@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  tests:
+    name: PHP ${{ matrix.php-version }} (${{ matrix.judy == 'ext' && 'ext-judy' || 'polyfill' }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: ["8.1", "8.2", "8.3", "8.4", "8.5"]
+        judy: [ext, polyfill]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+      - name: Install ext-judy via PIE
+        if: matrix.judy == 'ext'
+        run: |
+          sudo apt-get update && sudo apt-get install -y libjudy-dev
+          curl -fsSL https://github.com/php/pie/releases/latest/download/pie.phar \
+            -o /usr/local/bin/pie && chmod +x /usr/local/bin/pie
+          sudo pie install orieg/judy --with-judy=/usr
+          php -r 'echo "ext-judy ", judy_version(), PHP_EOL;'
+      - name: Composer validate + install
+        run: |
+          composer validate --strict
+          composer install --no-interaction --no-progress
+      - name: PSR-16 tests
+        run: php tests/simplecache.php
+      - name: Symfony adapter tests
+        run: php tests/symfony-adapter.php
+
+  bench:
+    name: benchmark (PHP 8.4, ext-judy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+      - name: Install ext-judy via PIE
+        run: |
+          sudo apt-get update && sudo apt-get install -y libjudy-dev
+          curl -fsSL https://github.com/php/pie/releases/latest/download/pie.phar \
+            -o /usr/local/bin/pie && chmod +x /usr/local/bin/pie
+          sudo pie install orieg/judy --with-judy=/usr
+      - name: Composer install
+        run: composer install --no-interaction --no-progress
+      - name: Run benchmark
+        run: |
+          php bench/cache-bench.php 200000 | tee bench-results.txt
+          { echo '### judy-cache benchmark (200k entries)'; echo '```'; cat bench-results.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench-results.txt

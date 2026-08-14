@@ -1,0 +1,5 @@
+vendor/
+composer.lock
+.claude/
+.DS_Store
+bench-results.txt
