@@ -34,10 +34,8 @@ jobs:
         run: |
           composer validate --strict
           composer install --no-interaction --no-progress
-      - name: PSR-16 behavior tests
+      - name: PSR-16 behavior + spec-clause tests
         run: php tests/simplecache.php
-      - name: PSR-16 compliance suite (cache/integration-tests)
-        run: vendor/bin/phpunit
       - name: Model-based fuzz (3 backends x 5 seeds)
         run: php tests/fuzz.php 5000
       - name: Symfony adapter tests

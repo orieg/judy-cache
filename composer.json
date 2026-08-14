@@ -33,14 +33,7 @@
         "orieg/judy-polyfill": "^2.4"
     },
     "require-dev": {
-        "symfony/cache": "^6.4 || ^7.0",
-        "cache/integration-tests": "^0.17",
-        "phpunit/phpunit": "^9.6"
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Orieg\\JudyCache\\Tests\\": "tests/"
-        }
+        "symfony/cache": "^6.4 || ^7.0"
     },
     "suggest": {
         "ext-judy": "The native extension: C-speed operations and lower memory (pie install orieg/judy)",

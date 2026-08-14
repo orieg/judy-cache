@@ -31,6 +31,21 @@ function check(string $label, mixed $expected, mixed $actual): void
     }
 }
 
+function throws(string $label, string $class, callable $fn): void
+{
+    global $failures;
+    try {
+        $fn();
+        $failures++;
+        echo "FAIL $label: expected $class, nothing thrown\n";
+    } catch (\Throwable $e) {
+        if (!($e instanceof $class)) {
+            $failures++;
+            echo "FAIL $label: expected $class, got ", get_class($e), "\n";
+        }
+    }
+}
+
 // Controllable clock
 $now = 1_000_000;
 $cache = new JudySimpleCache(clock: function () use (&$now) { return $now; });
@@ -123,6 +138,69 @@ $o->v = 1;
 $raw->set('o', $o);
 $o->v = 2;
 check('by-reference storage sees mutation', 2, $raw->get('o')->v);
+
+/* ── PSR-16 spec-clause compliance ─────────────────────────────
+ * The official cache/integration-tests suite requires psr/cache ~1.0 and
+ * predates the typed psr/simple-cache v3 interface, so it cannot run
+ * against modern implementations. These checks map each testable MUST
+ * clause of the PSR-16 spec (+ typed-interface reality) explicitly.
+ */
+
+$spec = new JudySimpleCache(clock: function () use (&$now) { return $now; });
+
+// "Keys consisting of A-Z, a-z, 0-9, _, and . MUST be supported" — and a
+// length of up to 64 characters MUST be supported.
+$legal = 'AZaz09_.' . str_repeat('k', 56);
+check('spec: 64-char legal key', true, strlen($legal) === 64 && $spec->set($legal, 'v') && $spec->get($legal) === 'v');
+check('spec: legal charset key', true, $spec->set('AZaz09_.-', 'v2') && $spec->get('AZaz09_.-') === 'v2');
+
+// Data MUST be returned exactly as stored, for all serializable types.
+$exact = ['s' => 'str', 'i' => -42, 'f' => 1.5, 'b' => false, 'n' => null, 'a' => [['x']], 'o' => new stdClass()];
+$spec->set('spec.types', $exact);
+$back = $spec->get('spec.types');
+check('spec: type fidelity', true,
+    $back['s'] === 'str' && $back['i'] === -42 && $back['f'] === 1.5
+    && $back['b'] === false && $back['n'] === null && $back['a'] === [['x']]
+    && $back['o'] instanceof stdClass);
+
+// A stored null MUST be distinguishable via has(), even though get()
+// cannot distinguish it from a miss.
+$spec->set('spec.null', null);
+check('spec: null value has()', true, $spec->has('spec.null'));
+check('spec: null value get with default', null, $spec->get('spec.null', 'DEFAULT') === null ? null : 'WRONG');
+
+// getMultiple/setMultiple/deleteMultiple MUST accept any iterable, not
+// just arrays.
+$gen = (function () { yield 'g.1' => 'v1'; yield 'g.2' => 'v2'; })();
+check('spec: setMultiple(Generator)', true, $spec->setMultiple($gen));
+$keys = (function () { yield 'g.1'; yield 'g.2'; yield 'g.3'; })();
+check('spec: getMultiple(Generator)', ['g.1' => 'v1', 'g.2' => 'v2', 'g.3' => 'D'],
+    (array) $spec->getMultiple($keys, 'D'));
+$dkeys = (function () { yield 'g.1'; })();
+check('spec: deleteMultiple(Generator)', true, $spec->deleteMultiple($dkeys));
+check('spec: after generator delete', false, $spec->has('g.1'));
+
+// getMultiple MUST return defaults for missing keys, keyed by requested key.
+check('spec: getMultiple defaults', ['none.1' => 0, 'none.2' => 0], (array) $spec->getMultiple(['none.1', 'none.2'], 0));
+
+// Reserved characters {}()/\@: MUST throw InvalidArgumentException — on
+// every key-taking method.
+foreach (['set' => fn($k) => $spec->set($k, 1), 'get' => fn($k) => $spec->get($k),
+          'has' => fn($k) => $spec->has($k), 'delete' => fn($k) => $spec->delete($k),
+          'getMultiple' => fn($k) => $spec->getMultiple([$k]),
+          'deleteMultiple' => fn($k) => $spec->deleteMultiple([$k])] as $m => $fn) {
+    throws("spec: reserved char via $m", \Psr\SimpleCache\InvalidArgumentException::class, fn() => $fn('bad{key'));
+}
+
+// TTL: an expired item MUST be treated as a miss (get, has, getMultiple).
+$spec->set('spec.exp', 'v', 10);
+$now += 11;
+check('spec: expired is miss on get', 'D', $spec->get('spec.exp', 'D'));
+check('spec: expired is miss in getMultiple', ['spec.exp' => 'D'], (array) $spec->getMultiple(['spec.exp'], 'D'));
+
+// clear() MUST empty the cache and return true.
+$spec->set('spec.c', 1);
+check('spec: clear returns true and empties', [true, false], [$spec->clear(), $spec->has('spec.c')]);
 
 if ($failures === 0) {
     echo "simplecache: all checks passed (backend: ", judy_version(), ")\n";

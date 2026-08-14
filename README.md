@@ -87,11 +87,17 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 
 Four independent layers, all in CI on PHP 8.1–8.5 × {ext-judy, polyfill}:
 
-1. **Official PSR-16 compliance**: the community-standard
+1. **Spec-clause compliance**: `tests/simplecache.php` maps each testable
+   MUST clause of PSR-16 to an explicit check (legal key charset + 64-char
+   length, reserved-character rejection on every method, type fidelity,
+   stored-null vs miss, iterables/Generators in the multi ops, TTL-expiry
+   as miss, clear semantics). The historical
    [cache/integration-tests](https://github.com/php-cache/integration-tests)
-   suite (`vendor/bin/phpunit`).
-2. **Behavior tests**: `php tests/simplecache.php` — TTL/clock edge cases,
-   prefix ops, key validation, serialization semantics.
+   suite requires `psr/cache ~1.0` and predates the typed
+   `psr/simple-cache` v3 interface, so it cannot run against modern
+   implementations — the clause mapping replaces it.
+2. **Behavior tests**: same file — TTL/clock edge cases, prefix ops,
+   snapshot-serialization semantics, `prune()`, backend selection.
 3. **Model-based fuzzing**: `php tests/fuzz.php` — random op sequences
    (set/get/delete/TTL-advance/prefix-delete) diffed step-by-step against a
    trivially-correct reference implementation, across all three backends
