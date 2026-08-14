@@ -18,7 +18,7 @@ jobs:
         php-version: ["8.1", "8.2", "8.3", "8.4", "8.5"]
         judy: [ext, polyfill]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
@@ -45,7 +45,7 @@ jobs:
     name: benchmark (PHP 8.4, ext-judy, apcu)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
@@ -63,7 +63,7 @@ jobs:
         run: |
           php bench/cache-bench.php 50000,200000,1000000 5 | tee bench-results.md
           { echo '## judy-cache benchmark'; cat bench-results.md; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bench-results
           path: bench-results.md
