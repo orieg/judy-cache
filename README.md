@@ -120,7 +120,9 @@ a plain-array cache, Symfony `ArrayAdapter`, Symfony **`TagAwareAdapter`**
 comparison), and **APCu** when loaded. Each cell runs in a fresh child
 process, multiple runs, reported as median [min..max], across a size sweep
 (50k / 200k / 1M). CI publishes the table in the run summary weekly and on
-every push — trust those numbers, not laptop runs.
+every push; the current reference run with full methodology and analysis is
+committed in [BENCHMARK.md](BENCHMARK.md). Trust those numbers, not laptop
+runs.
 
 ## Backend choice
 
