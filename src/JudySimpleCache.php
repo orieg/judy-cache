@@ -29,15 +29,28 @@ class JudySimpleCache implements CacheInterface
      *   faster, but mutating a fetched object mutates the cached one.
      * @param ?callable(): int $clock Returns the current Unix timestamp;
      *   injectable for tests.
+     * @param ?int $backend Judy type constant for the value store. Defaults
+     *   to Judy::STRING_TO_MIXED (sorted trie). STRING_TO_MIXED_HASH and
+     *   STRING_TO_MIXED_ADAPTIVE are also valid; all three support the
+     *   prefix operations. See the README for the trade-offs.
      */
     public function __construct(
         private readonly bool $storeSerialized = true,
         private $clock = null,
+        ?int $backend = null,
     ) {
         // orieg/judy-polyfill guarantees the global Judy class exists,
         // aliasing itself when ext-judy is absent.
-        $this->values = new \Judy(\Judy::STRING_TO_MIXED);
-        $this->expiries = new \Judy(\Judy::STRING_TO_INT);
+        $backend ??= \Judy::STRING_TO_MIXED;
+        if (!\in_array($backend, [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE], true)) {
+            throw new InvalidArgumentException('backend must be a string-to-mixed Judy type constant');
+        }
+        $this->values = new \Judy($backend);
+        $this->expiries = new \Judy(match ($backend) {
+            \Judy::STRING_TO_MIXED => \Judy::STRING_TO_INT,
+            \Judy::STRING_TO_MIXED_HASH => \Judy::STRING_TO_INT_HASH,
+            default => \Judy::STRING_TO_INT_ADAPTIVE,
+        });
     }
 
     public function get(string $key, mixed $default = null): mixed
@@ -148,7 +161,7 @@ class JudySimpleCache implements CacheInterface
     public function keysByPrefix(string $prefix, int $limit = PHP_INT_MAX): array
     {
         $keys = [];
-        for ($key = $this->values->first($prefix === '' ? null : $prefix);
+        for ($key = $prefix === '' ? $this->values->first() : $this->values->first($prefix);
              $key !== null && ($prefix === '' || \str_starts_with($key, $prefix)) && \count($keys) < $limit;
              $key = $this->values->searchNext($key)) {
             if ($this->live($key)) {

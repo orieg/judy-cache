@@ -83,17 +83,45 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 - Benchmark numbers should come from an idle machine or CI, never a loaded
   laptop.
 
-## Testing
+## Validation
 
-```sh
-composer install
-php tests/simplecache.php        # PSR-16 behavior (either backend)
-php tests/symfony-adapter.php    # PSR-6 pool via symfony/cache
-php bench/cache-bench.php        # vs plain array + Symfony ArrayAdapter
+Four independent layers, all in CI on PHP 8.1–8.5 × {ext-judy, polyfill}:
+
+1. **Official PSR-16 compliance**: the community-standard
+   [cache/integration-tests](https://github.com/php-cache/integration-tests)
+   suite (`vendor/bin/phpunit`).
+2. **Behavior tests**: `php tests/simplecache.php` — TTL/clock edge cases,
+   prefix ops, key validation, serialization semantics.
+3. **Model-based fuzzing**: `php tests/fuzz.php` — random op sequences
+   (set/get/delete/TTL-advance/prefix-delete) diffed step-by-step against a
+   trivially-correct reference implementation, across all three backends
+   and multiple seeds.
+4. **Backend parity**: the underlying Judy API is itself parity-verified
+   against the C extension by
+   [judy-polyfill's 249-check suite](https://github.com/orieg/judy-polyfill).
+
+## Benchmarks
+
+`php bench/cache-bench.php` compares judy-cache (all three backends) against
+a plain-array cache, Symfony `ArrayAdapter`, Symfony **`TagAwareAdapter`**
+(the ecosystem's standard group-invalidation mechanism — the fair
+comparison), and **APCu** when loaded. Each cell runs in a fresh child
+process, multiple runs, reported as median [min..max], across a size sweep
+(50k / 200k / 1M). CI publishes the table in the run summary weekly and on
+every push — trust those numbers, not laptop runs.
+
+## Backend choice
+
+The default backend is the sorted trie (`Judy::STRING_TO_MIXED`). All three
+string-keyed backends support the prefix operations; pick via the
+constructor:
+
+```php
+new JudySimpleCache(backend: Judy::STRING_TO_MIXED_ADAPTIVE);
 ```
 
-CI runs the suite on PHP 8.1–8.5, each version both with `ext-judy` (via PIE)
-and with the polyfill.
+The CI benchmark compares them; if one dominates across workloads, it will
+become the default in a minor release.
 
 ## License
 

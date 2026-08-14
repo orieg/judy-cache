@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "17 6 * * 1" # weekly benchmark refresh
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -31,19 +34,25 @@ jobs:
         run: |
           composer validate --strict
           composer install --no-interaction --no-progress
-      - name: PSR-16 tests
+      - name: PSR-16 behavior tests
         run: php tests/simplecache.php
+      - name: PSR-16 compliance suite (cache/integration-tests)
+        run: vendor/bin/phpunit
+      - name: Model-based fuzz (3 backends x 5 seeds)
+        run: php tests/fuzz.php 5000
       - name: Symfony adapter tests
         run: php tests/symfony-adapter.php
 
   bench:
-    name: benchmark (PHP 8.4, ext-judy)
+    name: benchmark (PHP 8.4, ext-judy, apcu)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
+          extensions: apcu
+          ini-values: apc.enable_cli=1, apc.shm_size=512M
       - name: Install ext-judy via PIE
         run: |
           sudo apt-get update && sudo apt-get install -y libjudy-dev
@@ -52,11 +61,11 @@ jobs:
           sudo pie install orieg/judy --with-judy=/usr
       - name: Composer install
         run: composer install --no-interaction --no-progress
-      - name: Run benchmark
+      - name: Run benchmark sweep (median of 5)
         run: |
-          php bench/cache-bench.php 200000 | tee bench-results.txt
-          { echo '### judy-cache benchmark (200k entries)'; echo '```'; cat bench-results.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          php bench/cache-bench.php 50000,200000,1000000 5 | tee bench-results.md
+          { echo '## judy-cache benchmark'; cat bench-results.md; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: bench-results
-          path: bench-results.txt
+          path: bench-results.md
