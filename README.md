@@ -86,6 +86,12 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
   it pays with ~10x slower writes and the highest memory of any backend.
   For integer-keyed workloads, skip the cache layer and use a `Judy`
   array directly ([php-judy benchmarks](https://github.com/orieg/php-judy/blob/main/BENCHMARK.md)).
+- **Scope caveat**: this cache is per-process, like the array/Symfony
+  comparisons — at W workers, total footprint is W × RSS. APCu is shared
+  across workers and stays flat as workers scale; for data every worker
+  can share, it wins total memory at high worker counts. judy-cache's
+  case is per-worker state, single-process daemons, and O(range)
+  invalidation.
 - Benchmark numbers should come from an idle machine or CI, never a loaded
   laptop.
 

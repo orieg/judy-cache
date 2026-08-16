@@ -21,6 +21,11 @@ meaningfully change (new release, methodology change), not per commit.
 - Peak RSS via `getrusage()` per child; Judy allocates outside PHP's
   memory manager, so RSS is the only fair memory comparison. APCu's column
   includes its shared-memory segment as mapped pages (approximate).
+- **Memory scope**: the array/symfony/tagaware/judy rows are **per-process**
+  — in a multi-worker deployment each worker holds its own copy, so total
+  footprint scales with worker count (W × RSS). APCu is **shared across
+  all workers** — its footprint stays flat as workers scale. The rows are
+  comparable as printed only for a single process.
 - Environment of the reference run below: GitHub Actions `ubuntu-latest`,
   PHP 8.4.24, ext-judy 2.4.2, APCu enabled (`apc.shm_size=512M`),
   2026-08-14, judy-cache v0.1.x.
@@ -87,6 +92,13 @@ shared-memory segment as mapped pages; treat its memory column as approximate.
 - **Memory at 1M entries**: judy-cache (trie) 172 MB vs 495 MB plain
   array, 921 MB ArrayAdapter, 294 MB APCu. The ratio shrinks as values
   grow — the savings are in key/bucket overhead, not in your data.
+- **APCu is shared across workers; the other four rows are per-process.**
+  At W workers the per-process backends cost W × RSS while APCu stays
+  ~flat: at 16 workers, 16 × 172 MB far exceeds APCu's 294 MB. For data
+  every worker can share, APCu (or Redis) wins total memory at high worker
+  counts; judy-cache's memory case is per-worker state, single-process
+  daemons, and workloads that need its O(range) invalidation (APCu's
+  regex-scan invalidation is 63 ms at 1M entries and grows linearly).
 - **Raw throughput**: a plain PHP array is fastest at set/get (447/537
   kops/s vs judy-cache's 249/281). You buy bounded memory and O(range)
   invalidation, not raw speed.
