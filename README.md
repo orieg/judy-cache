@@ -130,6 +130,21 @@ every push; the current reference run with full methodology and analysis is
 committed in [BENCHMARK.md](BENCHMARK.md). Trust those numbers, not laptop
 runs.
 
+## Sharing across workers
+
+This cache is per-process. If several workers need one logical cache, the
+supported pattern today is an **owner process**: one worker holds the
+`JudySimpleCache`, the others reach it over your runtime's IPC (a Swoole
+channel, unix socket, or RoadRunner RPC). That keeps a single writer — no
+locking — and preserves O(range) invalidation, at the cost of a message
+hop on reads (tens of µs, vs sub-µs for a shared-memory read). For data
+every worker can share and read hot, APCu's shared segment remains the
+right tool; see the scope caveat above.
+
+A true shared-memory backend ("APCu with ordered keys") is a research
+item on the extension side, not a promise — tracked in
+[php-judy#83](https://github.com/orieg/php-judy/issues/83).
+
 ## Backend choice
 
 The default backend is the sorted trie (`Judy::STRING_TO_MIXED`). All three
