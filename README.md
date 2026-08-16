@@ -137,7 +137,10 @@ supported pattern today is an **owner process**: one worker holds the
 `JudySimpleCache`, the others reach it over your runtime's IPC (a Swoole
 channel, unix socket, or RoadRunner RPC). That keeps a single writer — no
 locking — and preserves O(range) invalidation, at the cost of a message
-hop on reads (tens of µs, vs sub-µs for a shared-memory read). For data
+hop on reads (tens of µs, vs sub-µs for a shared-memory read). A runnable
+reference implementation — pure-PHP unix-socket server, client, and a
+latency/concurrency demo, smoke-tested in CI — lives in
+[examples/owner-process/](examples/owner-process/). For data
 every worker can share and read hot, APCu's shared segment remains the
 right tool; see the scope caveat above.
 

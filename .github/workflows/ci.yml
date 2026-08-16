@@ -40,6 +40,8 @@ jobs:
         run: php tests/fuzz.php 5000
       - name: Symfony adapter tests
         run: php tests/symfony-adapter.php
+      - name: Owner-process example smoke (IPC pattern)
+        run: php examples/owner-process/demo.php 2 1000
 
   bench:
     name: benchmark (PHP 8.4, ext-judy, apcu)
