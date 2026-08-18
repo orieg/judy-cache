@@ -131,6 +131,33 @@ check('count before prune', 2, $cache->count());
 check('prune evicts', 1, $cache->prune());
 check('count after prune', 1, $cache->count());
 
+// prune() with numeric-string keys. "42" is a legal PSR-16 key, but a PHP
+// array coerces it to int 42 — so expiries->toArray() hands prune() an int
+// key, which ext-judy rejects on a string-keyed array (TypeError).
+$probe = new \Judy(\Judy::STRING_TO_INT);
+$probe['42'] = 1;
+check('toArray() coerces a canonical numeric key to int', 'integer',
+    \gettype(\array_key_first($probe->toArray())));   // pins the hazard prune() guards against
+foreach ([\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE] as $b) {
+    $num = new JudySimpleCache(clock: function () use (&$now) { return $now; }, backend: $b);
+    $num->set('42', 'dies', 10);
+    $num->set('-7', 'dies', 10);
+    $num->set('007', 'dies', 10);   // not canonical: stays a string key
+    $num->set('42.keep', 'lives');
+    $now += 11;
+    check("numeric-key prune evicts (backend $b)", 3, $num->prune());
+    check("numeric-key prune leaves the rest (backend $b)", ['42.keep'], $num->keysByPrefix(''));
+    check("numeric-key prune is a miss (backend $b)", 'MISS', $num->get('42', 'MISS'));
+}
+
+// The same coercion hazard on the prefix ops, which read keys back from Judy.
+$num = new JudySimpleCache(clock: function () use (&$now) { return $now; });
+$num->setMultiple(['1' => 'a', '2' => 'b', '10' => 'c', '1.x' => 'd']);
+check('numeric keysByPrefix', ['1', '1.x', '10'], $num->keysByPrefix('1'));
+check('numeric keysByPrefix dotted', ['1.x'], $num->keysByPrefix('1.'));
+check('numeric deletePrefix', 3, $num->deletePrefix('1'));
+check('numeric deletePrefix leaves siblings', ['2'], $num->keysByPrefix(''));
+
 // storeSerialized=false stores by reference
 $raw = new JudySimpleCache(storeSerialized: false, clock: function () use (&$now) { return $now; });
 $o = new \stdClass();
