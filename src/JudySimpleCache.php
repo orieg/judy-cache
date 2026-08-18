@@ -183,6 +183,11 @@ class JudySimpleCache implements CacheInterface
         $now = $this->now();
         $evicted = 0;
         foreach ($this->expiries->toArray() as $key => $expiry) {
+            // toArray() returns a PHP array, and PHP array keys coerce
+            // canonical decimal strings to int: the legal PSR-16 key "42"
+            // comes back as int 42. ext-judy rejects a non-string offset on
+            // a string-keyed array with a TypeError, so cast it back.
+            $key = (string) $key;
             if ($expiry <= $now) {
                 unset($this->values[$key], $this->expiries[$key]);
                 $evicted++;

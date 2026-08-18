@@ -120,6 +120,13 @@ foreach (['user', 'report', 'cfg', 'x'] as $ns) {
         $keyPool[] = "$ns.$i.detail";
     }
 }
+// Bare numeric keys are legal PSR-16 keys and are the ones PHP array-key
+// coercion turns into ints on the way out of toArray()/foreach.
+for ($i = 0; $i < 20; $i++) {
+    $keyPool[] = (string) $i;
+    $keyPool[] = '-' . $i;
+    $keyPool[] = '0' . $i;   // non-canonical: stays a string key
+}
 $valuePool = [null, true, false, 0, -1, 42, 3.14, '', 'str', [1, 2, 3], ['a' => ['b' => 'c']]];
 $prefixPool = ['user.', 'user.1', 'report.', 'cfg.3', 'nope.', ''];
 
