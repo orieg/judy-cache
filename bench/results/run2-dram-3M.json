@@ -1,0 +1,3495 @@
+{
+    "schema": "judy-cache-vendoring-probe/1",
+    "label": "honeycomb-i9-12900F-php8.4-out-of-cache-n3M",
+    "at": "2026-08-19T21:47:53+00:00",
+    "host": "Linux 24fc52209ab9 6.8.0-136-generic #136~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul  3 16:29:11 UTC  x86_64",
+    "php": "8.4.24",
+    "ext_version": "2.6.0",
+    "params": {
+        "rounds": 7,
+        "n": 3000000,
+        "iterations": 1,
+        "groups": 2000,
+        "families": "ser,jser,rawint,jint,ctl",
+        "floor_pct": 1.3,
+        "dram_n": 2000000,
+        "residency": "out-of-cache"
+    },
+    "arms": {
+        "bundled": [
+            {
+                "so": "/work/builds/judy-C-1.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ],
+                "sha256": "d470e8daef5847bd458eb61005d64ad3e16ba150de3d592d05c01afbf94941c6",
+                "size": 1872056
+            },
+            {
+                "so": "/work/builds/judy-C-2.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ],
+                "sha256": "7ca2b4731be4a90050de5e6c30806ebfd4d545376516f5245bb6a7572f960095",
+                "size": 1872056
+            },
+            {
+                "so": "/work/builds/judy-C-3.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ],
+                "sha256": "a932f3d38a1b4551f142fe6036910f815f0a8e8c404a6897a7bd823b84f22c7c",
+                "size": 1872056
+            }
+        ],
+        "system": [
+            {
+                "so": "/work/builds/judy-B-1.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-1.so"
+                ],
+                "sha256": "9922e09e102250eca9c11eba5729c23f0e2afc74e6345f6d5a8c33009b444aa5",
+                "size": 661136
+            },
+            {
+                "so": "/work/builds/judy-B-2.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-2.so"
+                ],
+                "sha256": "9e40b3f169ed135e43bfb198ffc32d15522ef848d1a02271e9f370559292d911",
+                "size": 661136
+            },
+            {
+                "so": "/work/builds/judy-B-3.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-3.so"
+                ],
+                "sha256": "d612ebbcb812d2851ab7f63cb929011cefcd8d1872a5a1598f286d83be3e2e97",
+                "size": 661136
+            }
+        ],
+        "pristine": [
+            {
+                "so": "/work/builds/judy-P-1.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-P-1.so"
+                ],
+                "sha256": "273c47bd27f6c6a081c1ecbc5c4ebbfe504f86f90f8785a404f395bd1e462c07",
+                "size": 961352
+            },
+            {
+                "so": "/work/builds/judy-P-2.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-P-2.so"
+                ],
+                "sha256": "b3f9d6c774505eaa690d3eea417c93f511895cbf70281ab08b5b22e61a8e7527",
+                "size": 961352
+            },
+            {
+                "so": "/work/builds/judy-P-3.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-P-3.so"
+                ],
+                "sha256": "dd679e4c58902e820fbdce31baf057e3b431281fb1fb461e05f3665785c9e29e",
+                "size": 961352
+            }
+        ]
+    },
+    "provenance": [],
+    "reference": "bundled",
+    "hygiene": {
+        "failed": false,
+        "snapshots": [
+            {
+                "phase": "before",
+                "at": "2026-08-19T21:39:03+00:00",
+                "load1": 1.01,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-0",
+                "at": "2026-08-19T21:40:18+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-1",
+                "at": "2026-08-19T21:41:34+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-2",
+                "at": "2026-08-19T21:42:50+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-3",
+                "at": "2026-08-19T21:44:05+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-4",
+                "at": "2026-08-19T21:45:22+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-5",
+                "at": "2026-08-19T21:46:37+00:00",
+                "load1": 1,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-6",
+                "at": "2026-08-19T21:47:53+00:00",
+                "load1": 1.06,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            }
+        ]
+    },
+    "stability": {
+        "unstable": false,
+        "tol_pct": 15,
+        "arms": {
+            "bundled": {
+                "median_spread_pct": 0.65,
+                "max_spread_pct": 5.84,
+                "worst_row": "jint.keys",
+                "median_drift_pct": 0.18,
+                "max_drift_pct": 0.96,
+                "rows": 28
+            },
+            "system": {
+                "median_spread_pct": 0.76,
+                "max_spread_pct": 4.44,
+                "worst_row": "rawint.keys",
+                "median_drift_pct": 0.11,
+                "max_drift_pct": 1.94,
+                "rows": 28
+            },
+            "pristine": {
+                "median_spread_pct": 1.12,
+                "max_spread_pct": 22.71,
+                "worst_row": "jser.keys",
+                "median_drift_pct": 0.18,
+                "max_drift_pct": 1.63,
+                "rows": 28
+            }
+        }
+    },
+    "peak_rss": {
+        "bundled": {
+            "median_mb": 2643.7,
+            "min_mb": 2643.5,
+            "max_mb": 2643.9
+        },
+        "system": {
+            "median_mb": 2643.8,
+            "min_mb": 2643.5,
+            "max_mb": 2643.9
+        },
+        "pristine": {
+            "median_mb": 2643.6,
+            "min_mb": 2643.5,
+            "max_mb": 2643.8
+        }
+    },
+    "comparisons": {
+        "system": {
+            "reference": "bundled",
+            "control_measured": true,
+            "control_median": 0.99759,
+            "control_spread_pct": 1.41,
+            "control_rows": {
+                "ctl.set": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.00041,
+                    "delta_pct": 0.04,
+                    "ci_delta_pct": [
+                        -0.33,
+                        0.73
+                    ],
+                    "rounds": 7
+                },
+                "ctl.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.98594,
+                    "delta_pct": -1.41,
+                    "ci_delta_pct": [
+                        -1.6,
+                        -1.38
+                    ],
+                    "rounds": 7
+                },
+                "ctl.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.99524,
+                    "delta_pct": -0.48,
+                    "ci_delta_pct": [
+                        -0.6,
+                        -0.37
+                    ],
+                    "rounds": 7
+                },
+                "ctl.hasr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.00148,
+                    "delta_pct": 0.15,
+                    "ci_delta_pct": [
+                        -0.06,
+                        0.24
+                    ],
+                    "rounds": 7
+                },
+                "ctl.del": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.99759,
+                    "delta_pct": -0.24,
+                    "ci_delta_pct": [
+                        -0.33,
+                        0.16
+                    ],
+                    "rounds": 7
+                }
+            },
+            "contaminated": false,
+            "rows": {
+                "ser.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.71906,
+                    "delta_pct": -28.09,
+                    "ci_delta_pct": [
+                        -28.19,
+                        -27.96
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -28.09,
+                        "1x1": -28.06,
+                        "2x2": -28.13
+                    },
+                    "build_spread_pct": 0.07,
+                    "builds": 3,
+                    "reference_ms": 3450.6546,
+                    "comparison_ms": 4812.3849,
+                    "reference_ms_by_round": [
+                        3455.5629,
+                        3450.6546,
+                        3456.7128,
+                        3447.4165,
+                        3460.2314,
+                        3448.1489,
+                        3450.5994
+                    ],
+                    "comparison_ms_by_round": [
+                        4808.1793,
+                        4821.6573,
+                        4817.8168,
+                        4812.3849,
+                        4808.2651,
+                        4812.9705,
+                        4810.3711
+                    ],
+                    "paired_ratios": [
+                        0.72042,
+                        0.71738,
+                        0.71922,
+                        0.71809,
+                        0.72138,
+                        0.71816,
+                        0.71906
+                    ]
+                },
+                "ser.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.9159,
+                    "delta_pct": -8.41,
+                    "ci_delta_pct": [
+                        -8.77,
+                        -8.13
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -8.41,
+                        "1x1": -8.52,
+                        "2x2": -8.5
+                    },
+                    "build_spread_pct": 0.11,
+                    "builds": 3,
+                    "reference_ms": 828.3205,
+                    "comparison_ms": 908.3224,
+                    "reference_ms_by_round": [
+                        828.3205,
+                        826.7538,
+                        831.4766,
+                        825.5321,
+                        834.1893,
+                        828.3018,
+                        832.3856
+                    ],
+                    "comparison_ms_by_round": [
+                        906.5636,
+                        909.8969,
+                        908.3224,
+                        907.0092,
+                        910.192,
+                        910.0787,
+                        906.5665
+                    ],
+                    "paired_ratios": [
+                        0.9159,
+                        0.91082,
+                        0.91761,
+                        0.91237,
+                        0.91871,
+                        0.91234,
+                        0.92039
+                    ]
+                },
+                "ser.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.01263,
+                    "delta_pct": 1.26,
+                    "ci_delta_pct": [
+                        1.02,
+                        1.58
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 1.17,
+                        "1x1": 1.27,
+                        "2x2": 1.42
+                    },
+                    "build_spread_pct": 0.25,
+                    "builds": 3,
+                    "reference_ms": 2422.3093,
+                    "comparison_ms": 2395.9576,
+                    "reference_ms_by_round": [
+                        2419.0279,
+                        2419.2356,
+                        2422.3093,
+                        2415.0576,
+                        2424.994,
+                        2425.9329,
+                        2427.7448
+                    ],
+                    "comparison_ms_by_round": [
+                        2400.4556,
+                        2402.9788,
+                        2397.8672,
+                        2392.7737,
+                        2391.9006,
+                        2394.0679,
+                        2395.9576
+                    ],
+                    "paired_ratios": [
+                        1.01017,
+                        1.00919,
+                        1.01263,
+                        1.01175,
+                        1.01628,
+                        1.01575,
+                        1.01571
+                    ]
+                },
+                "ser.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.02182,
+                    "delta_pct": 2.18,
+                    "ci_delta_pct": [
+                        2.14,
+                        2.24
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 2.2,
+                        "1x1": 2.08,
+                        "2x2": 2.21
+                    },
+                    "build_spread_pct": 0.13,
+                    "builds": 3,
+                    "reference_ms": 1372.0851,
+                    "comparison_ms": 1344.953,
+                    "reference_ms_by_round": [
+                        1370.0188,
+                        1372.3747,
+                        1371.7742,
+                        1369.623,
+                        1372.9134,
+                        1372.7624,
+                        1372.0851
+                    ],
+                    "comparison_ms_by_round": [
+                        1343.9971,
+                        1346.9144,
+                        1344.953,
+                        1343.4038,
+                        1348.945,
+                        1346.8072,
+                        1344.2267
+                    ],
+                    "paired_ratios": [
+                        1.02182,
+                        1.02136,
+                        1.0224,
+                        1.02198,
+                        1.02022,
+                        1.02173,
+                        1.02319
+                    ]
+                },
+                "ser.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.83624,
+                    "delta_pct": -16.38,
+                    "ci_delta_pct": [
+                        -17.58,
+                        -16.3
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -16.38,
+                        "1x1": -16.85,
+                        "2x2": -16.53
+                    },
+                    "build_spread_pct": 0.47,
+                    "builds": 3,
+                    "reference_ms": 3.4166,
+                    "comparison_ms": 4.0946,
+                    "reference_ms_by_round": [
+                        3.4158,
+                        3.4256,
+                        3.4166,
+                        3.4226,
+                        3.4255,
+                        3.3986,
+                        3.4078
+                    ],
+                    "comparison_ms_by_round": [
+                        4.0946,
+                        4.0944,
+                        4.0945,
+                        4.0992,
+                        4.166,
+                        4.0903,
+                        4.1657
+                    ],
+                    "paired_ratios": [
+                        0.83624,
+                        0.83868,
+                        0.83646,
+                        0.83698,
+                        0.82425,
+                        0.8329,
+                        0.82005
+                    ]
+                },
+                "ser.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.79401,
+                    "delta_pct": -20.6,
+                    "ci_delta_pct": [
+                        -20.7,
+                        -20.27
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -20.6,
+                        "1x1": -20.63,
+                        "2x2": -20.36
+                    },
+                    "build_spread_pct": 0.27,
+                    "builds": 3,
+                    "reference_ms": 3.7692,
+                    "comparison_ms": 4.7542,
+                    "reference_ms_by_round": [
+                        3.7692,
+                        3.7608,
+                        3.7637,
+                        3.7654,
+                        3.7812,
+                        3.7881,
+                        3.7776
+                    ],
+                    "comparison_ms_by_round": [
+                        4.7749,
+                        4.7542,
+                        4.7568,
+                        4.7538,
+                        4.7715,
+                        4.7482,
+                        4.7497
+                    ],
+                    "paired_ratios": [
+                        0.79128,
+                        0.79296,
+                        0.79314,
+                        0.79401,
+                        0.79435,
+                        0.79972,
+                        0.79725
+                    ]
+                },
+                "ser.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.87552,
+                    "delta_pct": -12.45,
+                    "ci_delta_pct": [
+                        -12.71,
+                        -12.19
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -12.66,
+                        "1x1": -12.58,
+                        "2x2": -12.18
+                    },
+                    "build_spread_pct": 0.48,
+                    "builds": 3,
+                    "reference_ms": 421.0883,
+                    "comparison_ms": 482.4178,
+                    "reference_ms_by_round": [
+                        419.5209,
+                        420.5783,
+                        421.945,
+                        421.0883,
+                        421.4045,
+                        422.0928,
+                        421.0095
+                    ],
+                    "comparison_ms_by_round": [
+                        482.4178,
+                        482.9759,
+                        481.5733,
+                        483.2647,
+                        482.4802,
+                        481.8589,
+                        481.7935
+                    ],
+                    "paired_ratios": [
+                        0.87172,
+                        0.87291,
+                        0.87829,
+                        0.87344,
+                        0.87552,
+                        0.87808,
+                        0.87595
+                    ]
+                },
+                "jser.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.80387,
+                    "delta_pct": -19.61,
+                    "ci_delta_pct": [
+                        -19.82,
+                        -19.47
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -19.61,
+                        "1x1": -19.4,
+                        "2x2": -19.77
+                    },
+                    "build_spread_pct": 0.37,
+                    "builds": 3,
+                    "reference_ms": 218.6594,
+                    "comparison_ms": 272.4733,
+                    "reference_ms_by_round": [
+                        218.7692,
+                        219.3244,
+                        218.5281,
+                        218.6594,
+                        219.0393,
+                        217.9354,
+                        218.4434
+                    ],
+                    "comparison_ms_by_round": [
+                        274.3569,
+                        273.0289,
+                        272.8455,
+                        272.1747,
+                        272.1344,
+                        272.4733,
+                        272.3955
+                    ],
+                    "paired_ratios": [
+                        0.79931,
+                        0.80524,
+                        0.80286,
+                        0.80532,
+                        0.80684,
+                        0.80177,
+                        0.80387
+                    ]
+                },
+                "jser.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.69974,
+                    "delta_pct": -30.03,
+                    "ci_delta_pct": [
+                        -30.24,
+                        -29.8
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -29.8,
+                        "1x1": -30.27,
+                        "2x2": -30.02
+                    },
+                    "build_spread_pct": 0.47,
+                    "builds": 3,
+                    "reference_ms": 301.0915,
+                    "comparison_ms": 431.8224,
+                    "reference_ms_by_round": [
+                        303.3287,
+                        300.5697,
+                        300.7641,
+                        301.0915,
+                        300.7714,
+                        301.459,
+                        302.2846
+                    ],
+                    "comparison_ms_by_round": [
+                        433.1342,
+                        432.2136,
+                        430.8569,
+                        431.6719,
+                        432.2022,
+                        431.8224,
+                        430.4202
+                    ],
+                    "paired_ratios": [
+                        0.702,
+                        0.6971,
+                        0.69974,
+                        0.69918,
+                        0.69758,
+                        0.69979,
+                        0.704
+                    ]
+                },
+                "jser.getr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.04616,
+                    "delta_pct": 4.62,
+                    "ci_delta_pct": [
+                        4.24,
+                        4.8
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 4.53,
+                        "1x1": 4.74,
+                        "2x2": 4.38
+                    },
+                    "build_spread_pct": 0.36,
+                    "builds": 3,
+                    "reference_ms": 1594.9761,
+                    "comparison_ms": 1528.9643,
+                    "reference_ms_by_round": [
+                        1597.531,
+                        1597.3648,
+                        1595.6963,
+                        1590.6364,
+                        1593.8921,
+                        1594.3551,
+                        1594.9761
+                    ],
+                    "comparison_ms_by_round": [
+                        1528.0794,
+                        1529.5918,
+                        1528.9643,
+                        1525.3625,
+                        1524.5415,
+                        1534.7045,
+                        1533.8331
+                    ],
+                    "paired_ratios": [
+                        1.04797,
+                        1.04683,
+                        1.04616,
+                        1.04531,
+                        1.04801,
+                        1.04137,
+                        1.04237
+                    ]
+                },
+                "jser.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.06448,
+                    "delta_pct": 6.45,
+                    "ci_delta_pct": [
+                        6.31,
+                        6.58
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 6.47,
+                        "1x1": 6.43,
+                        "2x2": 6.38
+                    },
+                    "build_spread_pct": 0.09,
+                    "builds": 3,
+                    "reference_ms": 1035.674,
+                    "comparison_ms": 975.9908,
+                    "reference_ms_by_round": [
+                        1035.2524,
+                        1034.3196,
+                        1036.3706,
+                        1034.2429,
+                        1036.0027,
+                        1035.674,
+                        1039.9862
+                    ],
+                    "comparison_ms_by_round": [
+                        975.9908,
+                        976.3677,
+                        975.9428,
+                        973.7644,
+                        973.5809,
+                        976.5334,
+                        978.1769
+                    ],
+                    "paired_ratios": [
+                        1.06328,
+                        1.06191,
+                        1.06448,
+                        1.06467,
+                        1.06668,
+                        1.06312,
+                        1.06575
+                    ]
+                },
+                "jser.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.76464,
+                    "delta_pct": -23.54,
+                    "ci_delta_pct": [
+                        -24.65,
+                        -22.7
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -24.25,
+                        "1x1": -23.68,
+                        "2x2": -22.97
+                    },
+                    "build_spread_pct": 1.28,
+                    "builds": 3,
+                    "reference_ms": 2.6105,
+                    "comparison_ms": 3.4193,
+                    "reference_ms_by_round": [
+                        2.623,
+                        2.6083,
+                        2.6082,
+                        2.6152,
+                        2.6052,
+                        2.6387,
+                        2.6105
+                    ],
+                    "comparison_ms_by_round": [
+                        3.4897,
+                        3.3823,
+                        3.4193,
+                        3.396,
+                        3.4664,
+                        3.4089,
+                        3.4543
+                    ],
+                    "paired_ratios": [
+                        0.75346,
+                        0.77303,
+                        0.76464,
+                        0.77194,
+                        0.75336,
+                        0.77593,
+                        0.75754
+                    ]
+                },
+                "jser.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.78515,
+                    "delta_pct": -21.49,
+                    "ci_delta_pct": [
+                        -21.52,
+                        -21.05
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -21.5,
+                        "1x1": -21.01,
+                        "2x2": -21.73
+                    },
+                    "build_spread_pct": 0.72,
+                    "builds": 3,
+                    "reference_ms": 3.6007,
+                    "comparison_ms": 4.5989,
+                    "reference_ms_by_round": [
+                        3.5927,
+                        3.6287,
+                        3.6188,
+                        3.6007,
+                        3.6076,
+                        3.5801,
+                        3.5929
+                    ],
+                    "comparison_ms_by_round": [
+                        4.5877,
+                        4.6021,
+                        4.615,
+                        4.5989,
+                        4.5806,
+                        4.6042,
+                        4.5872
+                    ],
+                    "paired_ratios": [
+                        0.785,
+                        0.79038,
+                        0.78604,
+                        0.78483,
+                        0.78948,
+                        0.77945,
+                        0.78515
+                    ]
+                },
+                "jser.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.82654,
+                    "delta_pct": -17.35,
+                    "ci_delta_pct": [
+                        -17.58,
+                        -17.17
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -17.19,
+                        "1x1": -17.26,
+                        "2x2": -18.2
+                    },
+                    "build_spread_pct": 1.01,
+                    "builds": 3,
+                    "reference_ms": 273.1428,
+                    "comparison_ms": 331.234,
+                    "reference_ms_by_round": [
+                        273.4096,
+                        273.1189,
+                        273.4265,
+                        272.7165,
+                        273.1428,
+                        273.0605,
+                        273.9698
+                    ],
+                    "comparison_ms_by_round": [
+                        331.6825,
+                        331.234,
+                        332.5349,
+                        330.1177,
+                        330.5402,
+                        337.2285,
+                        330.422
+                    ],
+                    "paired_ratios": [
+                        0.8263,
+                        0.82654,
+                        0.82423,
+                        0.82811,
+                        0.82835,
+                        0.81167,
+                        0.83115
+                    ]
+                },
+                "rawint.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.86446,
+                    "delta_pct": -13.55,
+                    "ci_delta_pct": [
+                        -14.04,
+                        -13.23
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -13.55,
+                        "1x1": -14.57,
+                        "2x2": -13.6
+                    },
+                    "build_spread_pct": 1.02,
+                    "builds": 3,
+                    "reference_ms": 425.3265,
+                    "comparison_ms": 494.2842,
+                    "reference_ms_by_round": [
+                        425.248,
+                        424.1319,
+                        428.4128,
+                        425.1367,
+                        426.3502,
+                        425.3265,
+                        427.3096
+                    ],
+                    "comparison_ms_by_round": [
+                        493.9501,
+                        505.6525,
+                        494.4975,
+                        492.9805,
+                        492.543,
+                        496.0121,
+                        494.2842
+                    ],
+                    "paired_ratios": [
+                        0.86299,
+                        0.84081,
+                        0.86845,
+                        0.86446,
+                        0.8677,
+                        0.85956,
+                        0.86659
+                    ]
+                },
+                "rawint.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.87468,
+                    "delta_pct": -12.53,
+                    "ci_delta_pct": [
+                        -12.74,
+                        -12.49
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -12.49,
+                        "1x1": -12.73,
+                        "2x2": -12.65
+                    },
+                    "build_spread_pct": 0.24,
+                    "builds": 3,
+                    "reference_ms": 503.2121,
+                    "comparison_ms": 577.1572,
+                    "reference_ms_by_round": [
+                        501.9266,
+                        503.184,
+                        502.9041,
+                        505.2678,
+                        505.0759,
+                        503.2121,
+                        503.6112
+                    ],
+                    "comparison_ms_by_round": [
+                        574.9233,
+                        579.5184,
+                        576.4741,
+                        576.9456,
+                        578.6013,
+                        578.0657,
+                        577.1572
+                    ],
+                    "paired_ratios": [
+                        0.87514,
+                        0.87037,
+                        0.87448,
+                        0.87788,
+                        0.87503,
+                        0.87261,
+                        0.87468
+                    ]
+                },
+                "rawint.getr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.02948,
+                    "delta_pct": 2.95,
+                    "ci_delta_pct": [
+                        2.67,
+                        3.19
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 2.95,
+                        "1x1": 3.04,
+                        "2x2": 3
+                    },
+                    "build_spread_pct": 0.09,
+                    "builds": 3,
+                    "reference_ms": 1903.2357,
+                    "comparison_ms": 1852.3202,
+                    "reference_ms_by_round": [
+                        1902.3439,
+                        1906.1844,
+                        1906.5187,
+                        1901.3554,
+                        1909.968,
+                        1903.2357,
+                        1901.2052
+                    ],
+                    "comparison_ms_by_round": [
+                        1852.3202,
+                        1861.0856,
+                        1852.2679,
+                        1846.9355,
+                        1851.5856,
+                        1855.4129,
+                        1856.6447
+                    ],
+                    "paired_ratios": [
+                        1.02948,
+                        1.0267,
+                        1.03177,
+                        1.03195,
+                        1.03402,
+                        1.02825,
+                        1.02647
+                    ]
+                },
+                "rawint.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.02279,
+                    "delta_pct": 2.28,
+                    "ci_delta_pct": [
+                        1.82,
+                        2.5
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 2.28,
+                        "1x1": 2.26,
+                        "2x2": 2.16
+                    },
+                    "build_spread_pct": 0.12,
+                    "builds": 3,
+                    "reference_ms": 1374.8524,
+                    "comparison_ms": 1347.9716,
+                    "reference_ms_by_round": [
+                        1375.369,
+                        1375.512,
+                        1377.8052,
+                        1372.7616,
+                        1372.2743,
+                        1373.9311,
+                        1374.8524
+                    ],
+                    "comparison_ms_by_round": [
+                        1347.9716,
+                        1349.03,
+                        1347.495,
+                        1342.3731,
+                        1344.4871,
+                        1352.6548,
+                        1355.1521
+                    ],
+                    "paired_ratios": [
+                        1.02279,
+                        1.02209,
+                        1.02496,
+                        1.02511,
+                        1.02313,
+                        1.01818,
+                        1.01699
+                    ]
+                },
+                "rawint.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.8265,
+                    "delta_pct": -17.35,
+                    "ci_delta_pct": [
+                        -19.52,
+                        -16.72
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -17.86,
+                        "1x1": -18.63,
+                        "2x2": -16.44
+                    },
+                    "build_spread_pct": 2.19,
+                    "builds": 3,
+                    "reference_ms": 3.3858,
+                    "comparison_ms": 4.1045,
+                    "reference_ms_by_round": [
+                        3.3682,
+                        3.3858,
+                        3.4197,
+                        3.3607,
+                        3.3811,
+                        3.4101,
+                        3.418
+                    ],
+                    "comparison_ms_by_round": [
+                        4.0762,
+                        4.1065,
+                        4.0885,
+                        4.1013,
+                        4.2315,
+                        4.1045,
+                        4.2572
+                    ],
+                    "paired_ratios": [
+                        0.82829,
+                        0.8265,
+                        0.83844,
+                        0.82139,
+                        0.80095,
+                        0.83281,
+                        0.8048
+                    ]
+                },
+                "rawint.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.79158,
+                    "delta_pct": -20.84,
+                    "ci_delta_pct": [
+                        -20.89,
+                        -20.21
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -20.64,
+                        "1x1": -20.87,
+                        "2x2": -21.08
+                    },
+                    "build_spread_pct": 0.44,
+                    "builds": 3,
+                    "reference_ms": 3.6972,
+                    "comparison_ms": 4.6773,
+                    "reference_ms_by_round": [
+                        3.7062,
+                        3.6723,
+                        3.7237,
+                        3.6931,
+                        3.6972,
+                        3.6758,
+                        3.7169
+                    ],
+                    "comparison_ms_by_round": [
+                        4.6812,
+                        4.6533,
+                        4.6773,
+                        4.6768,
+                        4.6825,
+                        4.7212,
+                        4.6698
+                    ],
+                    "paired_ratios": [
+                        0.79364,
+                        0.79109,
+                        0.79804,
+                        0.79158,
+                        0.79147,
+                        0.78045,
+                        0.79786
+                    ]
+                },
+                "rawint.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.87905,
+                    "delta_pct": -12.09,
+                    "ci_delta_pct": [
+                        -12.31,
+                        -11.87
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -12.09,
+                        "1x1": -12.33,
+                        "2x2": -11.91
+                    },
+                    "build_spread_pct": 0.42,
+                    "builds": 3,
+                    "reference_ms": 415.08,
+                    "comparison_ms": 473.2187,
+                    "reference_ms_by_round": [
+                        415.7523,
+                        413.9645,
+                        415.5522,
+                        415.08,
+                        414.9204,
+                        415.8891,
+                        414.536
+                    ],
+                    "comparison_ms_by_round": [
+                        472.8815,
+                        474.562,
+                        472.5052,
+                        474.501,
+                        473.2187,
+                        473.6384,
+                        472.7081
+                    ],
+                    "paired_ratios": [
+                        0.88131,
+                        0.87441,
+                        0.88159,
+                        0.87688,
+                        0.87892,
+                        0.88019,
+                        0.87905
+                    ]
+                },
+                "jint.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.80754,
+                    "delta_pct": -19.25,
+                    "ci_delta_pct": [
+                        -19.61,
+                        -19.04
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -19.18,
+                        "1x1": -19.33,
+                        "2x2": -19.56
+                    },
+                    "build_spread_pct": 0.38,
+                    "builds": 3,
+                    "reference_ms": 219.4313,
+                    "comparison_ms": 272.4793,
+                    "reference_ms_by_round": [
+                        219.6874,
+                        218.5605,
+                        218.7167,
+                        218.3484,
+                        220.2052,
+                        219.9717,
+                        219.4313
+                    ],
+                    "comparison_ms_by_round": [
+                        272.4793,
+                        272.5407,
+                        271.4975,
+                        271.9607,
+                        272.6542,
+                        275.1835,
+                        271.1186
+                    ],
+                    "paired_ratios": [
+                        0.8082,
+                        0.80387,
+                        0.80754,
+                        0.8048,
+                        0.80958,
+                        0.80129,
+                        0.81131
+                    ]
+                },
+                "jint.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.71799,
+                    "delta_pct": -28.2,
+                    "ci_delta_pct": [
+                        -28.24,
+                        -27.79
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -27.79,
+                        "1x1": -28.1,
+                        "2x2": -28.27
+                    },
+                    "build_spread_pct": 0.48,
+                    "builds": 3,
+                    "reference_ms": 302.8394,
+                    "comparison_ms": 422.748,
+                    "reference_ms_by_round": [
+                        302.618,
+                        303.408,
+                        302.7645,
+                        304.6378,
+                        302.8394,
+                        302.1187,
+                        304.9327
+                    ],
+                    "comparison_ms_by_round": [
+                        422.748,
+                        422.36,
+                        423.4987,
+                        422.8838,
+                        422.8566,
+                        421.8008,
+                        421.7932
+                    ],
+                    "paired_ratios": [
+                        0.71756,
+                        0.7201,
+                        0.71664,
+                        0.72212,
+                        0.7179,
+                        0.71799,
+                        0.72469
+                    ]
+                },
+                "jint.getr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.07186,
+                    "delta_pct": 7.19,
+                    "ci_delta_pct": [
+                        6.94,
+                        7.37
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 6.96,
+                        "1x1": 7.18,
+                        "2x2": 7.35
+                    },
+                    "build_spread_pct": 0.39,
+                    "builds": 3,
+                    "reference_ms": 1533.7822,
+                    "comparison_ms": 1433.6602,
+                    "reference_ms_by_round": [
+                        1532.9759,
+                        1534.7829,
+                        1534.9183,
+                        1530.5949,
+                        1531.4286,
+                        1534.7278,
+                        1533.7822
+                    ],
+                    "comparison_ms_by_round": [
+                        1433.6574,
+                        1439.334,
+                        1433.6602,
+                        1434.4496,
+                        1428.5152,
+                        1432.8316,
+                        1437.7049
+                    ],
+                    "paired_ratios": [
+                        1.07186,
+                        1.06889,
+                        1.07321,
+                        1.0696,
+                        1.07463,
+                        1.0737,
+                        1.0694
+                    ]
+                },
+                "jint.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.06264,
+                    "delta_pct": 6.26,
+                    "ci_delta_pct": [
+                        6.1,
+                        6.44
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 6.26,
+                        "1x1": 6.28,
+                        "2x2": 6.29
+                    },
+                    "build_spread_pct": 0.03,
+                    "builds": 3,
+                    "reference_ms": 1035.0508,
+                    "comparison_ms": 976.7278,
+                    "reference_ms_by_round": [
+                        1034.9011,
+                        1035.0508,
+                        1035.5273,
+                        1034.9047,
+                        1034.4946,
+                        1036.8208,
+                        1035.4165
+                    ],
+                    "comparison_ms_by_round": [
+                        977.7101,
+                        978.0481,
+                        977.9798,
+                        975.0488,
+                        973.8436,
+                        976.4749,
+                        976.7278
+                    ],
+                    "paired_ratios": [
+                        1.06105,
+                        1.06084,
+                        1.0614,
+                        1.06395,
+                        1.06484,
+                        1.06436,
+                        1.06264
+                    ]
+                },
+                "jint.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.77589,
+                    "delta_pct": -22.41,
+                    "ci_delta_pct": [
+                        -22.79,
+                        -21.88
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -22.35,
+                        "1x1": -23.37,
+                        "2x2": -21.86
+                    },
+                    "build_spread_pct": 1.51,
+                    "builds": 3,
+                    "reference_ms": 2.6558,
+                    "comparison_ms": 3.413,
+                    "reference_ms_by_round": [
+                        2.6597,
+                        2.6459,
+                        2.6788,
+                        2.6127,
+                        2.5784,
+                        2.729,
+                        2.6558
+                    ],
+                    "comparison_ms_by_round": [
+                        3.413,
+                        3.4244,
+                        3.4126,
+                        3.3921,
+                        3.4098,
+                        3.5257,
+                        3.4286
+                    ],
+                    "paired_ratios": [
+                        0.78115,
+                        0.77453,
+                        0.78686,
+                        0.77208,
+                        0.75799,
+                        0.77589,
+                        0.77646
+                    ]
+                },
+                "jint.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.78351,
+                    "delta_pct": -21.65,
+                    "ci_delta_pct": [
+                        -22.03,
+                        -21.2
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -21.65,
+                        "1x1": -21.45,
+                        "2x2": -21.62
+                    },
+                    "build_spread_pct": 0.2,
+                    "builds": 3,
+                    "reference_ms": 3.5519,
+                    "comparison_ms": 4.5439,
+                    "reference_ms_by_round": [
+                        3.5516,
+                        3.5519,
+                        3.5498,
+                        3.5336,
+                        3.6276,
+                        3.5572,
+                        3.5621
+                    ],
+                    "comparison_ms_by_round": [
+                        4.5439,
+                        4.6164,
+                        4.5332,
+                        4.5432,
+                        4.5475,
+                        4.556,
+                        4.5313
+                    ],
+                    "paired_ratios": [
+                        0.78351,
+                        0.77126,
+                        0.78495,
+                        0.77965,
+                        0.79965,
+                        0.78266,
+                        0.78801
+                    ]
+                },
+                "jint.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.82914,
+                    "delta_pct": -17.09,
+                    "ci_delta_pct": [
+                        -17.35,
+                        -17
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -17,
+                        "1x1": -17.1,
+                        "2x2": -18.03
+                    },
+                    "build_spread_pct": 1.03,
+                    "builds": 3,
+                    "reference_ms": 270.2011,
+                    "comparison_ms": 326.6269,
+                    "reference_ms_by_round": [
+                        270.3454,
+                        270.2011,
+                        270.1009,
+                        269.3217,
+                        270.277,
+                        269.9164,
+                        270.4596
+                    ],
+                    "comparison_ms_by_round": [
+                        326.3733,
+                        327.1064,
+                        326.547,
+                        326.6595,
+                        326.4089,
+                        333.9165,
+                        326.6269
+                    ],
+                    "paired_ratios": [
+                        0.83033,
+                        0.82803,
+                        0.82914,
+                        0.82646,
+                        0.83003,
+                        0.81029,
+                        0.83004
+                    ]
+                }
+            }
+        },
+        "pristine": {
+            "reference": "bundled",
+            "control_measured": true,
+            "control_median": 1.00082,
+            "control_spread_pct": 0.36,
+            "control_rows": {
+                "ctl.set": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.99924,
+                    "delta_pct": -0.08,
+                    "ci_delta_pct": [
+                        -0.42,
+                        0.62
+                    ],
+                    "rounds": 7
+                },
+                "ctl.get": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.00145,
+                    "delta_pct": 0.14,
+                    "ci_delta_pct": [
+                        0.09,
+                        0.37
+                    ],
+                    "rounds": 7
+                },
+                "ctl.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.00082,
+                    "delta_pct": 0.08,
+                    "ci_delta_pct": [
+                        -0.07,
+                        0.31
+                    ],
+                    "rounds": 7
+                },
+                "ctl.hasr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.00357,
+                    "delta_pct": 0.36,
+                    "ci_delta_pct": [
+                        -0.06,
+                        0.46
+                    ],
+                    "rounds": 7
+                },
+                "ctl.del": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.99722,
+                    "delta_pct": -0.28,
+                    "ci_delta_pct": [
+                        -0.71,
+                        -0.1
+                    ],
+                    "rounds": 7
+                }
+            },
+            "contaminated": false,
+            "rows": {
+                "ser.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.87658,
+                    "delta_pct": -12.34,
+                    "ci_delta_pct": [
+                        -12.64,
+                        -12.11
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -12.38,
+                        "1x1": -16.49,
+                        "2x2": -12
+                    },
+                    "build_spread_pct": 4.49,
+                    "builds": 3,
+                    "reference_ms": 3450.6546,
+                    "comparison_ms": 3931.0475,
+                    "reference_ms_by_round": [
+                        3455.5629,
+                        3450.6546,
+                        3456.7128,
+                        3447.4165,
+                        3460.2314,
+                        3448.1489,
+                        3450.5994
+                    ],
+                    "comparison_ms_by_round": [
+                        3928.4629,
+                        3931.0475,
+                        3909.4392,
+                        3931.1376,
+                        4359.6845,
+                        3930.3961,
+                        3946.7374
+                    ],
+                    "paired_ratios": [
+                        0.8789,
+                        0.87707,
+                        0.88347,
+                        0.87623,
+                        0.79304,
+                        0.87658,
+                        0.87357
+                    ]
+                },
+                "ser.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.9433,
+                    "delta_pct": -5.67,
+                    "ci_delta_pct": [
+                        -5.85,
+                        -5.11
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -5.79,
+                        "1x1": -5.36,
+                        "2x2": -5.57
+                    },
+                    "build_spread_pct": 0.43,
+                    "builds": 3,
+                    "reference_ms": 828.3205,
+                    "comparison_ms": 877.3669,
+                    "reference_ms_by_round": [
+                        828.3205,
+                        826.7538,
+                        831.4766,
+                        825.5321,
+                        834.1893,
+                        828.3018,
+                        832.3856
+                    ],
+                    "comparison_ms_by_round": [
+                        879.0969,
+                        877.6929,
+                        878.8086,
+                        875.5792,
+                        875.8784,
+                        877.3669,
+                        876.5229
+                    ],
+                    "paired_ratios": [
+                        0.94146,
+                        0.94119,
+                        0.94536,
+                        0.94207,
+                        0.95162,
+                        0.9433,
+                        0.94886
+                    ]
+                },
+                "ser.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.991,
+                    "delta_pct": -0.9,
+                    "ci_delta_pct": [
+                        -1.09,
+                        -0.62
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -1.09,
+                        "1x1": -0.62,
+                        "2x2": -0.75
+                    },
+                    "build_spread_pct": 0.47,
+                    "builds": 3,
+                    "reference_ms": 2422.3093,
+                    "comparison_ms": 2438.0174,
+                    "reference_ms_by_round": [
+                        2419.0279,
+                        2419.2356,
+                        2422.3093,
+                        2415.0576,
+                        2424.994,
+                        2425.9329,
+                        2427.7448
+                    ],
+                    "comparison_ms_by_round": [
+                        2443.6825,
+                        2432.5665,
+                        2434.7117,
+                        2436.3978,
+                        2438.0174,
+                        2445.9473,
+                        2469.9902
+                    ],
+                    "paired_ratios": [
+                        0.9891,
+                        0.9937,
+                        0.99409,
+                        0.99043,
+                        0.99384,
+                        0.991,
+                        0.98209
+                    ]
+                },
+                "ser.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.02984,
+                    "delta_pct": 2.98,
+                    "ci_delta_pct": [
+                        2.94,
+                        3.11
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 2.94,
+                        "1x1": 3.22,
+                        "2x2": 2.98
+                    },
+                    "build_spread_pct": 0.28,
+                    "builds": 3,
+                    "reference_ms": 1372.0851,
+                    "comparison_ms": 1330.4607,
+                    "reference_ms_by_round": [
+                        1370.0188,
+                        1372.3747,
+                        1371.7742,
+                        1369.623,
+                        1372.9134,
+                        1372.7624,
+                        1372.0851
+                    ],
+                    "comparison_ms_by_round": [
+                        1329.1656,
+                        1327.0377,
+                        1331.006,
+                        1329.4177,
+                        1330.4607,
+                        1331.8926,
+                        1332.5095
+                    ],
+                    "paired_ratios": [
+                        1.02989,
+                        1.03331,
+                        1.02978,
+                        1.0294,
+                        1.03106,
+                        1.02984,
+                        1.02885
+                    ]
+                },
+                "ser.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.94183,
+                    "delta_pct": -5.82,
+                    "ci_delta_pct": [
+                        -8.05,
+                        -5.37
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -5.82,
+                        "1x1": -10.57,
+                        "2x2": -6.92
+                    },
+                    "build_spread_pct": 4.75,
+                    "builds": 3,
+                    "reference_ms": 3.4166,
+                    "comparison_ms": 3.6238,
+                    "reference_ms_by_round": [
+                        3.4158,
+                        3.4256,
+                        3.4166,
+                        3.4226,
+                        3.4255,
+                        3.3986,
+                        3.4078
+                    ],
+                    "comparison_ms_by_round": [
+                        3.6238,
+                        3.617,
+                        3.6235,
+                        3.6056,
+                        4.0639,
+                        3.6933,
+                        3.672
+                    ],
+                    "paired_ratios": [
+                        0.94183,
+                        0.9463,
+                        0.94212,
+                        0.94848,
+                        0.84222,
+                        0.91946,
+                        0.9273
+                    ]
+                },
+                "ser.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.90633,
+                    "delta_pct": -9.37,
+                    "ci_delta_pct": [
+                        -9.93,
+                        -8.81
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -9.51,
+                        "1x1": -16.83,
+                        "2x2": -9.07
+                    },
+                    "build_spread_pct": 7.76,
+                    "builds": 3,
+                    "reference_ms": 3.7692,
+                    "comparison_ms": 4.1507,
+                    "reference_ms_by_round": [
+                        3.7692,
+                        3.7608,
+                        3.7637,
+                        3.7654,
+                        3.7812,
+                        3.7881,
+                        3.7776
+                    ],
+                    "comparison_ms_by_round": [
+                        4.162,
+                        4.1461,
+                        4.1476,
+                        4.1772,
+                        4.991,
+                        4.1507,
+                        4.1334
+                    ],
+                    "paired_ratios": [
+                        0.90487,
+                        0.90633,
+                        0.90671,
+                        0.90069,
+                        0.75697,
+                        0.91189,
+                        0.91316
+                    ]
+                },
+                "ser.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.95752,
+                    "delta_pct": -4.25,
+                    "ci_delta_pct": [
+                        -4.76,
+                        -4.07
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -4.29,
+                        "1x1": -7.95,
+                        "2x2": -3.99
+                    },
+                    "build_spread_pct": 3.96,
+                    "builds": 3,
+                    "reference_ms": 421.0883,
+                    "comparison_ms": 439.5052,
+                    "reference_ms_by_round": [
+                        419.5209,
+                        420.5783,
+                        421.945,
+                        421.0883,
+                        421.4045,
+                        422.0928,
+                        421.0095
+                    ],
+                    "comparison_ms_by_round": [
+                        440.1348,
+                        438.7543,
+                        439.5052,
+                        439.6013,
+                        476.6997,
+                        438.8535,
+                        439.3252
+                    ],
+                    "paired_ratios": [
+                        0.95238,
+                        0.95778,
+                        0.95926,
+                        0.9571,
+                        0.88328,
+                        0.96102,
+                        0.95752
+                    ]
+                },
+                "jser.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.92357,
+                    "delta_pct": -7.64,
+                    "ci_delta_pct": [
+                        -7.88,
+                        -7.43
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -7.64,
+                        "1x1": -7.41,
+                        "2x2": -7.89
+                    },
+                    "build_spread_pct": 0.48,
+                    "builds": 3,
+                    "reference_ms": 218.6594,
+                    "comparison_ms": 236.4587,
+                    "reference_ms_by_round": [
+                        218.7692,
+                        219.3244,
+                        218.5281,
+                        218.6594,
+                        219.0393,
+                        217.9354,
+                        218.4434
+                    ],
+                    "comparison_ms_by_round": [
+                        236.6777,
+                        236.1938,
+                        237.0233,
+                        236.0227,
+                        236.8534,
+                        236.4587,
+                        236.4087
+                    ],
+                    "paired_ratios": [
+                        0.92357,
+                        0.92781,
+                        0.92121,
+                        0.92567,
+                        0.92403,
+                        0.92091,
+                        0.92325
+                    ]
+                },
+                "jser.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.85301,
+                    "delta_pct": -14.7,
+                    "ci_delta_pct": [
+                        -14.91,
+                        -14.37
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -14.37,
+                        "1x1": -14.74,
+                        "2x2": -14.89
+                    },
+                    "build_spread_pct": 0.52,
+                    "builds": 3,
+                    "reference_ms": 301.0915,
+                    "comparison_ms": 353.1163,
+                    "reference_ms_by_round": [
+                        303.3287,
+                        300.5697,
+                        300.7641,
+                        301.0915,
+                        300.7714,
+                        301.459,
+                        302.2846
+                    ],
+                    "comparison_ms_by_round": [
+                        353.5671,
+                        352.8102,
+                        353.853,
+                        353.5394,
+                        351.9061,
+                        353.1163,
+                        352.7061
+                    ],
+                    "paired_ratios": [
+                        0.8572,
+                        0.85123,
+                        0.84927,
+                        0.85095,
+                        0.85399,
+                        0.85301,
+                        0.85634
+                    ]
+                },
+                "jser.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.99169,
+                    "delta_pct": -0.83,
+                    "ci_delta_pct": [
+                        -0.87,
+                        -0.72
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.83,
+                        "1x1": -0.83,
+                        "2x2": -0.82
+                    },
+                    "build_spread_pct": 0.01,
+                    "builds": 3,
+                    "reference_ms": 1594.9761,
+                    "comparison_ms": 1607.018,
+                    "reference_ms_by_round": [
+                        1597.531,
+                        1597.3648,
+                        1595.6963,
+                        1590.6364,
+                        1593.8921,
+                        1594.3551,
+                        1594.9761
+                    ],
+                    "comparison_ms_by_round": [
+                        1602.7867,
+                        1607.5782,
+                        1607.8835,
+                        1603.2957,
+                        1607.7612,
+                        1606.0393,
+                        1607.018
+                    ],
+                    "paired_ratios": [
+                        0.9959,
+                        0.99283,
+                        0.9916,
+                        0.99129,
+                        0.99056,
+                        0.99191,
+                        0.99169
+                    ]
+                },
+                "jser.hasr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.01063,
+                    "delta_pct": 1.06,
+                    "ci_delta_pct": [
+                        0.92,
+                        1.1
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 1.1,
+                        "1x1": 0.98,
+                        "2x2": 0.93
+                    },
+                    "build_spread_pct": 0.17,
+                    "builds": 3,
+                    "reference_ms": 1035.674,
+                    "comparison_ms": 1024.0669,
+                    "reference_ms_by_round": [
+                        1035.2524,
+                        1034.3196,
+                        1036.3706,
+                        1034.2429,
+                        1036.0027,
+                        1035.674,
+                        1039.9862
+                    ],
+                    "comparison_ms_by_round": [
+                        1023.1354,
+                        1024.0669,
+                        1024.6254,
+                        1022.3534,
+                        1024.4363,
+                        1026.5975,
+                        1023.872
+                    ],
+                    "paired_ratios": [
+                        1.01101,
+                        1.00918,
+                        1.01063,
+                        1.0108,
+                        1.01046,
+                        1.00801,
+                        1.0149
+                    ]
+                },
+                "jser.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.90661,
+                    "delta_pct": -9.34,
+                    "ci_delta_pct": [
+                        -9.7,
+                        -8.93
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -9.34,
+                        "1x1": -17.48,
+                        "2x2": -8.7
+                    },
+                    "build_spread_pct": 8.78,
+                    "builds": 3,
+                    "reference_ms": 2.6105,
+                    "comparison_ms": 2.8823,
+                    "reference_ms_by_round": [
+                        2.623,
+                        2.6083,
+                        2.6082,
+                        2.6152,
+                        2.6052,
+                        2.6387,
+                        2.6105
+                    ],
+                    "comparison_ms_by_round": [
+                        2.878,
+                        2.8861,
+                        2.8386,
+                        2.8823,
+                        3.4833,
+                        2.9039,
+                        2.8804
+                    ],
+                    "paired_ratios": [
+                        0.91066,
+                        0.90301,
+                        0.91808,
+                        0.90661,
+                        0.7473,
+                        0.90793,
+                        0.90556
+                    ]
+                },
+                "jser.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.90177,
+                    "delta_pct": -9.82,
+                    "ci_delta_pct": [
+                        -10.85,
+                        -9.18
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -9.82,
+                        "1x1": -17,
+                        "2x2": -9.9
+                    },
+                    "build_spread_pct": 7.18,
+                    "builds": 3,
+                    "reference_ms": 3.6007,
+                    "comparison_ms": 3.9921,
+                    "reference_ms_by_round": [
+                        3.5927,
+                        3.6287,
+                        3.6188,
+                        3.6007,
+                        3.6076,
+                        3.5801,
+                        3.5929
+                    ],
+                    "comparison_ms_by_round": [
+                        3.9964,
+                        3.9921,
+                        3.9711,
+                        3.9896,
+                        4.7944,
+                        4.0126,
+                        3.9733
+                    ],
+                    "paired_ratios": [
+                        0.89824,
+                        0.90821,
+                        0.91055,
+                        0.90177,
+                        0.75184,
+                        0.89148,
+                        0.90354
+                    ]
+                },
+                "jser.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.94044,
+                    "delta_pct": -5.96,
+                    "ci_delta_pct": [
+                        -6.79,
+                        -5.68
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -5.68,
+                        "1x1": -11.52,
+                        "2x2": -5.95
+                    },
+                    "build_spread_pct": 5.84,
+                    "builds": 3,
+                    "reference_ms": 273.1428,
+                    "comparison_ms": 290.1768,
+                    "reference_ms_by_round": [
+                        273.4096,
+                        273.1189,
+                        273.4265,
+                        272.7165,
+                        273.1428,
+                        273.0605,
+                        273.9698
+                    ],
+                    "comparison_ms_by_round": [
+                        289.6458,
+                        290.1768,
+                        290.6457,
+                        292.3426,
+                        329.1799,
+                        289.9356,
+                        289.9512
+                    ],
+                    "paired_ratios": [
+                        0.94317,
+                        0.94044,
+                        0.93998,
+                        0.9321,
+                        0.82908,
+                        0.94102,
+                        0.9441
+                    ]
+                },
+                "rawint.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.97455,
+                    "delta_pct": -2.55,
+                    "ci_delta_pct": [
+                        -2.6,
+                        -2.15
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -2.55,
+                        "1x1": -2.53,
+                        "2x2": -2.26
+                    },
+                    "build_spread_pct": 0.29,
+                    "builds": 3,
+                    "reference_ms": 425.3265,
+                    "comparison_ms": 436.3481,
+                    "reference_ms_by_round": [
+                        425.248,
+                        424.1319,
+                        428.4128,
+                        425.1367,
+                        426.3502,
+                        425.3265,
+                        427.3096
+                    ],
+                    "comparison_ms_by_round": [
+                        435.9959,
+                        434.5008,
+                        436.4168,
+                        436.5761,
+                        437.3481,
+                        436.3379,
+                        436.3481
+                    ],
+                    "paired_ratios": [
+                        0.97455,
+                        0.97533,
+                        0.98085,
+                        0.973,
+                        0.97405,
+                        0.97396,
+                        0.97848
+                    ]
+                },
+                "rawint.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.92595,
+                    "delta_pct": -7.4,
+                    "ci_delta_pct": [
+                        -7.61,
+                        -7.14
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -7.61,
+                        "1x1": -7.08,
+                        "2x2": -7.4
+                    },
+                    "build_spread_pct": 0.53,
+                    "builds": 3,
+                    "reference_ms": 503.2121,
+                    "comparison_ms": 542.8222,
+                    "reference_ms_by_round": [
+                        501.9266,
+                        503.184,
+                        502.9041,
+                        505.2678,
+                        505.0759,
+                        503.2121,
+                        503.6112
+                    ],
+                    "comparison_ms_by_round": [
+                        542.8222,
+                        541.4334,
+                        542.4087,
+                        545.2237,
+                        542.7836,
+                        543.2425,
+                        544.8709
+                    ],
+                    "paired_ratios": [
+                        0.9239,
+                        0.92859,
+                        0.92641,
+                        0.92595,
+                        0.92976,
+                        0.92555,
+                        0.92352
+                    ]
+                },
+                "rawint.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.0121,
+                    "delta_pct": 1.21,
+                    "ci_delta_pct": [
+                        0.96,
+                        1.36
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.96,
+                        "1x1": 1.42,
+                        "2x2": 1.19
+                    },
+                    "build_spread_pct": 0.46,
+                    "builds": 3,
+                    "reference_ms": 1903.2357,
+                    "comparison_ms": 1880.623,
+                    "reference_ms_by_round": [
+                        1902.3439,
+                        1906.1844,
+                        1906.5187,
+                        1901.3554,
+                        1909.968,
+                        1903.2357,
+                        1901.2052
+                    ],
+                    "comparison_ms_by_round": [
+                        1878.0522,
+                        1879.0966,
+                        1879.345,
+                        1882.3738,
+                        1880.623,
+                        1882.4918,
+                        1881.5348
+                    ],
+                    "paired_ratios": [
+                        1.0121,
+                        1.01358,
+                        1.01362,
+                        1.00925,
+                        1.01477,
+                        1.01019,
+                        1.00962
+                    ]
+                },
+                "rawint.hasr": {
+                    "status": "SLOWER",
+                    "reason": null,
+                    "ratio": 1.03169,
+                    "delta_pct": 3.17,
+                    "ci_delta_pct": [
+                        2.82,
+                        3.43
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 3.14,
+                        "1x1": 3.24,
+                        "2x2": 3.13
+                    },
+                    "build_spread_pct": 0.11,
+                    "builds": 3,
+                    "reference_ms": 1374.8524,
+                    "comparison_ms": 1330.4526,
+                    "reference_ms_by_round": [
+                        1375.369,
+                        1375.512,
+                        1377.8052,
+                        1372.7616,
+                        1372.2743,
+                        1373.9311,
+                        1374.8524
+                    ],
+                    "comparison_ms_by_round": [
+                        1328.6341,
+                        1330.4526,
+                        1330.8528,
+                        1329.8462,
+                        1329.0318,
+                        1335.1832,
+                        1336.343
+                    ],
+                    "paired_ratios": [
+                        1.03432,
+                        1.03302,
+                        1.03443,
+                        1.03142,
+                        1.03169,
+                        1.02817,
+                        1.02797
+                    ]
+                },
+                "rawint.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.93368,
+                    "delta_pct": -6.63,
+                    "ci_delta_pct": [
+                        -8.17,
+                        -6.1
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -6.2,
+                        "1x1": -12.31,
+                        "2x2": -6.92
+                    },
+                    "build_spread_pct": 6.11,
+                    "builds": 3,
+                    "reference_ms": 3.3858,
+                    "comparison_ms": 3.6234,
+                    "reference_ms_by_round": [
+                        3.3682,
+                        3.3858,
+                        3.4197,
+                        3.3607,
+                        3.3811,
+                        3.4101,
+                        3.418
+                    ],
+                    "comparison_ms_by_round": [
+                        3.5877,
+                        3.6234,
+                        3.6225,
+                        3.605,
+                        4.1191,
+                        3.7105,
+                        3.637
+                    ],
+                    "paired_ratios": [
+                        0.93804,
+                        0.93368,
+                        0.94324,
+                        0.93145,
+                        0.82015,
+                        0.91827,
+                        0.939
+                    ]
+                },
+                "rawint.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.91076,
+                    "delta_pct": -8.92,
+                    "ci_delta_pct": [
+                        -10.01,
+                        -8.71
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -8.82,
+                        "1x1": -17.65,
+                        "2x2": -8.93
+                    },
+                    "build_spread_pct": 8.83,
+                    "builds": 3,
+                    "reference_ms": 3.6972,
+                    "comparison_ms": 4.0671,
+                    "reference_ms_by_round": [
+                        3.7062,
+                        3.6723,
+                        3.7237,
+                        3.6931,
+                        3.6972,
+                        3.6758,
+                        3.7169
+                    ],
+                    "comparison_ms_by_round": [
+                        4.0616,
+                        4.0773,
+                        4.0514,
+                        4.0517,
+                        4.9444,
+                        4.0671,
+                        4.0682
+                    ],
+                    "paired_ratios": [
+                        0.91176,
+                        0.89993,
+                        0.91836,
+                        0.91076,
+                        0.74714,
+                        0.90304,
+                        0.91289
+                    ]
+                },
+                "rawint.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.95815,
+                    "delta_pct": -4.19,
+                    "ci_delta_pct": [
+                        -4.55,
+                        -4.02
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -4.19,
+                        "1x1": -8.11,
+                        "2x2": -3.92
+                    },
+                    "build_spread_pct": 4.19,
+                    "builds": 3,
+                    "reference_ms": 415.08,
+                    "comparison_ms": 432.9015,
+                    "reference_ms_by_round": [
+                        415.7523,
+                        413.9645,
+                        415.5522,
+                        415.08,
+                        414.9204,
+                        415.8891,
+                        414.536
+                    ],
+                    "comparison_ms_by_round": [
+                        432.7976,
+                        433.3509,
+                        432.9015,
+                        433.2501,
+                        469.3603,
+                        431.7526,
+                        432.2866
+                    ],
+                    "paired_ratios": [
+                        0.95983,
+                        0.95448,
+                        0.95913,
+                        0.95727,
+                        0.88329,
+                        0.96247,
+                        0.95815
+                    ]
+                },
+                "jint.set": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.92798,
+                    "delta_pct": -7.2,
+                    "ci_delta_pct": [
+                        -7.6,
+                        -7.08
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -7.11,
+                        "1x1": -7.34,
+                        "2x2": -7.23
+                    },
+                    "build_spread_pct": 0.23,
+                    "builds": 3,
+                    "reference_ms": 219.4313,
+                    "comparison_ms": 236.3047,
+                    "reference_ms_by_round": [
+                        219.6874,
+                        218.5605,
+                        218.7167,
+                        218.3484,
+                        220.2052,
+                        219.9717,
+                        219.4313
+                    ],
+                    "comparison_ms_by_round": [
+                        236.3047,
+                        236.0158,
+                        236.5007,
+                        236.3512,
+                        237.0999,
+                        235.9645,
+                        235.959
+                    ],
+                    "paired_ratios": [
+                        0.92891,
+                        0.92528,
+                        0.92404,
+                        0.92307,
+                        0.92798,
+                        0.93146,
+                        0.92919
+                    ]
+                },
+                "jint.get": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.86343,
+                    "delta_pct": -13.66,
+                    "ci_delta_pct": [
+                        -13.92,
+                        -13.48
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -13.48,
+                        "1x1": -13.74,
+                        "2x2": -13.96
+                    },
+                    "build_spread_pct": 0.48,
+                    "builds": 3,
+                    "reference_ms": 302.8394,
+                    "comparison_ms": 351.2367,
+                    "reference_ms_by_round": [
+                        302.618,
+                        303.408,
+                        302.7645,
+                        304.6378,
+                        302.8394,
+                        302.1187,
+                        304.9327
+                    ],
+                    "comparison_ms_by_round": [
+                        350.196,
+                        350.741,
+                        352.2352,
+                        351.8243,
+                        351.53,
+                        350.1833,
+                        351.2367
+                    ],
+                    "paired_ratios": [
+                        0.86343,
+                        0.86434,
+                        0.85884,
+                        0.86517,
+                        0.86078,
+                        0.86203,
+                        0.86745
+                    ]
+                },
+                "jint.getr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 0.98677,
+                    "delta_pct": -1.32,
+                    "ci_delta_pct": [
+                        -1.47,
+                        -1.18
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -1.2,
+                        "1x1": -1.47,
+                        "2x2": -1.25
+                    },
+                    "build_spread_pct": 0.27,
+                    "builds": 3,
+                    "reference_ms": 1533.7822,
+                    "comparison_ms": 1552.1521,
+                    "reference_ms_by_round": [
+                        1532.9759,
+                        1534.7829,
+                        1534.9183,
+                        1530.5949,
+                        1531.4286,
+                        1534.7278,
+                        1533.7822
+                    ],
+                    "comparison_ms_by_round": [
+                        1548.8126,
+                        1554.9147,
+                        1554.2098,
+                        1552.1521,
+                        1554.4735,
+                        1551.7798,
+                        1551.1018
+                    ],
+                    "paired_ratios": [
+                        0.98896,
+                        0.98624,
+                        0.98677,
+                        0.9853,
+                        0.98436,
+                        0.9882,
+                        0.98802
+                    ]
+                },
+                "jint.hasr": {
+                    "status": "null",
+                    "reason": "inside the 1.3% claim floor (CI straddles it)",
+                    "ratio": 1.0107,
+                    "delta_pct": 1.07,
+                    "ci_delta_pct": [
+                        0.97,
+                        1.14
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 1.13,
+                        "1x1": 0.95,
+                        "2x2": 1.12
+                    },
+                    "build_spread_pct": 0.18,
+                    "builds": 3,
+                    "reference_ms": 1035.0508,
+                    "comparison_ms": 1023.477,
+                    "reference_ms_by_round": [
+                        1034.9011,
+                        1035.0508,
+                        1035.5273,
+                        1034.9047,
+                        1034.4946,
+                        1036.8208,
+                        1035.4165
+                    ],
+                    "comparison_ms_by_round": [
+                        1022.3796,
+                        1024.713,
+                        1024.1326,
+                        1023.1093,
+                        1023.7013,
+                        1023.477,
+                        1023.0007
+                    ],
+                    "paired_ratios": [
+                        1.01141,
+                        1.00926,
+                        1.01029,
+                        1.0107,
+                        1.00971,
+                        1.0122,
+                        1.0113
+                    ]
+                },
+                "jint.keys": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.89974,
+                    "delta_pct": -10.03,
+                    "ci_delta_pct": [
+                        -12.06,
+                        -8.08
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -8.58,
+                        "1x1": -16.96,
+                        "2x2": -8.55
+                    },
+                    "build_spread_pct": 8.41,
+                    "builds": 3,
+                    "reference_ms": 2.6558,
+                    "comparison_ms": 2.9383,
+                    "reference_ms_by_round": [
+                        2.6597,
+                        2.6459,
+                        2.6788,
+                        2.6127,
+                        2.5784,
+                        2.729,
+                        2.6558
+                    ],
+                    "comparison_ms_by_round": [
+                        2.9068,
+                        2.9383,
+                        3.0181,
+                        2.9684,
+                        3.3855,
+                        2.8941,
+                        2.8868
+                    ],
+                    "paired_ratios": [
+                        0.91423,
+                        0.89974,
+                        0.88684,
+                        0.87944,
+                        0.76098,
+                        0.94217,
+                        0.91922
+                    ]
+                },
+                "jint.delpfx": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.8997,
+                    "delta_pct": -10.03,
+                    "ci_delta_pct": [
+                        -12.26,
+                        -9.64
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -10.13,
+                        "1x1": -16.71,
+                        "2x2": -9.49
+                    },
+                    "build_spread_pct": 7.22,
+                    "builds": 3,
+                    "reference_ms": 3.5519,
+                    "comparison_ms": 3.9443,
+                    "reference_ms_by_round": [
+                        3.5516,
+                        3.5519,
+                        3.5498,
+                        3.5336,
+                        3.6276,
+                        3.5572,
+                        3.5621
+                    ],
+                    "comparison_ms_by_round": [
+                        3.9443,
+                        3.9283,
+                        3.9117,
+                        4.024,
+                        4.7543,
+                        3.9336,
+                        3.9605
+                    ],
+                    "paired_ratios": [
+                        0.8997,
+                        0.90345,
+                        0.90673,
+                        0.87742,
+                        0.7624,
+                        0.90357,
+                        0.89866
+                    ]
+                },
+                "jint.del": {
+                    "status": "FASTER",
+                    "reason": null,
+                    "ratio": 0.94298,
+                    "delta_pct": -5.7,
+                    "ci_delta_pct": [
+                        -6.39,
+                        -5.51
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -5.7,
+                        "1x1": -11.22,
+                        "2x2": -5.63
+                    },
+                    "build_spread_pct": 5.59,
+                    "builds": 3,
+                    "reference_ms": 270.2011,
+                    "comparison_ms": 286.1356,
+                    "reference_ms_by_round": [
+                        270.3454,
+                        270.2011,
+                        270.1009,
+                        269.3217,
+                        270.277,
+                        269.9164,
+                        270.4596
+                    ],
+                    "comparison_ms_by_round": [
+                        286.4554,
+                        285.7798,
+                        285.6061,
+                        287.4821,
+                        325.012,
+                        286.1356,
+                        285.5251
+                    ],
+                    "paired_ratios": [
+                        0.94298,
+                        0.94471,
+                        0.94493,
+                        0.93606,
+                        0.83091,
+                        0.94254,
+                        0.94646
+                    ]
+                }
+            }
+        }
+    },
+    "attribution": {
+        "system": {
+            "ser.set": {
+                "mirror": "jser.set",
+                "judy_share": 0.0634,
+                "mirror_delta_pct": -19.61,
+                "predicted_delta_pct": -1.24,
+                "measured_delta_pct": -28.09,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "ser.get": {
+                "mirror": "jser.get",
+                "judy_share": 0.3635,
+                "mirror_delta_pct": -30.03,
+                "predicted_delta_pct": -10.92,
+                "measured_delta_pct": -8.41,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.getr": {
+                "mirror": "jser.getr",
+                "judy_share": 0.6585,
+                "mirror_delta_pct": 4.62,
+                "predicted_delta_pct": 3.04,
+                "measured_delta_pct": 1.26,
+                "measured_status": "null",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.hasr": {
+                "mirror": "jser.hasr",
+                "judy_share": 0.7548,
+                "mirror_delta_pct": 6.45,
+                "predicted_delta_pct": 4.87,
+                "measured_delta_pct": 2.18,
+                "measured_status": "SLOWER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.keys": {
+                "mirror": "jser.keys",
+                "judy_share": 0.7641,
+                "mirror_delta_pct": -23.54,
+                "predicted_delta_pct": -17.99,
+                "measured_delta_pct": -16.38,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.delpfx": {
+                "mirror": "jser.delpfx",
+                "judy_share": 0.9553,
+                "mirror_delta_pct": -21.49,
+                "predicted_delta_pct": -20.53,
+                "measured_delta_pct": -20.6,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.del": {
+                "mirror": "jser.del",
+                "judy_share": 0.6487,
+                "mirror_delta_pct": -17.35,
+                "predicted_delta_pct": -11.25,
+                "measured_delta_pct": -12.45,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.set": {
+                "mirror": "jint.set",
+                "judy_share": 0.5159,
+                "mirror_delta_pct": -19.25,
+                "predicted_delta_pct": -9.93,
+                "measured_delta_pct": -13.55,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.get": {
+                "mirror": "jint.get",
+                "judy_share": 0.6018,
+                "mirror_delta_pct": -28.2,
+                "predicted_delta_pct": -16.97,
+                "measured_delta_pct": -12.53,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.getr": {
+                "mirror": "jint.getr",
+                "judy_share": 0.8059,
+                "mirror_delta_pct": 7.19,
+                "predicted_delta_pct": 5.79,
+                "measured_delta_pct": 2.95,
+                "measured_status": "SLOWER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.hasr": {
+                "mirror": "jint.hasr",
+                "judy_share": 0.7528,
+                "mirror_delta_pct": 6.26,
+                "predicted_delta_pct": 4.71,
+                "measured_delta_pct": 2.28,
+                "measured_status": "SLOWER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.keys": {
+                "mirror": "jint.keys",
+                "judy_share": 0.7844,
+                "mirror_delta_pct": -22.41,
+                "predicted_delta_pct": -17.58,
+                "measured_delta_pct": -17.35,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.delpfx": {
+                "mirror": "jint.delpfx",
+                "judy_share": 0.9607,
+                "mirror_delta_pct": -21.65,
+                "predicted_delta_pct": -20.8,
+                "measured_delta_pct": -20.84,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.del": {
+                "mirror": "jint.del",
+                "judy_share": 0.651,
+                "mirror_delta_pct": -17.09,
+                "predicted_delta_pct": -11.12,
+                "measured_delta_pct": -12.09,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            }
+        },
+        "pristine": {
+            "ser.set": {
+                "mirror": "jser.set",
+                "judy_share": 0.0634,
+                "mirror_delta_pct": -7.64,
+                "predicted_delta_pct": -0.48,
+                "measured_delta_pct": -12.34,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "ser.get": {
+                "mirror": "jser.get",
+                "judy_share": 0.3635,
+                "mirror_delta_pct": -14.7,
+                "predicted_delta_pct": -5.34,
+                "measured_delta_pct": -5.67,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.getr": {
+                "mirror": "jser.getr",
+                "judy_share": 0.6585,
+                "mirror_delta_pct": -0.83,
+                "predicted_delta_pct": -0.55,
+                "measured_delta_pct": -0.9,
+                "measured_status": "null",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "ser.hasr": {
+                "mirror": "jser.hasr",
+                "judy_share": 0.7548,
+                "mirror_delta_pct": 1.06,
+                "predicted_delta_pct": 0.8,
+                "measured_delta_pct": 2.98,
+                "measured_status": "SLOWER",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "ser.keys": {
+                "mirror": "jser.keys",
+                "judy_share": 0.7641,
+                "mirror_delta_pct": -9.34,
+                "predicted_delta_pct": -7.14,
+                "measured_delta_pct": -5.82,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.delpfx": {
+                "mirror": "jser.delpfx",
+                "judy_share": 0.9553,
+                "mirror_delta_pct": -9.82,
+                "predicted_delta_pct": -9.38,
+                "measured_delta_pct": -9.37,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "ser.del": {
+                "mirror": "jser.del",
+                "judy_share": 0.6487,
+                "mirror_delta_pct": -5.96,
+                "predicted_delta_pct": -3.87,
+                "measured_delta_pct": -4.25,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.set": {
+                "mirror": "jint.set",
+                "judy_share": 0.5159,
+                "mirror_delta_pct": -7.2,
+                "predicted_delta_pct": -3.71,
+                "measured_delta_pct": -2.55,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.get": {
+                "mirror": "jint.get",
+                "judy_share": 0.6018,
+                "mirror_delta_pct": -13.66,
+                "predicted_delta_pct": -8.22,
+                "measured_delta_pct": -7.4,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.getr": {
+                "mirror": "jint.getr",
+                "judy_share": 0.8059,
+                "mirror_delta_pct": -1.32,
+                "predicted_delta_pct": -1.06,
+                "measured_delta_pct": 1.21,
+                "measured_status": "null",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "rawint.hasr": {
+                "mirror": "jint.hasr",
+                "judy_share": 0.7528,
+                "mirror_delta_pct": 1.07,
+                "predicted_delta_pct": 0.81,
+                "measured_delta_pct": 3.17,
+                "measured_status": "SLOWER",
+                "floor_pct": 1.3,
+                "detectable": false
+            },
+            "rawint.keys": {
+                "mirror": "jint.keys",
+                "judy_share": 0.7844,
+                "mirror_delta_pct": -10.03,
+                "predicted_delta_pct": -7.87,
+                "measured_delta_pct": -6.63,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.delpfx": {
+                "mirror": "jint.delpfx",
+                "judy_share": 0.9607,
+                "mirror_delta_pct": -10.03,
+                "predicted_delta_pct": -9.64,
+                "measured_delta_pct": -8.92,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            },
+            "rawint.del": {
+                "mirror": "jint.del",
+                "judy_share": 0.651,
+                "mirror_delta_pct": -5.7,
+                "predicted_delta_pct": -3.71,
+                "measured_delta_pct": -4.19,
+                "measured_status": "FASTER",
+                "floor_pct": 1.3,
+                "detectable": true
+            }
+        }
+    },
+    "children": {
+        "bundled": [
+            {
+                "round": 0,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 2772111360,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            },
+            {
+                "round": 1,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 2772148224,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 2,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 2771927040,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            },
+            {
+                "round": 3,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 2772111360,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            },
+            {
+                "round": 4,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 2771947520,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 5,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 2772381696,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            },
+            {
+                "round": 6,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 2772172800,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            }
+        ],
+        "system": [
+            {
+                "round": 0,
+                "so": "/work/builds/judy-B-1.so",
+                "peak_rss": 2772213760,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-1.so"
+                ]
+            },
+            {
+                "round": 1,
+                "so": "/work/builds/judy-B-2.so",
+                "peak_rss": 2772176896,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-2.so"
+                ]
+            },
+            {
+                "round": 2,
+                "so": "/work/builds/judy-B-3.so",
+                "peak_rss": 2772107264,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-3.so"
+                ]
+            },
+            {
+                "round": 3,
+                "so": "/work/builds/judy-B-1.so",
+                "peak_rss": 2772090880,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-1.so"
+                ]
+            },
+            {
+                "round": 4,
+                "so": "/work/builds/judy-B-2.so",
+                "peak_rss": 2772369408,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-2.so"
+                ]
+            },
+            {
+                "round": 5,
+                "so": "/work/builds/judy-B-3.so",
+                "peak_rss": 2772209664,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-3.so"
+                ]
+            },
+            {
+                "round": 6,
+                "so": "/work/builds/judy-B-1.so",
+                "peak_rss": 2771943424,
+                "mapped": [
+                    "/usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3",
+                    "/work/builds/judy-B-1.so"
+                ]
+            }
+        ],
+        "pristine": [
+            {
+                "round": 0,
+                "so": "/work/builds/judy-P-1.so",
+                "peak_rss": 2772037632,
+                "mapped": [
+                    "/work/builds/judy-P-1.so"
+                ]
+            },
+            {
+                "round": 1,
+                "so": "/work/builds/judy-P-2.so",
+                "peak_rss": 2772037632,
+                "mapped": [
+                    "/work/builds/judy-P-2.so"
+                ]
+            },
+            {
+                "round": 2,
+                "so": "/work/builds/judy-P-3.so",
+                "peak_rss": 2772250624,
+                "mapped": [
+                    "/work/builds/judy-P-3.so"
+                ]
+            },
+            {
+                "round": 3,
+                "so": "/work/builds/judy-P-1.so",
+                "peak_rss": 2772127744,
+                "mapped": [
+                    "/work/builds/judy-P-1.so"
+                ]
+            },
+            {
+                "round": 4,
+                "so": "/work/builds/judy-P-2.so",
+                "peak_rss": 2772000768,
+                "mapped": [
+                    "/work/builds/judy-P-2.so"
+                ]
+            },
+            {
+                "round": 5,
+                "so": "/work/builds/judy-P-3.so",
+                "peak_rss": 2772115456,
+                "mapped": [
+                    "/work/builds/judy-P-3.so"
+                ]
+            },
+            {
+                "round": 6,
+                "so": "/work/builds/judy-P-1.so",
+                "peak_rss": 2771881984,
+                "mapped": [
+                    "/work/builds/judy-P-1.so"
+                ]
+            }
+        ]
+    }
+}

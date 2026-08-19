@@ -1,0 +1,192 @@
+vendoring-probe: 7 rounds, n=300000, arms: bundled, system, pristine (reference=bundled), floor=3%
+.......
+judy-cache vendoring probe — honeycomb-i9-12900F-php8.4-cache-resident-n300k
+PHP 8.4.24, ext-judy 2.6.0 (identical in every arm), n=300,000, 7 rounds x 3 iterations, cache-resident
+  arm bundled    3 build(s)
+      /work/builds/judy-C-1.so  sha256=d470e8daef5847bd
+      links /work/builds/judy-C-1.so
+      /work/builds/judy-C-2.so  sha256=7ca2b4731be4a900
+      links /work/builds/judy-C-2.so
+      /work/builds/judy-C-3.so  sha256=a932f3d38a1b4551
+      links /work/builds/judy-C-3.so
+  arm system     3 build(s)
+      /work/builds/judy-B-1.so  sha256=9922e09e102250ec
+      links /usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3
+      links /work/builds/judy-B-1.so
+      /work/builds/judy-B-2.so  sha256=9e40b3f169ed135e
+      links /usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3
+      links /work/builds/judy-B-2.so
+      /work/builds/judy-B-3.so  sha256=d612ebbcb812d285
+      links /usr/lib/x86_64-linux-gnu/libJudy.so.1.0.3
+      links /work/builds/judy-B-3.so
+  arm pristine   3 build(s)
+      /work/builds/judy-P-1.so  sha256=273c47bd27f6c6a0
+      links /work/builds/judy-P-1.so
+      /work/builds/judy-P-2.so  sha256=b3f9d6c774505eaa
+      links /work/builds/judy-P-2.so
+      /work/builds/judy-P-3.so  sha256=dd679e4c58902e82
+      links /work/builds/judy-P-3.so
+peak RSS per arm (should be identical — the patches changed code, not structures):
+  bundled      296.7 MB [296.6..296.9]
+  system       296.8 MB [296.5..296.9]
+  pristine     296.6 MB [296.5..296.7]
+baseline stability (an arm measuring identical work every round must hold still;
+  a PHP-array control cannot see LLC/bandwidth contention, an absolute series can):
+  bundled    median spread   3.81%  max  15.19% (jser.set)  median |drift|  0.21%  ok
+  system     median spread   0.99%  max   4.02% (rawint.getr)  median |drift|  0.15%  ok
+  pristine   median spread   1.02%  max  10.38% (rawint.getr)  median |drift|  0.20%  ok
+hygiene: ok
+
+### bundled vs system — negative delta = bundled is faster
+control (PHP array, no libJudy): median +0.17%, spread 1.82%
+
+| row            | bundled ms |   other ms |  delta % | 95% CI             | verdict  | bspread |
+|----------------|------------|------------|----------|--------------------|----------|--------|
+| ser.set        |    163.644 |    213.046 |   -23.27 | [-23.47, -22.98]   | FASTER   |   3.07 |
+| ser.get        |     82.620 |     90.365 |    -8.72 | [ -8.86,  -8.13]   | FASTER   |   0.27 |
+| ser.getr       |    177.049 |    178.082 |    -0.81 | [ -1.28,  -0.61]   | null     |   0.23 |
+| ser.hasr       |     83.877 |     84.383 |    -0.85 | [ -0.94,  -0.64]   | null     |   0.02 |
+| ser.keys       |      3.196 |      4.042 |   -21.29 | [-21.61, -19.86]   | FASTER   |   2.05 |
+| ser.delpfx     |      3.654 |      4.972 |   -26.38 | [-26.85, -23.77]   | FASTER   |   5.98 |
+| ser.del        |     40.121 |     44.342 |    -9.76 | [ -9.88,  -8.30]   | FASTER   |   2.23 |
+| raw.set        |    105.931 |    142.218 |   -25.37 | [-25.99, -25.28]   | FASTER   |   2.75 |
+| raw.get        |    128.923 |    167.093 |   -23.12 | [-23.60, -22.77]   | FASTER   |   0.53 |
+| raw.getr       |    196.724 |    214.342 |    -8.19 | [ -8.45,  -8.18]   | FASTER   |   0.35 |
+| raw.hasr       |     84.197 |     84.474 |    -0.67 | [ -0.85,  +0.02]   | null     |   0.19 |
+| raw.keys       |      3.178 |      4.033 |   -21.71 | [-22.04, -21.34]   | FASTER   |   1.53 |
+| raw.delpfx     |      3.964 |      5.232 |   -24.30 | [-24.64, -23.81]   | FASTER   |   4.38 |
+| raw.del        |     44.157 |     48.739 |    -9.55 | [-10.23,  -9.09]   | FASTER   |   1.93 |
+| rawint.set     |     41.293 |     47.889 |   -13.91 | [-14.21, -13.61]   | FASTER   |   3.01 |
+| rawint.get     |     50.452 |     57.661 |   -12.76 | [-12.80, -12.53]   | FASTER   |   0.77 |
+| rawint.getr    |    118.488 |    119.132 |    -0.93 | [ -1.13,  -0.79]   | null     |   0.21 |
+| rawint.hasr    |     83.956 |     84.437 |    -0.81 | [ -1.01,  -0.20]   | null     |   0.34 |
+| rawint.keys    |      3.166 |      4.029 |   -21.81 | [-21.89, -21.05]   | FASTER   |   1.70 |
+| rawint.delpfx  |      3.607 |      4.920 |   -26.92 | [-27.10, -26.46]   | FASTER   |   4.33 |
+| rawint.del     |     39.444 |     43.599 |    -9.68 | [-10.00,  -9.29]   | FASTER   |   1.89 |
+| jser.set       |     21.564 |     26.045 |   -17.33 | [-17.75, -17.11]   | FASTER   |   4.94 |
+| jser.get       |     32.216 |     42.882 |   -25.00 | [-25.07, -24.69]   | FASTER   |   0.63 |
+| jser.getr      |     98.601 |     99.208 |    -1.00 | [ -1.25,  -0.52]   | null     |   0.17 |
+| jser.hasr      |     67.948 |     65.690 |    +3.18 | [ +3.03,  +3.53]   | SLOWER   |   0.10 |
+| jser.keys      |      2.481 |      3.395 |   -26.80 | [-27.67, -26.58]   | FASTER   |   0.87 |
+| jser.delpfx    |      3.516 |      4.891 |   -28.16 | [-28.46, -27.88]   | FASTER   |   3.31 |
+| jser.del       |     27.755 |     31.774 |   -12.76 | [-13.97, -12.14]   | FASTER   |   3.34 |
+| jarr.set       |     21.744 |     26.370 |   -17.71 | [-17.92, -16.98]   | FASTER   |   4.57 |
+| jarr.get       |     91.364 |    124.637 |   -26.88 | [-27.10, -26.43]   | FASTER   |   1.35 |
+| jarr.getr      |    170.224 |    195.415 |   -12.95 | [-13.26, -12.81]   | FASTER   |   1.03 |
+| jarr.hasr      |     67.945 |     65.896 |    +2.92 | [ +2.73,  +3.33]   | null     |   0.16 |
+| jarr.keys      |      2.469 |      3.385 |   -27.17 | [-27.56, -27.16]   | FASTER   |   1.63 |
+| jarr.delpfx    |      3.848 |      5.182 |   -25.59 | [-26.07, -24.98]   | FASTER   |   3.80 |
+| jarr.del       |     31.541 |     35.312 |   -10.60 | [-10.97, -10.38]   | FASTER   |   2.41 |
+| jint.set       |     21.434 |     26.100 |   -17.81 | [-18.21, -17.70]   | FASTER   |   4.24 |
+| jint.get       |     32.218 |     42.006 |   -23.53 | [-23.66, -23.35]   | FASTER   |   0.23 |
+| jint.getr      |     92.114 |     89.181 |    +3.31 | [ +2.94,  +3.42]   | null     |   0.38 |
+| jint.hasr      |     68.012 |     65.596 |    +3.45 | [ +3.12,  +3.65]   | SLOWER   |   0.37 |
+| jint.keys      |      2.499 |      3.399 |   -26.41 | [-28.00, -25.99]   | FASTER   |   2.87 |
+| jint.delpfx    |      3.490 |      4.830 |   -27.67 | [-28.17, -27.22]   | FASTER   |   3.55 |
+| jint.del       |     27.457 |     31.360 |   -12.50 | [-12.78, -12.43]   | FASTER   |   2.37 |
+
+Amdahl attribution (bundled vs system): how much of each operation is libJudy,
+and what end-to-end movement that share can carry.
+
+| row            | mirror       | judy share |   mirror d% | predicted d% | measured d% | above floor?
+|----------------|--------------|-----------|-------------|-------------|-------------|-------------|
+| ser.set        | jser.set     |     13.2% |      -17.33 |       -2.28 |      -23.27 | no — under the 3% floor
+| ser.get        | jser.get     |     39.0% |      -25.00 |       -9.75 |       -8.72 | yes
+| ser.getr       | jser.getr    |     55.7% |       -1.00 |       -0.56 |       -0.81 | no — under the 3% floor
+| ser.hasr       | jser.hasr    |     81.0% |       +3.18 |       +2.58 |       -0.85 | no — under the 3% floor
+| ser.keys       | jser.keys    |     77.6% |      -26.80 |      -20.80 |      -21.29 | yes
+| ser.delpfx     | jser.delpfx  |     96.2% |      -28.16 |      -27.10 |      -26.38 | yes
+| ser.del        | jser.del     |     69.2% |      -12.76 |       -8.83 |       -9.76 | yes
+| raw.set        | jarr.set     |     20.5% |      -17.71 |       -3.64 |      -25.37 | yes
+| raw.get        | jarr.get     |     70.9% |      -26.88 |      -19.05 |      -23.12 | yes
+| raw.getr       | jarr.getr    |     86.5% |      -12.95 |      -11.21 |       -8.19 | yes
+| raw.hasr       | jarr.hasr    |     80.7% |       +2.92 |       +2.36 |       -0.67 | no — under the 3% floor
+| raw.keys       | jarr.keys    |     77.7% |      -27.17 |      -21.11 |      -21.71 | yes
+| raw.delpfx     | jarr.delpfx  |     97.1% |      -25.59 |      -24.84 |      -24.30 | yes
+| raw.del        | jarr.del     |     71.4% |      -10.60 |       -7.57 |       -9.55 | yes
+| rawint.set     | jint.set     |     51.9% |      -17.81 |       -9.24 |      -13.91 | yes
+| rawint.get     | jint.get     |     63.9% |      -23.53 |      -15.03 |      -12.76 | yes
+| rawint.getr    | jint.getr    |     77.7% |       +3.31 |       +2.57 |       -0.93 | no — under the 3% floor
+| rawint.hasr    | jint.hasr    |     81.0% |       +3.45 |       +2.79 |       -0.81 | no — under the 3% floor
+| rawint.keys    | jint.keys    |     78.9% |      -26.41 |      -20.85 |      -21.81 | yes
+| rawint.delpfx  | jint.delpfx  |     96.7% |      -27.67 |      -26.77 |      -26.92 | yes
+| rawint.del     | jint.del     |     69.6% |      -12.50 |       -8.70 |       -9.68 | yes
+
+### bundled vs pristine — negative delta = bundled is faster
+control (PHP array, no libJudy): median -0.03%, spread 0.49%
+
+| row            | bundled ms |   other ms |  delta % | 95% CI             | verdict  | bspread |
+|----------------|------------|------------|----------|--------------------|----------|--------|
+| ser.set        |    163.644 |    180.534 |    -9.28 | [ -9.33,  -9.10]   | FASTER   |   3.36 |
+| ser.get        |     82.620 |     86.604 |    -4.63 | [ -4.77,  -4.30]   | FASTER   |   0.56 |
+| ser.getr       |    177.049 |    178.906 |    -1.02 | [ -1.16,  -0.62]   | null     |   0.39 |
+| ser.hasr       |     83.877 |     82.416 |    +1.92 | [ +1.77,  +2.24]   | null     |   0.49 |
+| ser.keys       |      3.196 |      3.438 |    -7.53 | [ -7.73,  -6.14]   | FASTER   |   2.73 |
+| ser.delpfx     |      3.654 |      4.099 |   -10.27 | [-11.02,  -7.29]   | FASTER   |   6.68 |
+| ser.del        |     40.121 |     41.940 |    -4.01 | [ -4.68,  -2.46]   | null     |   2.56 |
+| raw.set        |    105.931 |    117.086 |    -9.20 | [ -9.99,  -9.00]   | FASTER   |   3.13 |
+| raw.get        |    128.923 |    143.003 |    -9.87 | [ -9.94,  -9.58]   | FASTER   |   1.20 |
+| raw.getr       |    196.724 |    199.811 |    -1.31 | [ -1.58,  -1.17]   | null     |   0.36 |
+| raw.hasr       |     84.197 |     82.563 |    +2.02 | [ +1.78,  +2.20]   | null     |   0.54 |
+| raw.keys       |      3.178 |      3.446 |    -7.44 | [ -8.41,  -6.48]   | FASTER   |   2.04 |
+| raw.delpfx     |      3.964 |      4.394 |    -9.70 | [-10.73,  -8.91]   | FASTER   |   5.35 |
+| raw.del        |     44.157 |     45.914 |    -3.79 | [ -4.14,  -3.59]   | FASTER   |   1.62 |
+| rawint.set     |     41.293 |     42.289 |    -2.32 | [ -2.93,  -2.13]   | null     |   3.14 |
+| rawint.get     |     50.452 |     53.474 |    -5.69 | [ -5.84,  -5.58]   | FASTER   |   0.12 |
+| rawint.getr    |    118.488 |    114.689 |    +3.52 | [ +1.53,  +4.09]   | null     |   5.26 |
+| rawint.hasr    |     83.956 |     82.635 |    +1.66 | [ +1.54,  +1.97]   | null     |   0.38 |
+| rawint.keys    |      3.166 |      3.437 |    -7.62 | [ -8.30,  -6.09]   | FASTER   |   2.03 |
+| rawint.delpfx  |      3.607 |      4.019 |   -10.40 | [-10.54,  -9.95]   | FASTER   |   4.81 |
+| rawint.del     |     39.444 |     41.046 |    -3.94 | [ -4.19,  -3.50]   | FASTER   |   1.79 |
+| jser.set       |     21.564 |     22.807 |    -5.38 | [ -5.74,  -5.04]   | null     |   7.31 |
+| jser.get       |     32.216 |     35.588 |    -9.49 | [ -9.76,  -8.71]   | FASTER   |   0.60 |
+| jser.getr      |     98.601 |    102.219 |    -3.63 | [ -3.73,  -3.40]   | FASTER   |   0.30 |
+| jser.hasr      |     67.948 |     68.856 |    -1.38 | [ -1.62,  -1.24]   | null     |   0.47 |
+| jser.keys      |      2.481 |      2.714 |    -8.85 | [ -9.28,  -7.77]   | FASTER   |   1.56 |
+| jser.delpfx    |      3.516 |      3.965 |   -11.24 | [-11.44, -10.89]   | FASTER   |   4.14 |
+| jser.del       |     27.755 |     29.047 |    -4.51 | [ -4.74,  -3.51]   | FASTER   |   3.50 |
+| jarr.set       |     21.744 |     22.927 |    -4.95 | [ -5.77,  -4.52]   | null     |   6.63 |
+| jarr.get       |     91.364 |    102.868 |   -11.05 | [-11.81, -10.64]   | FASTER   |   1.06 |
+| jarr.getr      |    170.224 |    182.737 |    -6.69 | [ -7.10,  -6.45]   | FASTER   |   0.66 |
+| jarr.hasr      |     67.945 |     68.897 |    -1.45 | [ -1.55,  -0.99]   | null     |   0.47 |
+| jarr.keys      |      2.469 |      2.704 |    -8.34 | [ -9.04,  -7.99]   | FASTER   |   1.65 |
+| jarr.delpfx    |      3.848 |      4.296 |   -10.41 | [-10.87,  -9.13]   | FASTER   |   4.95 |
+| jarr.del       |     31.541 |     33.169 |    -4.77 | [ -5.13,  -4.66]   | FASTER   |   2.64 |
+| jint.set       |     21.434 |     22.692 |    -5.41 | [ -5.56,  -5.37]   | null     |   5.87 |
+| jint.get       |     32.218 |     35.417 |    -8.92 | [ -9.40,  -8.67]   | FASTER   |   0.49 |
+| jint.getr      |     92.114 |     95.765 |    -3.70 | [ -4.12,  -3.57]   | FASTER   |   0.23 |
+| jint.hasr      |     68.012 |     68.837 |    -1.18 | [ -1.64,  -1.09]   | null     |   0.48 |
+| jint.keys      |      2.499 |      2.731 |    -8.18 | [ -9.52,  -8.07]   | FASTER   |   2.86 |
+| jint.delpfx    |      3.490 |      3.928 |   -11.29 | [-11.56,  -9.90]   | FASTER   |   4.39 |
+| jint.del       |     27.457 |     28.707 |    -4.33 | [ -4.58,  -4.11]   | FASTER   |   3.03 |
+
+Amdahl attribution (bundled vs pristine): how much of each operation is libJudy,
+and what end-to-end movement that share can carry.
+
+| row            | mirror       | judy share |   mirror d% | predicted d% | measured d% | above floor?
+|----------------|--------------|-----------|-------------|-------------|-------------|-------------|
+| ser.set        | jser.set     |     13.2% |       -5.38 |       -0.71 |       -9.28 | no — under the 3% floor
+| ser.get        | jser.get     |     39.0% |       -9.49 |       -3.70 |       -4.63 | yes
+| ser.getr       | jser.getr    |     55.7% |       -3.63 |       -2.02 |       -1.02 | no — under the 3% floor
+| ser.hasr       | jser.hasr    |     81.0% |       -1.38 |       -1.12 |       +1.92 | no — under the 3% floor
+| ser.keys       | jser.keys    |     77.6% |       -8.85 |       -6.87 |       -7.53 | yes
+| ser.delpfx     | jser.delpfx  |     96.2% |      -11.24 |      -10.82 |      -10.27 | yes
+| ser.del        | jser.del     |     69.2% |       -4.51 |       -3.12 |       -4.01 | yes
+| raw.set        | jarr.set     |     20.5% |       -4.95 |       -1.02 |       -9.20 | no — under the 3% floor
+| raw.get        | jarr.get     |     70.9% |      -11.05 |       -7.83 |       -9.87 | yes
+| raw.getr       | jarr.getr    |     86.5% |       -6.69 |       -5.79 |       -1.31 | yes
+| raw.hasr       | jarr.hasr    |     80.7% |       -1.45 |       -1.17 |       +2.02 | no — under the 3% floor
+| raw.keys       | jarr.keys    |     77.7% |       -8.34 |       -6.48 |       -7.44 | yes
+| raw.delpfx     | jarr.delpfx  |     97.1% |      -10.41 |      -10.11 |       -9.70 | yes
+| raw.del        | jarr.del     |     71.4% |       -4.77 |       -3.41 |       -3.79 | yes
+| rawint.set     | jint.set     |     51.9% |       -5.41 |       -2.81 |       -2.32 | no — under the 3% floor
+| rawint.get     | jint.get     |     63.9% |       -8.92 |       -5.70 |       -5.69 | yes
+| rawint.getr    | jint.getr    |     77.7% |       -3.70 |       -2.88 |       +3.52 | no — under the 3% floor
+| rawint.hasr    | jint.hasr    |     81.0% |       -1.18 |       -0.96 |       +1.66 | no — under the 3% floor
+| rawint.keys    | jint.keys    |     78.9% |       -8.18 |       -6.46 |       -7.62 | yes
+| rawint.delpfx  | jint.delpfx  |     96.7% |      -11.29 |      -10.92 |      -10.40 | yes
+| rawint.del     | jint.del     |     69.6% |       -4.33 |       -3.01 |       -3.94 | yes
+
+A row is a claim only when its verdict is FASTER or SLOWER: that requires the
+whole CI to clear the claim floor AND the delta to exceed the per-build spread.
+Everything else is null — inside demonstrated noise, not a small win.
