@@ -1,0 +1,2531 @@
+{
+    "schema": "judy-cache-vendoring-probe/1",
+    "label": "honeycomb-i9-12900F-php8.4-REBUILD-CONTROL-n300k",
+    "at": "2026-08-19T21:49:26+00:00",
+    "host": "Linux 24fc52209ab9 6.8.0-136-generic #136~22.04.1-Ubuntu SMP PREEMPT_DYNAMIC Fri Jul  3 16:29:11 UTC  x86_64",
+    "php": "8.4.24",
+    "ext_version": "2.6.0",
+    "params": {
+        "rounds": 7,
+        "n": 300000,
+        "iterations": 3,
+        "groups": 2000,
+        "families": "ser,raw,rawint,jser,jarr,jint,ctl",
+        "floor_pct": 3,
+        "dram_n": 2000000,
+        "residency": "cache-resident"
+    },
+    "arms": {
+        "bundled": [
+            {
+                "so": "/work/builds/judy-C-1.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ],
+                "sha256": "d470e8daef5847bd458eb61005d64ad3e16ba150de3d592d05c01afbf94941c6",
+                "size": 1872056
+            },
+            {
+                "so": "/work/builds/judy-C-2.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ],
+                "sha256": "7ca2b4731be4a90050de5e6c30806ebfd4d545376516f5245bb6a7572f960095",
+                "size": 1872056
+            }
+        ],
+        "rebuild": [
+            {
+                "so": "/work/builds/judy-C-3.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ],
+                "sha256": "a932f3d38a1b4551f142fe6036910f815f0a8e8c404a6897a7bd823b84f22c7c",
+                "size": 1872056
+            },
+            {
+                "so": "/work/builds/judy-C-2.so",
+                "version": "2.6.0",
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ],
+                "sha256": "7ca2b4731be4a90050de5e6c30806ebfd4d545376516f5245bb6a7572f960095",
+                "size": 1872056
+            }
+        ]
+    },
+    "provenance": {
+        "rebuild": "CONTROL: independently linked BUNDLED builds C3/C2 posing as a second arm. NOT byte-identical .so files \u2014 that is the point: it measures link-layout noise, which a byte-identical control cannot see. Every cell must read null."
+    },
+    "reference": "bundled",
+    "hygiene": {
+        "failed": false,
+        "snapshots": [
+            {
+                "phase": "before",
+                "at": "2026-08-19T21:47:53+00:00",
+                "load1": 1.06,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-0",
+                "at": "2026-08-19T21:48:07+00:00",
+                "load1": 1.04,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-1",
+                "at": "2026-08-19T21:48:20+00:00",
+                "load1": 1.03,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-2",
+                "at": "2026-08-19T21:48:33+00:00",
+                "load1": 1.03,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-3",
+                "at": "2026-08-19T21:48:46+00:00",
+                "load1": 1.02,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-4",
+                "at": "2026-08-19T21:49:00+00:00",
+                "load1": 1.02,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-5",
+                "at": "2026-08-19T21:49:13+00:00",
+                "load1": 1.01,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            },
+            {
+                "phase": "after-round-6",
+                "at": "2026-08-19T21:49:26+00:00",
+                "load1": 1.01,
+                "cpus": 24,
+                "threshold": 12,
+                "over": false,
+                "cpus_known": true,
+                "foreign_cpu_pct": 0,
+                "foreign_busy": false,
+                "heavy": []
+            }
+        ]
+    },
+    "stability": {
+        "unstable": false,
+        "tol_pct": 15,
+        "arms": {
+            "bundled": {
+                "median_spread_pct": 1.17,
+                "max_spread_pct": 3.54,
+                "worst_row": "jint.delpfx",
+                "median_drift_pct": 0.25,
+                "max_drift_pct": 1.75,
+                "rows": 42
+            },
+            "rebuild": {
+                "median_spread_pct": 1.34,
+                "max_spread_pct": 15.08,
+                "worst_row": "jint.getr",
+                "median_drift_pct": 0.2,
+                "max_drift_pct": 1.13,
+                "rows": 42
+            }
+        }
+    },
+    "peak_rss": {
+        "bundled": {
+            "median_mb": 296.7,
+            "min_mb": 296.5,
+            "max_mb": 296.7
+        },
+        "rebuild": {
+            "median_mb": 296.5,
+            "min_mb": 296.4,
+            "max_mb": 296.9
+        }
+    },
+    "comparisons": {
+        "rebuild": {
+            "reference": "bundled",
+            "control_measured": true,
+            "control_median": 1.00066,
+            "control_spread_pct": 1.22,
+            "control_rows": {
+                "ctl.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99502,
+                    "delta_pct": -0.5,
+                    "ci_delta_pct": [
+                        -0.57,
+                        0.4
+                    ],
+                    "rounds": 7
+                },
+                "ctl.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00066,
+                    "delta_pct": 0.07,
+                    "ci_delta_pct": [
+                        -0.13,
+                        0.33
+                    ],
+                    "rounds": 7
+                },
+                "ctl.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00034,
+                    "delta_pct": 0.03,
+                    "ci_delta_pct": [
+                        -0.14,
+                        0.42
+                    ],
+                    "rounds": 7
+                },
+                "ctl.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00122,
+                    "delta_pct": 0.12,
+                    "ci_delta_pct": [
+                        -0.36,
+                        0.38
+                    ],
+                    "rounds": 7
+                },
+                "ctl.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.01222,
+                    "delta_pct": 1.22,
+                    "ci_delta_pct": [
+                        -0.38,
+                        1.77
+                    ],
+                    "rounds": 7
+                }
+            },
+            "contaminated": false,
+            "rows": {
+                "ser.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99908,
+                    "delta_pct": -0.09,
+                    "ci_delta_pct": [
+                        -0.68,
+                        0.35
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.39,
+                        "1x1": 0.29
+                    },
+                    "build_spread_pct": 0.68,
+                    "builds": 2,
+                    "reference_ms": 164.309,
+                    "comparison_ms": 163.9135,
+                    "reference_ms_by_round": [
+                        164.1892,
+                        164.589,
+                        163.5407,
+                        164.309,
+                        166.241,
+                        164.4177,
+                        163.7528
+                    ],
+                    "comparison_ms_by_round": [
+                        165.5027,
+                        163.9135,
+                        164.5489,
+                        163.7202,
+                        163.5331,
+                        165.328,
+                        163.7942
+                    ],
+                    "paired_ratios": [
+                        0.99141,
+                        1.00345,
+                        0.99321,
+                        1.00293,
+                        1.01588,
+                        0.99383,
+                        0.99908
+                    ]
+                },
+                "ser.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99848,
+                    "delta_pct": -0.15,
+                    "ci_delta_pct": [
+                        -0.84,
+                        -0.07
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.59,
+                        "1x1": -0.1
+                    },
+                    "build_spread_pct": 0.49,
+                    "builds": 2,
+                    "reference_ms": 82.5327,
+                    "comparison_ms": 83.0146,
+                    "reference_ms_by_round": [
+                        82.5327,
+                        83.3804,
+                        83.0107,
+                        83.3886,
+                        82.5075,
+                        82.4226,
+                        82.4482
+                    ],
+                    "comparison_ms_by_round": [
+                        83.175,
+                        82.4348,
+                        83.0146,
+                        83.4203,
+                        83.4606,
+                        82.4931,
+                        82.6702
+                    ],
+                    "paired_ratios": [
+                        0.99162,
+                        1.0108,
+                        0.99929,
+                        0.99896,
+                        0.98792,
+                        0.99848,
+                        0.99665
+                    ]
+                },
+                "ser.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99936,
+                    "delta_pct": -0.06,
+                    "ci_delta_pct": [
+                        -0.51,
+                        0.17
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.29,
+                        "1x1": 0.17
+                    },
+                    "build_spread_pct": 0.46,
+                    "builds": 2,
+                    "reference_ms": 177.8414,
+                    "comparison_ms": 177.6973,
+                    "reference_ms_by_round": [
+                        177.7565,
+                        178.1145,
+                        178.2679,
+                        178.6703,
+                        177.6005,
+                        177.8414,
+                        176.6222
+                    ],
+                    "comparison_ms_by_round": [
+                        178.788,
+                        177.6973,
+                        178.2646,
+                        176.9896,
+                        177.5924,
+                        177.9824,
+                        177.4075
+                    ],
+                    "paired_ratios": [
+                        0.99357,
+                        1.00168,
+                        0.99936,
+                        1.00883,
+                        0.99938,
+                        0.99855,
+                        0.99491
+                    ]
+                },
+                "ser.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99661,
+                    "delta_pct": -0.34,
+                    "ci_delta_pct": [
+                        -0.56,
+                        0.42
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.12,
+                        "1x1": -0.42
+                    },
+                    "build_spread_pct": 0.3,
+                    "builds": 2,
+                    "reference_ms": 84.0712,
+                    "comparison_ms": 84.1721,
+                    "reference_ms_by_round": [
+                        84.0712,
+                        84.0434,
+                        84.6167,
+                        84.3294,
+                        84.8224,
+                        83.4529,
+                        83.9426
+                    ],
+                    "comparison_ms_by_round": [
+                        85.0789,
+                        84.344,
+                        84.483,
+                        83.9221,
+                        84.1325,
+                        83.8641,
+                        84.1721
+                    ],
+                    "paired_ratios": [
+                        0.9875,
+                        0.99578,
+                        1.00092,
+                        1.00419,
+                        1.00753,
+                        0.99444,
+                        0.99661
+                    ]
+                },
+                "ser.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99752,
+                    "delta_pct": -0.25,
+                    "ci_delta_pct": [
+                        -0.9,
+                        0.76
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.25,
+                        "1x1": 0.76
+                    },
+                    "build_spread_pct": 1.01,
+                    "builds": 2,
+                    "reference_ms": 3.1706,
+                    "comparison_ms": 3.1764,
+                    "reference_ms_by_round": [
+                        3.1706,
+                        3.156,
+                        3.1611,
+                        3.1768,
+                        3.2075,
+                        3.168,
+                        3.1741
+                    ],
+                    "comparison_ms_by_round": [
+                        3.1764,
+                        3.1824,
+                        3.1673,
+                        3.1507,
+                        3.1979,
+                        3.1309,
+                        3.2092
+                    ],
+                    "paired_ratios": [
+                        0.99752,
+                        0.99103,
+                        0.99739,
+                        1.00761,
+                        1.00233,
+                        1.01117,
+                        0.98842
+                    ]
+                },
+                "ser.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99734,
+                    "delta_pct": -0.27,
+                    "ci_delta_pct": [
+                        -0.65,
+                        0.83
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.45,
+                        "1x1": -0.65
+                    },
+                    "build_spread_pct": 1.1,
+                    "builds": 2,
+                    "reference_ms": 3.651,
+                    "comparison_ms": 3.6598,
+                    "reference_ms_by_round": [
+                        3.6501,
+                        3.6417,
+                        3.659,
+                        3.651,
+                        3.6751,
+                        3.6385,
+                        3.7144
+                    ],
+                    "comparison_ms_by_round": [
+                        3.6604,
+                        3.6762,
+                        3.654,
+                        3.6583,
+                        3.6426,
+                        3.6598,
+                        3.6642
+                    ],
+                    "paired_ratios": [
+                        0.99652,
+                        0.98994,
+                        1.0007,
+                        0.99734,
+                        1.00826,
+                        0.9935,
+                        1.01303
+                    ]
+                },
+                "ser.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00006,
+                    "delta_pct": 0.01,
+                    "ci_delta_pct": [
+                        -0.02,
+                        0.3
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.15,
+                        "1x1": -0.01
+                    },
+                    "build_spread_pct": 0.16,
+                    "builds": 2,
+                    "reference_ms": 40.12,
+                    "comparison_ms": 40.0152,
+                    "reference_ms_by_round": [
+                        40.1628,
+                        39.9939,
+                        40.12,
+                        40.0171,
+                        40.1148,
+                        40.2331,
+                        40.1981
+                    ],
+                    "comparison_ms_by_round": [
+                        40.0152,
+                        39.9767,
+                        40.091,
+                        39.8763,
+                        40.1888,
+                        40.2106,
+                        40.0046
+                    ],
+                    "paired_ratios": [
+                        1.00302,
+                        0.99977,
+                        1.00006,
+                        1.00287,
+                        0.9975,
+                        0.9999,
+                        1.00417
+                    ]
+                },
+                "raw.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.999,
+                    "delta_pct": -0.1,
+                    "ci_delta_pct": [
+                        -0.45,
+                        0.51
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.3,
+                        "1x1": 0.35
+                    },
+                    "build_spread_pct": 0.65,
+                    "builds": 2,
+                    "reference_ms": 105.9416,
+                    "comparison_ms": 105.9292,
+                    "reference_ms_by_round": [
+                        105.7798,
+                        106.0116,
+                        105.8391,
+                        106.6012,
+                        105.4167,
+                        105.9416,
+                        107.2914
+                    ],
+                    "comparison_ms_by_round": [
+                        105.8666,
+                        106.0476,
+                        106.3315,
+                        105.9857,
+                        105.8254,
+                        105.4986,
+                        105.9292
+                    ],
+                    "paired_ratios": [
+                        0.99852,
+                        0.999,
+                        0.99471,
+                        1.00514,
+                        0.99548,
+                        1.00353,
+                        1.01219
+                    ]
+                },
+                "raw.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99962,
+                    "delta_pct": -0.04,
+                    "ci_delta_pct": [
+                        -0.71,
+                        0.31
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.63,
+                        "1x1": 0.31
+                    },
+                    "build_spread_pct": 0.94,
+                    "builds": 2,
+                    "reference_ms": 128.9105,
+                    "comparison_ms": 129.5068,
+                    "reference_ms_by_round": [
+                        128.6675,
+                        129.6622,
+                        129.2891,
+                        130.4261,
+                        128.2815,
+                        128.6891,
+                        128.9105
+                    ],
+                    "comparison_ms_by_round": [
+                        129.5068,
+                        129.1814,
+                        129.9068,
+                        129.6763,
+                        129.7666,
+                        128.4483,
+                        128.8736
+                    ],
+                    "paired_ratios": [
+                        0.99286,
+                        1.00306,
+                        0.99459,
+                        1.00512,
+                        0.9879,
+                        1.00121,
+                        0.99962
+                    ]
+                },
+                "raw.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99922,
+                    "delta_pct": -0.08,
+                    "ci_delta_pct": [
+                        -0.39,
+                        0.1
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.2,
+                        "1x1": 0.1
+                    },
+                    "build_spread_pct": 0.3,
+                    "builds": 2,
+                    "reference_ms": 197.3162,
+                    "comparison_ms": 197.6607,
+                    "reference_ms_by_round": [
+                        196.6517,
+                        197.4364,
+                        197.7554,
+                        198.5562,
+                        196.6206,
+                        197.3162,
+                        197.1479
+                    ],
+                    "comparison_ms_by_round": [
+                        197.1698,
+                        198.0804,
+                        197.6616,
+                        197.6607,
+                        197.882,
+                        196.9974,
+                        197.1719
+                    ],
+                    "paired_ratios": [
+                        0.99671,
+                        0.99609,
+                        0.99981,
+                        1.00386,
+                        0.99297,
+                        1.00095,
+                        0.99922
+                    ]
+                },
+                "raw.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99748,
+                    "delta_pct": -0.25,
+                    "ci_delta_pct": [
+                        -1.05,
+                        -0.09
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.44,
+                        "1x1": -0.25
+                    },
+                    "build_spread_pct": 0.19,
+                    "builds": 2,
+                    "reference_ms": 84.2876,
+                    "comparison_ms": 84.619,
+                    "reference_ms_by_round": [
+                        84.2876,
+                        84.0578,
+                        84.6451,
+                        84.2975,
+                        84.0089,
+                        83.8507,
+                        84.6564
+                    ],
+                    "comparison_ms_by_round": [
+                        85.3588,
+                        84.8905,
+                        84.666,
+                        84.4546,
+                        84.619,
+                        83.9892,
+                        84.5536
+                    ],
+                    "paired_ratios": [
+                        0.9868,
+                        0.98953,
+                        0.99909,
+                        0.99748,
+                        0.99213,
+                        0.99769,
+                        1.00055
+                    ]
+                },
+                "raw.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99949,
+                    "delta_pct": -0.05,
+                    "ci_delta_pct": [
+                        -0.55,
+                        0.62
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.21,
+                        "1x1": 0.51
+                    },
+                    "build_spread_pct": 0.72,
+                    "builds": 2,
+                    "reference_ms": 3.1665,
+                    "comparison_ms": 3.1682,
+                    "reference_ms_by_round": [
+                        3.1647,
+                        3.1502,
+                        3.1665,
+                        3.1888,
+                        3.1687,
+                        3.1828,
+                        3.1656
+                    ],
+                    "comparison_ms_by_round": [
+                        3.1802,
+                        3.1663,
+                        3.1759,
+                        3.1704,
+                        3.1682,
+                        3.14,
+                        3.144
+                    ],
+                    "paired_ratios": [
+                        0.99447,
+                        0.99427,
+                        0.99638,
+                        1.00513,
+                        0.99949,
+                        1.01296,
+                        1.00621
+                    ]
+                },
+                "raw.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99963,
+                    "delta_pct": -0.04,
+                    "ci_delta_pct": [
+                        -0.68,
+                        0.19
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.36,
+                        "1x1": 0.19
+                    },
+                    "build_spread_pct": 0.55,
+                    "builds": 2,
+                    "reference_ms": 3.9611,
+                    "comparison_ms": 3.9556,
+                    "reference_ms_by_round": [
+                        3.9611,
+                        3.9462,
+                        3.9564,
+                        3.9642,
+                        3.9419,
+                        3.9677,
+                        3.966
+                    ],
+                    "comparison_ms_by_round": [
+                        3.9599,
+                        3.951,
+                        3.9529,
+                        3.954,
+                        3.9662,
+                        3.9556,
+                        3.9912
+                    ],
+                    "paired_ratios": [
+                        0.99963,
+                        0.99813,
+                        1.00023,
+                        1.00194,
+                        0.99322,
+                        1.00239,
+                        0.99302
+                    ]
+                },
+                "raw.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00122,
+                    "delta_pct": 0.12,
+                    "ci_delta_pct": [
+                        -0.09,
+                        0.21
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.15,
+                        "1x1": -0.02
+                    },
+                    "build_spread_pct": 0.17,
+                    "builds": 2,
+                    "reference_ms": 44.1461,
+                    "comparison_ms": 44.1016,
+                    "reference_ms_by_round": [
+                        44.1485,
+                        43.9269,
+                        44.0908,
+                        44.0496,
+                        44.417,
+                        44.1461,
+                        44.2615
+                    ],
+                    "comparison_ms_by_round": [
+                        44.0371,
+                        44.0751,
+                        44.1016,
+                        43.9276,
+                        44.149,
+                        44.1236,
+                        44.1781
+                    ],
+                    "paired_ratios": [
+                        1.00186,
+                        0.99598,
+                        0.99909,
+                        1.00211,
+                        1.0054,
+                        0.99985,
+                        1.00122
+                    ]
+                },
+                "rawint.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99787,
+                    "delta_pct": -0.21,
+                    "ci_delta_pct": [
+                        -0.43,
+                        0.08
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.25,
+                        "1x1": -0.16
+                    },
+                    "build_spread_pct": 0.09,
+                    "builds": 2,
+                    "reference_ms": 41.186,
+                    "comparison_ms": 41.2776,
+                    "reference_ms_by_round": [
+                        41.1544,
+                        41.1319,
+                        41.186,
+                        41.2399,
+                        41.3356,
+                        41.1735,
+                        41.6239
+                    ],
+                    "comparison_ms_by_round": [
+                        41.303,
+                        41.3869,
+                        41.2776,
+                        41.2767,
+                        41.1896,
+                        41.1153,
+                        41.6852
+                    ],
+                    "paired_ratios": [
+                        0.99574,
+                        0.99318,
+                        0.99712,
+                        0.99845,
+                        1.00288,
+                        1.00075,
+                        0.99787
+                    ]
+                },
+                "rawint.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99941,
+                    "delta_pct": -0.06,
+                    "ci_delta_pct": [
+                        -1.47,
+                        0.3
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.91,
+                        "1x1": 0.3
+                    },
+                    "build_spread_pct": 1.21,
+                    "builds": 2,
+                    "reference_ms": 50.5678,
+                    "comparison_ms": 51.2333,
+                    "reference_ms_by_round": [
+                        50.5678,
+                        51.2027,
+                        51.2471,
+                        51.4193,
+                        50.3719,
+                        50.3648,
+                        50.4687
+                    ],
+                    "comparison_ms_by_round": [
+                        51.2861,
+                        50.4651,
+                        51.2431,
+                        51.2333,
+                        51.2453,
+                        50.3304,
+                        50.6191
+                    ],
+                    "paired_ratios": [
+                        0.98534,
+                        1.01394,
+                        0.99941,
+                        1.00297,
+                        0.9823,
+                        1.00002,
+                        0.99637
+                    ]
+                },
+                "rawint.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99839,
+                    "delta_pct": -0.16,
+                    "ci_delta_pct": [
+                        -1.06,
+                        -0.08
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.57,
+                        "1x1": -0.16
+                    },
+                    "build_spread_pct": 0.41,
+                    "builds": 2,
+                    "reference_ms": 118.3035,
+                    "comparison_ms": 119.1757,
+                    "reference_ms_by_round": [
+                        118.2479,
+                        118.6642,
+                        119.1657,
+                        119.3287,
+                        118.3035,
+                        118.1435,
+                        118.2018
+                    ],
+                    "comparison_ms_by_round": [
+                        119.4336,
+                        119.1757,
+                        119.1766,
+                        117.9869,
+                        118.3243,
+                        118.2556,
+                        120.6599
+                    ],
+                    "paired_ratios": [
+                        0.98942,
+                        0.99505,
+                        0.99925,
+                        1.0107,
+                        0.99916,
+                        0.99839,
+                        0.97898
+                    ]
+                },
+                "rawint.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99526,
+                    "delta_pct": -0.47,
+                    "ci_delta_pct": [
+                        -1.02,
+                        -0.18
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.84,
+                        "1x1": -0.45
+                    },
+                    "build_spread_pct": 0.39,
+                    "builds": 2,
+                    "reference_ms": 84.1993,
+                    "comparison_ms": 84.3896,
+                    "reference_ms_by_round": [
+                        84.359,
+                        84.0651,
+                        84.5312,
+                        84.4029,
+                        83.835,
+                        83.8286,
+                        84.1993
+                    ],
+                    "comparison_ms_by_round": [
+                        85.1676,
+                        84.3896,
+                        84.6292,
+                        84.1002,
+                        84.3325,
+                        84.1721,
+                        93.3382
+                    ],
+                    "paired_ratios": [
+                        0.98985,
+                        0.99549,
+                        0.99818,
+                        1.00293,
+                        0.99344,
+                        0.99526,
+                        0.90149
+                    ]
+                },
+                "rawint.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99637,
+                    "delta_pct": -0.36,
+                    "ci_delta_pct": [
+                        -0.96,
+                        0.31
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.4,
+                        "1x1": 0.31
+                    },
+                    "build_spread_pct": 0.71,
+                    "builds": 2,
+                    "reference_ms": 3.1599,
+                    "comparison_ms": 3.1651,
+                    "reference_ms_by_round": [
+                        3.1604,
+                        3.1472,
+                        3.1329,
+                        3.1655,
+                        3.1711,
+                        3.1599,
+                        3.1469
+                    ],
+                    "comparison_ms_by_round": [
+                        3.1698,
+                        3.2108,
+                        3.1443,
+                        3.1537,
+                        3.1651,
+                        3.1333,
+                        3.1754
+                    ],
+                    "paired_ratios": [
+                        0.99637,
+                        0.97955,
+                        0.9957,
+                        1.00309,
+                        1.00122,
+                        1.00784,
+                        0.99036
+                    ]
+                },
+                "rawint.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.9983,
+                    "delta_pct": -0.17,
+                    "ci_delta_pct": [
+                        -0.9,
+                        0.63
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.19,
+                        "1x1": -0.17
+                    },
+                    "build_spread_pct": 0.36,
+                    "builds": 2,
+                    "reference_ms": 3.5983,
+                    "comparison_ms": 3.6006,
+                    "reference_ms_by_round": [
+                        3.6283,
+                        3.5983,
+                        3.5942,
+                        3.6077,
+                        3.595,
+                        3.5886,
+                        3.6324
+                    ],
+                    "comparison_ms_by_round": [
+                        3.6033,
+                        3.6609,
+                        3.6006,
+                        3.5892,
+                        3.6252,
+                        3.5923,
+                        3.5982
+                    ],
+                    "paired_ratios": [
+                        1.00627,
+                        0.98226,
+                        0.99757,
+                        1.00449,
+                        0.99101,
+                        0.9983,
+                        1.00883
+                    ]
+                },
+                "rawint.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99966,
+                    "delta_pct": -0.03,
+                    "ci_delta_pct": [
+                        -0.36,
+                        0.22
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.07,
+                        "1x1": -0.03
+                    },
+                    "build_spread_pct": 0.04,
+                    "builds": 2,
+                    "reference_ms": 39.3966,
+                    "comparison_ms": 39.3839,
+                    "reference_ms_by_round": [
+                        39.4112,
+                        39.3508,
+                        39.2787,
+                        39.3003,
+                        39.497,
+                        39.3966,
+                        39.5462
+                    ],
+                    "comparison_ms_by_round": [
+                        39.5376,
+                        39.304,
+                        39.3961,
+                        39.31,
+                        39.2697,
+                        39.3839,
+                        39.4338
+                    ],
+                    "paired_ratios": [
+                        0.99614,
+                        1.00053,
+                        0.99636,
+                        0.99909,
+                        1.00512,
+                        0.99966,
+                        1.00219
+                    ]
+                },
+                "jser.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99604,
+                    "delta_pct": -0.4,
+                    "ci_delta_pct": [
+                        -0.69,
+                        0.66
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.06,
+                        "1x1": -0.69
+                    },
+                    "build_spread_pct": 0.75,
+                    "builds": 2,
+                    "reference_ms": 21.5557,
+                    "comparison_ms": 21.5736,
+                    "reference_ms_by_round": [
+                        21.5557,
+                        21.6644,
+                        21.6549,
+                        21.5223,
+                        21.5024,
+                        21.4387,
+                        21.6128
+                    ],
+                    "comparison_ms_by_round": [
+                        21.6303,
+                        21.4959,
+                        21.5307,
+                        21.8826,
+                        21.5736,
+                        21.5742,
+                        21.4577
+                    ],
+                    "paired_ratios": [
+                        0.99589,
+                        1.00717,
+                        1.0051,
+                        0.98288,
+                        0.99604,
+                        0.99306,
+                        1.00656
+                    ]
+                },
+                "jser.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00144,
+                    "delta_pct": 0.14,
+                    "ci_delta_pct": [
+                        -0.16,
+                        0.37
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.21,
+                        "1x1": -0.08
+                    },
+                    "build_spread_pct": 0.29,
+                    "builds": 2,
+                    "reference_ms": 32.1902,
+                    "comparison_ms": 32.1917,
+                    "reference_ms_by_round": [
+                        32.1291,
+                        32.1536,
+                        32.1716,
+                        32.1902,
+                        32.3299,
+                        32.2551,
+                        32.3833
+                    ],
+                    "comparison_ms_by_round": [
+                        32.2343,
+                        32.1832,
+                        32.0639,
+                        32.0495,
+                        32.2619,
+                        32.2597,
+                        32.1917
+                    ],
+                    "paired_ratios": [
+                        0.99607,
+                        0.99842,
+                        1.0027,
+                        1.00372,
+                        1.00144,
+                        0.99919,
+                        1.00528
+                    ]
+                },
+                "jser.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99912,
+                    "delta_pct": -0.09,
+                    "ci_delta_pct": [
+                        -0.87,
+                        -0.04
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.33,
+                        "1x1": -0.09
+                    },
+                    "build_spread_pct": 0.24,
+                    "builds": 2,
+                    "reference_ms": 98.7693,
+                    "comparison_ms": 98.9909,
+                    "reference_ms_by_round": [
+                        98.7546,
+                        98.7693,
+                        99.8601,
+                        98.609,
+                        98.7882,
+                        98.8062,
+                        98.4547
+                    ],
+                    "comparison_ms_by_round": [
+                        99.5576,
+                        99.9582,
+                        99.8365,
+                        98.5886,
+                        98.4958,
+                        98.8277,
+                        98.9909
+                    ],
+                    "paired_ratios": [
+                        0.99128,
+                        0.98745,
+                        0.99957,
+                        0.99954,
+                        1.0023,
+                        0.99912,
+                        0.99392
+                    ]
+                },
+                "jser.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99884,
+                    "delta_pct": -0.12,
+                    "ci_delta_pct": [
+                        -0.5,
+                        -0.05
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.28,
+                        "1x1": -0.05
+                    },
+                    "build_spread_pct": 0.23,
+                    "builds": 2,
+                    "reference_ms": 67.9993,
+                    "comparison_ms": 68.1832,
+                    "reference_ms_by_round": [
+                        68.0807,
+                        67.8892,
+                        68.4859,
+                        68.2595,
+                        67.813,
+                        67.9993,
+                        67.95
+                    ],
+                    "comparison_ms_by_round": [
+                        68.4362,
+                        68.1832,
+                        68.4848,
+                        67.8302,
+                        67.8467,
+                        67.9892,
+                        68.2053
+                    ],
+                    "paired_ratios": [
+                        0.99415,
+                        0.99503,
+                        0.99935,
+                        1.00566,
+                        0.99884,
+                        0.99949,
+                        0.9956
+                    ]
+                },
+                "jser.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99802,
+                    "delta_pct": -0.2,
+                    "ci_delta_pct": [
+                        -1.08,
+                        1.01
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.42,
+                        "1x1": -0.2
+                    },
+                    "build_spread_pct": 0.22,
+                    "builds": 2,
+                    "reference_ms": 2.4709,
+                    "comparison_ms": 2.4807,
+                    "reference_ms_by_round": [
+                        2.4649,
+                        2.465,
+                        2.4771,
+                        2.5004,
+                        2.4709,
+                        2.4882,
+                        2.4679
+                    ],
+                    "comparison_ms_by_round": [
+                        2.4807,
+                        2.4904,
+                        2.45,
+                        2.4738,
+                        2.4725,
+                        2.4915,
+                        2.4941
+                    ],
+                    "paired_ratios": [
+                        0.99296,
+                        0.98916,
+                        1.01042,
+                        1.0101,
+                        0.99871,
+                        0.99802,
+                        0.98883
+                    ]
+                },
+                "jser.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00126,
+                    "delta_pct": 0.13,
+                    "ci_delta_pct": [
+                        -0.37,
+                        0.27
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.1,
+                        "1x1": 0.13
+                    },
+                    "build_spread_pct": 0.23,
+                    "builds": 2,
+                    "reference_ms": 3.5241,
+                    "comparison_ms": 3.5149,
+                    "reference_ms_by_round": [
+                        3.5459,
+                        3.5203,
+                        3.5038,
+                        3.5241,
+                        3.5278,
+                        3.5144,
+                        3.5321
+                    ],
+                    "comparison_ms_by_round": [
+                        3.6251,
+                        3.5135,
+                        3.513,
+                        3.5122,
+                        3.5208,
+                        3.5252,
+                        3.5149
+                    ],
+                    "paired_ratios": [
+                        0.97751,
+                        1.00126,
+                        0.99673,
+                        1.0027,
+                        1.00132,
+                        0.99627,
+                        1.00422
+                    ]
+                },
+                "jser.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00046,
+                    "delta_pct": 0.05,
+                    "ci_delta_pct": [
+                        -0.11,
+                        0.14
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0,
+                        "1x1": 0.09
+                    },
+                    "build_spread_pct": 0.09,
+                    "builds": 2,
+                    "reference_ms": 27.7138,
+                    "comparison_ms": 27.6827,
+                    "reference_ms_by_round": [
+                        27.6243,
+                        27.7569,
+                        27.7191,
+                        27.6058,
+                        27.7231,
+                        27.653,
+                        27.7138
+                    ],
+                    "comparison_ms_by_round": [
+                        27.9365,
+                        27.7137,
+                        27.711,
+                        27.6182,
+                        27.5819,
+                        27.5949,
+                        27.6827
+                    ],
+                    "paired_ratios": [
+                        0.98817,
+                        1.00089,
+                        0.99963,
+                        0.99889,
+                        1.00445,
+                        1.00144,
+                        1.00046
+                    ]
+                },
+                "jarr.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99929,
+                    "delta_pct": -0.07,
+                    "ci_delta_pct": [
+                        -0.67,
+                        0.57
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.21,
+                        "1x1": -0.65
+                    },
+                    "build_spread_pct": 0.86,
+                    "builds": 2,
+                    "reference_ms": 21.7936,
+                    "comparison_ms": 21.7252,
+                    "reference_ms_by_round": [
+                        21.7936,
+                        21.8693,
+                        21.7241,
+                        21.8376,
+                        21.5974,
+                        21.6215,
+                        21.8356
+                    ],
+                    "comparison_ms_by_round": [
+                        21.6715,
+                        21.6097,
+                        21.7252,
+                        21.966,
+                        21.7882,
+                        21.7523,
+                        21.6969
+                    ],
+                    "paired_ratios": [
+                        1.00497,
+                        1.01135,
+                        0.99929,
+                        0.9935,
+                        0.99058,
+                        0.99333,
+                        1.00573
+                    ]
+                },
+                "jarr.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00098,
+                    "delta_pct": 0.1,
+                    "ci_delta_pct": [
+                        -0.33,
+                        0.31
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.27,
+                        "1x1": 0.31
+                    },
+                    "build_spread_pct": 0.58,
+                    "builds": 2,
+                    "reference_ms": 91.5114,
+                    "comparison_ms": 91.3612,
+                    "reference_ms_by_round": [
+                        91.2307,
+                        91.5114,
+                        91.3908,
+                        91.5851,
+                        91.179,
+                        91.5603,
+                        91.678
+                    ],
+                    "comparison_ms_by_round": [
+                        91.3615,
+                        91.3612,
+                        91.6885,
+                        91.2372,
+                        91.4237,
+                        91.0405,
+                        91.3561
+                    ],
+                    "paired_ratios": [
+                        0.99791,
+                        1.00098,
+                        0.99609,
+                        1.00315,
+                        0.99666,
+                        1.00504,
+                        1.00286
+                    ]
+                },
+                "jarr.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99848,
+                    "delta_pct": -0.15,
+                    "ci_delta_pct": [
+                        -0.36,
+                        0.19
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.21,
+                        "1x1": 0.19
+                    },
+                    "build_spread_pct": 0.4,
+                    "builds": 2,
+                    "reference_ms": 170.7375,
+                    "comparison_ms": 170.8064,
+                    "reference_ms_by_round": [
+                        170.9284,
+                        170.6916,
+                        171.6984,
+                        170.977,
+                        170.1865,
+                        170.7375,
+                        170.3364
+                    ],
+                    "comparison_ms_by_round": [
+                        171.2822,
+                        171.1972,
+                        171.3256,
+                        170.266,
+                        170.8064,
+                        170.295,
+                        170.4825
+                    ],
+                    "paired_ratios": [
+                        0.99727,
+                        0.99639,
+                        1.00151,
+                        1.00351,
+                        0.99571,
+                        1.00193,
+                        0.99848
+                    ]
+                },
+                "jarr.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00106,
+                    "delta_pct": 0.11,
+                    "ci_delta_pct": [
+                        -0.21,
+                        0.18
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.11,
+                        "1x1": -0.21
+                    },
+                    "build_spread_pct": 0.32,
+                    "builds": 2,
+                    "reference_ms": 68.1962,
+                    "comparison_ms": 68.1722,
+                    "reference_ms_by_round": [
+                        68.7477,
+                        68.0735,
+                        68.539,
+                        68.0639,
+                        68.1962,
+                        68.1956,
+                        68.3108
+                    ],
+                    "comparison_ms_by_round": [
+                        68.6237,
+                        68.1722,
+                        68.5556,
+                        68.5627,
+                        68.0789,
+                        67.9549,
+                        68.1459
+                    ],
+                    "paired_ratios": [
+                        1.00114,
+                        0.99789,
+                        0.99909,
+                        0.99207,
+                        1.00106,
+                        1.00288,
+                        1.00176
+                    ]
+                },
+                "jarr.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00641,
+                    "delta_pct": 0.64,
+                    "ci_delta_pct": [
+                        -0.47,
+                        0.72
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.68,
+                        "1x1": -0.47
+                    },
+                    "build_spread_pct": 1.15,
+                    "builds": 2,
+                    "reference_ms": 2.4731,
+                    "comparison_ms": 2.4657,
+                    "reference_ms_by_round": [
+                        2.4832,
+                        2.4589,
+                        2.4716,
+                        2.4452,
+                        2.4731,
+                        2.4867,
+                        2.5109
+                    ],
+                    "comparison_ms_by_round": [
+                        2.4657,
+                        2.4688,
+                        2.4524,
+                        2.5016,
+                        2.4555,
+                        2.4697,
+                        2.4579
+                    ],
+                    "paired_ratios": [
+                        1.00641,
+                        0.9953,
+                        1.00716,
+                        0.97681,
+                        1.00654,
+                        1.0062,
+                        1.02087
+                    ]
+                },
+                "jarr.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99894,
+                    "delta_pct": -0.11,
+                    "ci_delta_pct": [
+                        -1.85,
+                        0.27
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.89,
+                        "1x1": -0.11
+                    },
+                    "build_spread_pct": 0.78,
+                    "builds": 2,
+                    "reference_ms": 3.8476,
+                    "comparison_ms": 3.8521,
+                    "reference_ms_by_round": [
+                        3.8712,
+                        3.8513,
+                        3.8636,
+                        3.8476,
+                        3.8373,
+                        3.8419,
+                        3.8329
+                    ],
+                    "comparison_ms_by_round": [
+                        3.8474,
+                        3.8383,
+                        3.858,
+                        3.8521,
+                        3.926,
+                        3.8434,
+                        3.9026
+                    ],
+                    "paired_ratios": [
+                        1.00551,
+                        1.00272,
+                        1.00079,
+                        0.99817,
+                        0.97676,
+                        0.99894,
+                        0.98148
+                    ]
+                },
+                "jarr.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00009,
+                    "delta_pct": 0.01,
+                    "ci_delta_pct": [
+                        -0.28,
+                        0.57
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.32,
+                        "1x1": -0.28
+                    },
+                    "build_spread_pct": 0.6,
+                    "builds": 2,
+                    "reference_ms": 31.5111,
+                    "comparison_ms": 31.476,
+                    "reference_ms_by_round": [
+                        31.6769,
+                        31.4456,
+                        31.5715,
+                        31.5063,
+                        31.5111,
+                        31.4596,
+                        31.6646
+                    ],
+                    "comparison_ms_by_round": [
+                        31.476,
+                        31.4218,
+                        31.5967,
+                        31.8499,
+                        31.4683,
+                        31.5271,
+                        31.3889
+                    ],
+                    "paired_ratios": [
+                        1.00571,
+                        1.00009,
+                        0.99854,
+                        0.98855,
+                        1.0007,
+                        0.9972,
+                        1.00811
+                    ]
+                },
+                "jint.set": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99618,
+                    "delta_pct": -0.38,
+                    "ci_delta_pct": [
+                        -1.28,
+                        0.58
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.22,
+                        "1x1": -0.38
+                    },
+                    "build_spread_pct": 0.16,
+                    "builds": 2,
+                    "reference_ms": 21.4209,
+                    "comparison_ms": 21.4429,
+                    "reference_ms_by_round": [
+                        21.2745,
+                        21.6034,
+                        21.5817,
+                        21.4181,
+                        21.4235,
+                        21.2925,
+                        21.4209
+                    ],
+                    "comparison_ms_by_round": [
+                        21.5371,
+                        21.4196,
+                        21.4429,
+                        21.8031,
+                        21.572,
+                        21.3599,
+                        21.3401
+                    ],
+                    "paired_ratios": [
+                        0.98715,
+                        1.00791,
+                        1.0058,
+                        0.98169,
+                        0.99246,
+                        0.99618,
+                        1.00312
+                    ]
+                },
+                "jint.get": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00243,
+                    "delta_pct": 0.24,
+                    "ci_delta_pct": [
+                        -0.55,
+                        0.3
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.27,
+                        "1x1": -0.55
+                    },
+                    "build_spread_pct": 0.82,
+                    "builds": 2,
+                    "reference_ms": 32.3441,
+                    "comparison_ms": 32.2916,
+                    "reference_ms_by_round": [
+                        32.4765,
+                        32.1344,
+                        32.3441,
+                        32.2182,
+                        32.3915,
+                        32.1721,
+                        32.3625
+                    ],
+                    "comparison_ms_by_round": [
+                        32.3584,
+                        32.1306,
+                        32.2436,
+                        33.3256,
+                        32.2916,
+                        32.3273,
+                        32.1221
+                    ],
+                    "paired_ratios": [
+                        1.00298,
+                        0.99946,
+                        1.00245,
+                        0.96613,
+                        1.00243,
+                        0.99454,
+                        1.00682
+                    ]
+                },
+                "jint.getr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.0013,
+                    "delta_pct": 0.13,
+                    "ci_delta_pct": [
+                        -0.39,
+                        0.9
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.18,
+                        "1x1": -0.39
+                    },
+                    "build_spread_pct": 0.57,
+                    "builds": 2,
+                    "reference_ms": 92.6089,
+                    "comparison_ms": 93.0711,
+                    "reference_ms_by_round": [
+                        94.0788,
+                        93.9754,
+                        93.3162,
+                        92.6089,
+                        92.3974,
+                        92.2684,
+                        92.2281
+                    ],
+                    "comparison_ms_by_round": [
+                        93.1089,
+                        93.0711,
+                        93.1332,
+                        106.0235,
+                        92.1293,
+                        92.5644,
+                        92.3649
+                    ],
+                    "paired_ratios": [
+                        1.00975,
+                        1.00905,
+                        1.0013,
+                        0.8729,
+                        1.00224,
+                        0.99614,
+                        0.99786
+                    ]
+                },
+                "jint.hasr": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99464,
+                    "delta_pct": -0.54,
+                    "ci_delta_pct": [
+                        -0.91,
+                        -0.3
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.47,
+                        "1x1": -0.76
+                    },
+                    "build_spread_pct": 0.29,
+                    "builds": 2,
+                    "reference_ms": 68.0893,
+                    "comparison_ms": 68.4054,
+                    "reference_ms_by_round": [
+                        68.1231,
+                        67.8213,
+                        68.4643,
+                        68.165,
+                        68.0893,
+                        67.9338,
+                        67.9893
+                    ],
+                    "comparison_ms_by_round": [
+                        68.7039,
+                        68.4693,
+                        68.4054,
+                        68.6442,
+                        68.3148,
+                        68.093,
+                        68.3105
+                    ],
+                    "paired_ratios": [
+                        0.99089,
+                        0.98988,
+                        1.0002,
+                        0.99236,
+                        0.99604,
+                        0.997,
+                        0.99464
+                    ]
+                },
+                "jint.keys": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99468,
+                    "delta_pct": -0.53,
+                    "ci_delta_pct": [
+                        -1.11,
+                        0.14
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.41,
+                        "1x1": -1.11
+                    },
+                    "build_spread_pct": 0.7,
+                    "builds": 2,
+                    "reference_ms": 2.4849,
+                    "comparison_ms": 2.4979,
+                    "reference_ms_by_round": [
+                        2.4905,
+                        2.4657,
+                        2.4847,
+                        2.4968,
+                        2.4881,
+                        2.4745,
+                        2.4849
+                    ],
+                    "comparison_ms_by_round": [
+                        2.4774,
+                        2.5081,
+                        2.4979,
+                        2.4917,
+                        2.4997,
+                        2.5007,
+                        2.4904
+                    ],
+                    "paired_ratios": [
+                        1.00461,
+                        0.98243,
+                        0.99409,
+                        1.00139,
+                        0.99468,
+                        0.98887,
+                        0.99713
+                    ]
+                },
+                "jint.delpfx": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 0.99956,
+                    "delta_pct": -0.04,
+                    "ci_delta_pct": [
+                        -0.58,
+                        0.39
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": -0.09,
+                        "1x1": -0.04
+                    },
+                    "build_spread_pct": 0.05,
+                    "builds": 2,
+                    "reference_ms": 3.4867,
+                    "comparison_ms": 3.4876,
+                    "reference_ms_by_round": [
+                        3.4867,
+                        3.4857,
+                        3.4884,
+                        3.5005,
+                        3.4696,
+                        3.4752,
+                        3.5925
+                    ],
+                    "comparison_ms_by_round": [
+                        3.4707,
+                        3.4849,
+                        3.561,
+                        3.488,
+                        3.4876,
+                        3.4897,
+                        3.4689
+                    ],
+                    "paired_ratios": [
+                        1.00394,
+                        0.99956,
+                        0.97898,
+                        1.00292,
+                        0.99418,
+                        0.99517,
+                        1.03493
+                    ]
+                },
+                "jint.del": {
+                    "status": "null",
+                    "reason": "inside the 3.0% claim floor (CI straddles it)",
+                    "ratio": 1.00037,
+                    "delta_pct": 0.04,
+                    "ci_delta_pct": [
+                        -0.2,
+                        0.41
+                    ],
+                    "rounds": 7,
+                    "per_build_delta_pct": {
+                        "0x0": 0.23,
+                        "1x1": -0.2
+                    },
+                    "build_spread_pct": 0.43,
+                    "builds": 2,
+                    "reference_ms": 27.4037,
+                    "comparison_ms": 27.3788,
+                    "reference_ms_by_round": [
+                        27.4105,
+                        27.4037,
+                        27.5303,
+                        27.3447,
+                        27.3979,
+                        27.3712,
+                        27.4421
+                    ],
+                    "comparison_ms_by_round": [
+                        27.3788,
+                        27.4928,
+                        27.3604,
+                        27.3459,
+                        27.2668,
+                        27.4092,
+                        27.4137
+                    ],
+                    "paired_ratios": [
+                        1.00049,
+                        0.9961,
+                        1.00554,
+                        0.99929,
+                        1.00414,
+                        0.99795,
+                        1.00037
+                    ]
+                }
+            }
+        }
+    },
+    "attribution": {
+        "rebuild": {
+            "ser.set": {
+                "mirror": "jser.set",
+                "judy_share": 0.1312,
+                "mirror_delta_pct": -0.4,
+                "predicted_delta_pct": -0.05,
+                "measured_delta_pct": -0.09,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.get": {
+                "mirror": "jser.get",
+                "judy_share": 0.39,
+                "mirror_delta_pct": 0.14,
+                "predicted_delta_pct": 0.05,
+                "measured_delta_pct": -0.15,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.getr": {
+                "mirror": "jser.getr",
+                "judy_share": 0.5554,
+                "mirror_delta_pct": -0.09,
+                "predicted_delta_pct": -0.05,
+                "measured_delta_pct": -0.06,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.hasr": {
+                "mirror": "jser.hasr",
+                "judy_share": 0.8088,
+                "mirror_delta_pct": -0.12,
+                "predicted_delta_pct": -0.1,
+                "measured_delta_pct": -0.34,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.keys": {
+                "mirror": "jser.keys",
+                "judy_share": 0.7793,
+                "mirror_delta_pct": -0.2,
+                "predicted_delta_pct": -0.16,
+                "measured_delta_pct": -0.25,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.delpfx": {
+                "mirror": "jser.delpfx",
+                "judy_share": 0.9652,
+                "mirror_delta_pct": 0.13,
+                "predicted_delta_pct": 0.13,
+                "measured_delta_pct": -0.27,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "ser.del": {
+                "mirror": "jser.del",
+                "judy_share": 0.6908,
+                "mirror_delta_pct": 0.05,
+                "predicted_delta_pct": 0.03,
+                "measured_delta_pct": 0.01,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.set": {
+                "mirror": "jarr.set",
+                "judy_share": 0.2057,
+                "mirror_delta_pct": -0.07,
+                "predicted_delta_pct": -0.01,
+                "measured_delta_pct": -0.1,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.get": {
+                "mirror": "jarr.get",
+                "judy_share": 0.7099,
+                "mirror_delta_pct": 0.1,
+                "predicted_delta_pct": 0.07,
+                "measured_delta_pct": -0.04,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.getr": {
+                "mirror": "jarr.getr",
+                "judy_share": 0.8653,
+                "mirror_delta_pct": -0.15,
+                "predicted_delta_pct": -0.13,
+                "measured_delta_pct": -0.08,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.hasr": {
+                "mirror": "jarr.hasr",
+                "judy_share": 0.8091,
+                "mirror_delta_pct": 0.11,
+                "predicted_delta_pct": 0.09,
+                "measured_delta_pct": -0.25,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.keys": {
+                "mirror": "jarr.keys",
+                "judy_share": 0.781,
+                "mirror_delta_pct": 0.64,
+                "predicted_delta_pct": 0.5,
+                "measured_delta_pct": -0.05,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.delpfx": {
+                "mirror": "jarr.delpfx",
+                "judy_share": 0.9714,
+                "mirror_delta_pct": -0.11,
+                "predicted_delta_pct": -0.11,
+                "measured_delta_pct": -0.04,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "raw.del": {
+                "mirror": "jarr.del",
+                "judy_share": 0.7138,
+                "mirror_delta_pct": 0.01,
+                "predicted_delta_pct": 0.01,
+                "measured_delta_pct": 0.12,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.set": {
+                "mirror": "jint.set",
+                "judy_share": 0.5201,
+                "mirror_delta_pct": -0.38,
+                "predicted_delta_pct": -0.2,
+                "measured_delta_pct": -0.21,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.get": {
+                "mirror": "jint.get",
+                "judy_share": 0.6396,
+                "mirror_delta_pct": 0.24,
+                "predicted_delta_pct": 0.15,
+                "measured_delta_pct": -0.06,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.getr": {
+                "mirror": "jint.getr",
+                "judy_share": 0.7828,
+                "mirror_delta_pct": 0.13,
+                "predicted_delta_pct": 0.1,
+                "measured_delta_pct": -0.16,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.hasr": {
+                "mirror": "jint.hasr",
+                "judy_share": 0.8087,
+                "mirror_delta_pct": -0.54,
+                "predicted_delta_pct": -0.44,
+                "measured_delta_pct": -0.47,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.keys": {
+                "mirror": "jint.keys",
+                "judy_share": 0.7864,
+                "mirror_delta_pct": -0.53,
+                "predicted_delta_pct": -0.42,
+                "measured_delta_pct": -0.36,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.delpfx": {
+                "mirror": "jint.delpfx",
+                "judy_share": 0.969,
+                "mirror_delta_pct": -0.04,
+                "predicted_delta_pct": -0.04,
+                "measured_delta_pct": -0.17,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            },
+            "rawint.del": {
+                "mirror": "jint.del",
+                "judy_share": 0.6956,
+                "mirror_delta_pct": 0.04,
+                "predicted_delta_pct": 0.03,
+                "measured_delta_pct": -0.03,
+                "measured_status": "null",
+                "floor_pct": 3,
+                "detectable": false
+            }
+        }
+    },
+    "children": {
+        "bundled": [
+            {
+                "round": 0,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 311013376,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            },
+            {
+                "round": 1,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 311107584,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 2,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 311046144,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            },
+            {
+                "round": 3,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 310882304,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 4,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 311091200,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            },
+            {
+                "round": 5,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 311103488,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 6,
+                "so": "/work/builds/judy-C-1.so",
+                "peak_rss": 311083008,
+                "mapped": [
+                    "/work/builds/judy-C-1.so"
+                ]
+            }
+        ],
+        "rebuild": [
+            {
+                "round": 0,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 310927360,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            },
+            {
+                "round": 1,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 311017472,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 2,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 311062528,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            },
+            {
+                "round": 3,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 310882304,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 4,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 311349248,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            },
+            {
+                "round": 5,
+                "so": "/work/builds/judy-C-2.so",
+                "peak_rss": 310919168,
+                "mapped": [
+                    "/work/builds/judy-C-2.so"
+                ]
+            },
+            {
+                "round": 6,
+                "so": "/work/builds/judy-C-3.so",
+                "peak_rss": 310841344,
+                "mapped": [
+                    "/work/builds/judy-C-3.so"
+                ]
+            }
+        ]
+    }
+}

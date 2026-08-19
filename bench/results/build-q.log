@@ -1,0 +1,21 @@
+=== BUILD pristine libJudy 1.0.5 SHARED, our flags ===
+total 340
+drwxr-xr-x 2 root root   4096 Aug 19 21:55 .
+drwxr-xr-x 4 root root   4096 Aug 19 21:55 ..
+lrwxrwxrwx 1 root root     16 Aug 19 21:55 libJudy.so -> libJudy.so.1.0.3
+lrwxrwxrwx 1 root root     16 Aug 19 21:55 libJudy.so.1 -> libJudy.so.1.0.3
+-rwxr-xr-x 1 root root 338816 Aug 19 21:55 libJudy.so.1.0.3
+pristine-shared libJudy.so: popcnt=0 bswap=12
+=== BUILD Q tag=1 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /work/pristine-shared/lib/libJudy.so.1 (0x00007eeb8db49000)
+  popcnt=0 bswap=0 undef=38
+=== BUILD Q tag=2 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /work/pristine-shared/lib/libJudy.so.1 (0x0000768d2326e000)
+  popcnt=0 bswap=0 undef=38
+=== BUILD Q tag=3 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /work/pristine-shared/lib/libJudy.so.1 (0x0000790cb9837000)
+  popcnt=0 bswap=0 undef=38
+=== Q DONE ===

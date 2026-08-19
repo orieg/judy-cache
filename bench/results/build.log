@@ -1,0 +1,78 @@
+=== TOOLCHAIN ===
+gcc (Debian 14.2.0-19) 14.2.0
+PHP 8.4.24 (cli) (built: Aug  5 2026 00:28:53) (NTS)
+system libJudy: ii  libjudy-dev               1.0.5-5.1                            amd64        C library for creating and accessing dynamic arrays (dev package)
+ii  libjudydebian1            1.0.5-5.1                            amd64        C library for creating and accessing dynamic arrays
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+VERSION_ID="13"
+=== BUILD pristine libJudy 1.0.5 (unpatched upstream) ===
+pristine libJudy.a: popcnt=0
+pristine libJudy.a: bswap=12
+=== BUILD C (--with-judy=bundled) tag=1 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 1872056  sha256: d470e8daef5847bd
+  popcnt: 89  bswap: 985
+=== BUILD B (--with-judy=/usr) tag=1 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /lib/x86_64-linux-gnu/libJudy.so.1 (0x000072bf60247000)
+  size: 661136  sha256: 9922e09e102250ec
+  popcnt: 0  bswap: 0
+=== BUILD P (--with-judy=/work/pristine) tag=1 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 961352  sha256: 273c47bd27f6c6a0
+  popcnt: 0  bswap: 12
+=== BUILD C (--with-judy=bundled) tag=2 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 1872056  sha256: 7ca2b4731be4a900
+  popcnt: 89  bswap: 985
+=== BUILD B (--with-judy=/usr) tag=2 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /lib/x86_64-linux-gnu/libJudy.so.1 (0x00007378fb3ca000)
+  size: 661136  sha256: 9e40b3f169ed135e
+  popcnt: 0  bswap: 0
+=== BUILD P (--with-judy=/work/pristine) tag=2 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 961352  sha256: b3f9d6c774505eaa
+  popcnt: 0  bswap: 12
+=== BUILD C (--with-judy=bundled) tag=3 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 1872056  sha256: a932f3d38a1b4551
+  popcnt: 89  bswap: 985
+=== BUILD B (--with-judy=/usr) tag=3 ===
+  warnings: 0
+  ldd libJudy: 	libJudy.so.1 => /lib/x86_64-linux-gnu/libJudy.so.1 (0x000078b8ba161000)
+  size: 661136  sha256: d612ebbcb812d285
+  popcnt: 0  bswap: 0
+=== BUILD P (--with-judy=/work/pristine) tag=3 ===
+  warnings: 0
+  ldd libJudy: (none — statically linked in)
+  size: 961352  sha256: dd679e4c58902e82
+  popcnt: 0  bswap: 12
+=== FINGERPRINTS ===
+judy.so[C]: popcnt=89 bswap=985 undefined_judy_syms=0
+judy.so[B]: popcnt=0 bswap=0 undefined_judy_syms=38
+judy.so[P]: popcnt=0 bswap=12 undefined_judy_syms=0
+system libJudy (/lib/x86_64-linux-gnu/libJudy.so.1): popcnt=0 bswap=12
+pristine libJudy.a: popcnt=0 bswap=12
+=== SYSTEM libJudy.so instruction counts (arm B's library lives here) ===
+  /lib/x86_64-linux-gnu/libJudy.so.1
+  popcnt: 0  bswap: 12
+=== DONE ===
+total 10272
+drwxr-xr-x 2 root root    4096 Aug 19 21:36 .
+drwxr-xr-x 7 1000 1000    4096 Aug 19 21:35 ..
+-rw-r--r-- 1 root root     267 Aug 19 21:36 fingerprints.txt
+-rwxr-xr-x 1 root root  661136 Aug 19 21:35 judy-B-1.so
+-rwxr-xr-x 1 root root  661136 Aug 19 21:36 judy-B-2.so
+-rwxr-xr-x 1 root root  661136 Aug 19 21:36 judy-B-3.so
+-rwxr-xr-x 1 root root 1872056 Aug 19 21:35 judy-C-1.so
+-rwxr-xr-x 1 root root 1872056 Aug 19 21:36 judy-C-2.so
+-rwxr-xr-x 1 root root 1872056 Aug 19 21:36 judy-C-3.so
+-rwxr-xr-x 1 root root  961352 Aug 19 21:35 judy-P-1.so
+-rwxr-xr-x 1 root root  961352 Aug 19 21:36 judy-P-2.so
+-rwxr-xr-x 1 root root  961352 Aug 19 21:36 judy-P-3.so

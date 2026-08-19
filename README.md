@@ -111,6 +111,18 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
   can share, it wins total memory at high worker counts. judy-cache's
   case is per-worker state, single-process daemons, and O(range)
   invalidation.
+- **Which libJudy the extension links matters, and more than expected.**
+  `pie install orieg/judy` gives you ext-judy's bundled, patched libJudy and
+  nothing here needs doing. But an extension built `--with-judy=/usr` against a
+  distro libJudy — as some packaged builds are — measures **−23% on `set()`**,
+  −20 to −27% on `deletePrefix()` and −16 to −22% on `keysByPrefix()` against
+  the bundled default, on the *default* `storeSerialized: true` path. About 9 of
+  those 23 points are php-judy's patches and about 15 are Debian's build of the
+  same upstream sources; linkage itself contributes nothing measurable. The one
+  reversal: random-order `get()`/`has()` over a working set far beyond L3 is
+  ~2-3% *slower* on the bundled build. Memory is unchanged either way. Full
+  four-arm measurement, controls and caveats in
+  [BENCHMARK.md](BENCHMARK.md#does-the-extensions-bundled-libjudy-reach-this-package).
 - Benchmark numbers should come from an idle machine or CI, never a loaded
   laptop.
 
@@ -148,6 +160,14 @@ process, multiple runs, reported as median [min..max], across a size sweep
 every push; the current reference run with full methodology and analysis is
 committed in [BENCHMARK.md](BENCHMARK.md). Trust those numbers, not laptop
 runs.
+
+`php bench/vendoring-probe.php` answers a different question: whether the
+libJudy the extension is linked against is visible at this layer. It compares
+builds of one ext-judy version differing only in `--with-judy`, across a ladder
+of configurations, with paired per-round ratios, bootstrap CIs, claim floors, a
+rebuild control and a per-child assertion of which `.so` was loaded. It needs
+several extension builds on one quiet host, so it is a host-run instrument
+rather than a CI job; `bench/build-vendoring-arms.sh` builds the arms.
 
 ## Sharing across workers
 
