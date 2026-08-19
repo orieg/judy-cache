@@ -21,6 +21,17 @@ Works everywhere out of the box via
 [judy extension](https://github.com/orieg/php-judy) are picked up
 transparently.
 
+> **If you install the extension, use ext-judy >= 2.6.0.** Every backend this
+> package offers is one of the `STRING_TO_MIXED` types, and ext-judy before
+> 2.6.0 has a use-after-free in the teardown of exactly those types
+> ([php-judy#162](https://github.com/orieg/php-judy/issues/162)) — it reaches
+> this package through both `clear()` and ordinary destruction, and aborts the
+> process with `zend_mm_heap corrupted`. The defect predates the 2.6.0
+> vendoring work and is present in every earlier release. The **default**
+> `storeSerialized: true` is not affected, because it stores serialized
+> strings and the bug needs values the garbage collector can own; see
+> [Semantics](#semantics) for what that means if you turn it off.
+
 ## PSR-16
 
 ```php
@@ -67,6 +78,14 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 - **Values**: serialized snapshots by default (like Symfony's ArrayAdapter),
   so mutating a fetched object does not mutate the cache. Pass
   `storeSerialized: false` for by-reference storage (faster, aliasing caveat).
+  On **ext-judy < 2.6.0** that option is also the one that exposes
+  [php-judy#162](https://github.com/orieg/php-judy/issues/162): storing values
+  by reference means the cache holds arrays and objects the caller still
+  references, which is precisely the shared-GC-collectable case that turns the
+  teardown walk into a use-after-free. Measured against a locally built 2.5.2,
+  20k shared objects abort the process in 8 of 20 trials; the same script on
+  2.6.0 aborts in 0 of 20. The constructor raises one `E_USER_WARNING` if it
+  sees that combination. The default keeps you clear of it on any version.
 - **TTL**: `int` seconds or `DateInterval`; expired entries are evicted lazily
   on access, or eagerly via `prune()`.
 - **Clock**: injectable (`new JudySimpleCache(clock: fn() => $t)`) for tests.

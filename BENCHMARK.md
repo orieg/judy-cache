@@ -10,6 +10,18 @@ meaningfully change (new release, methodology change), not per commit.
 
 - Each cell = fresh child process per (backend, size, run); **5 runs,
   reported as median [min..max]**.
+- **Arms are interleaved**: run *r* of every backend, then run *r+1* of every
+  backend. Draining one backend's runs before starting the next gives each arm
+  its own contiguous slice of wall-clock, so anything that drifts over the
+  sweep — a thermal ramp, another job starting, the page cache warming — is
+  charged entirely to whichever arm held that slice. Interleaving spreads a
+  drift across all arms instead of biasing one.
+- **The child asserts its own backend.** A child process does not inherit the
+  parent's `-d extension=…`, so a run driven that way used to print the
+  extension in the header while every measured child silently fell back to the
+  polyfill. Each child now reports the backend it actually ran under and the
+  parent refuses to print a table whose children disagree with it. To measure
+  a specific build, set `JUDY_EXT_SO` to its `.so` and the parent forwards it.
 - Keys `user.<uid>.item.<i>` (10 entries per uid), values
   `['id' => int, 'score' => int]`, serialized snapshots where the backend
   serializes (judy-cache default, ArrayAdapter, plain-array harness).
@@ -28,10 +40,21 @@ meaningfully change (new release, methodology change), not per commit.
   comparable as printed only for a single process.
 - Environment of the reference run below: GitHub Actions `ubuntu-latest`,
   PHP 8.4.24, ext-judy 2.4.2, APCu enabled (`apc.shm_size=512M`),
-  2026-08-14, judy-cache v0.1.x.
+  2026-08-14, judy-cache v0.1.x. The benchmark job installs the extension with
+  PIE, which takes the latest release, so the next scheduled run refreshes
+  this table onto ext-judy 2.6.0 (and onto its default bundled libJudy) with
+  no change needed here.
 
 Reproduce: `composer install && php bench/cache-bench.php 50000,200000,1000000 5`
 (idle machine or CI runner only — co-resident load invalidates the numbers).
+
+To compare two ext-judy builds, load each in the parent *and* pass it through
+to the children:
+
+```sh
+JUDY_EXT_SO=/path/to/judy.so php -d extension=/path/to/judy.so \
+  bench/cache-bench.php 50000,200000 5
+```
 
 ## Reference run
 
@@ -105,3 +128,58 @@ shared-memory segment as mapped pages; treat its memory column as approximate.
 - **Backend choice**: the trie default beats the hash/adaptive backends on
   memory (172 vs 231 MB at 1M) with equal invalidation latency, which is
   why it stays the default.
+
+## ext-judy 2.5.2 vs 2.6.0 — directional, NOT claim-grade
+
+The question this answers is narrow: does upgrading the extension to 2.6.0
+move judy-cache's own numbers? Separating that from the backend comparison
+above is the point — 2.6.0's performance work landed on integer-keyed paths
+and the string layer, and it is not obvious how much of it survives a PSR-16
+wrapper whose hot path is dominated by `serialize()`/`unserialize()` and key
+formatting on the PHP side.
+
+**Confidence: directional only.** Host was a shared 8-core M1 MacBook Pro
+carrying a load average of 5.0–6.3 throughout (the project's hygiene gate is
+`load < N/2`, i.e. `< 4`), with a VM and a browser each near 100% CPU. Arms
+were interleaved and the two extension sweeps were run sequentially rather
+than concurrently, but neither fixes contention this heavy. **These numbers
+must not be quoted as a measured claim** — the CI benchmark job on an idle
+runner is the claim-grade instrument, and it refreshes onto 2.6.0 by itself.
+
+Environment: macOS arm64 (M1, 8 cores), PHP 8.5.8, 5 runs per cell,
+interleaved, child-asserted backend. 2.6.0 was its default **bundled static**
+libJudy; 2.5.2 was linked against a **system** libJudy 1.0.5 from Homebrew —
+so this A/B carries the linkage change as a confound, not just the patches.
+Symfony and APCu arms are absent: `symfony/cache` needs a `composer install`
+and no Composer is present on that host, and APCu is not built for that PHP.
+
+| n | backend | peak RSS MB, 2.5.2 → 2.6.0 | set kops/s, 2.5.2 → 2.6.0 | get kops/s, 2.5.2 → 2.6.0 |
+|---|---|---|---|---|
+| 50k | judy | 32.4 → 32.3 | 2030 → 1972 | 1978 → 1979 |
+| 50k | judy-hash | 34.9 → 34.9 | 1198 → 1599 | 2100 → 2193 |
+| 50k | judy-adaptive | 34.9 → 34.9 | 1570 → 1610 | 2192 → 2202 |
+| 200k | judy | 50.3 → 50.2 | 1898 → 1878 | 1752 → 1812 |
+| 200k | judy-hash | 60.8 → 60.8 | 1382 → 1507 | 2006 → 2140 |
+| 200k | judy-adaptive | 60.8 → 60.9 | 1554 → 1550 | 2120 → 2193 |
+
+**Reading: no detectable difference on this workload.** Every throughput
+delta above sits inside its own run-to-run spread — `judy-hash` set at 50k
+spanned 1065..1643 kops/s on 2.5.2 alone, a 54% range, which is wider than
+any median gap in the table. Nothing here supports a performance claim in
+either direction, and the honest summary is that 2.6.0's gains do not show
+through this wrapper at this noise level, not that they are absent.
+
+**Peak RSS is the exception and is worth reading.** It varied by under 1%
+across runs — it is a footprint, not a timing, so co-resident CPU load barely
+touches it — and it is flat to within 0.1 MB across the two versions at every
+cell. That is the expected result: 2.6.0 changed teardown order, build
+configuration and inner-loop code, not the data structures, so the memory
+footprint should be identical. It is.
+
+**The reason to upgrade is not on this table.** It is
+[php-judy#162](https://github.com/orieg/php-judy/issues/162): every backend
+here is a `STRING_TO_MIXED` type, and before 2.6.0 their teardown is a
+use-after-free. With `storeSerialized: false` and 20k shared objects, 2.5.2
+aborts with `zend_mm_heap corrupted` in **8 of 20 trials** and 2.6.0 in
+**0 of 20** (same host; a correctness observation, not a timing, so the
+contaminated host does not weaken it).

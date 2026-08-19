@@ -36,7 +36,7 @@
         "symfony/cache": "^6.4 || ^7.0"
     },
     "suggest": {
-        "ext-judy": "The native extension: C-speed operations and lower memory (pie install orieg/judy)",
+        "ext-judy": "The native extension: C-speed operations and lower memory. Use >= 2.6.0 — earlier versions have a use-after-free in the teardown of the STRING_TO_MIXED types this package is built on (php-judy#162) (pie install orieg/judy)",
         "symfony/cache": "To use JudyAdapter as a Symfony Cache / PSR-6 pool"
     },
     "provide": {
