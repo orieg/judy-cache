@@ -94,14 +94,14 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 
 - The headline benefit is **functional** (prefix invalidation, ordered key
   introspection) plus **bounded, GC-light key storage** at large entry counts.
-- Measured on CI (PHP 8.4, median of 5, small serialized array values):
-  at 1M entries the trie backend holds **172 MB vs 495 MB** for a plain
-  PHP array cache, 921 MB for Symfony ArrayAdapter, and 1407 MB for
-  TagAwareAdapter; group invalidation stays **flat (~40-57 µs)** from 50k
-  to 1M entries while scan-based backends grow linearly (array: 13.6 ms ->
-  280 ms). The memory ratio shrinks as values grow larger — the savings
+- Measured on CI (PHP 8.4, ext-judy 2.6.0, median of 5, small serialized
+  array values): at 1M entries the trie backend holds **172 MB vs 495 MB**
+  for a plain PHP array cache, 921 MB for Symfony ArrayAdapter, and 1407 MB
+  for TagAwareAdapter; group invalidation stays **flat (~50-58 µs)** from 50k
+  to 1M entries while scan-based backends grow linearly (array: 12.4 ms ->
+  252 ms). The memory ratio shrinks as values grow larger — the savings
   are in key/bucket overhead, not in your data. TagAwareAdapter's
-  invalidateTags() call itself is ~10 µs because its cost is deferred:
+  invalidateTags() call itself is ~14 µs because its cost is deferred:
   it pays with ~10x slower writes and the highest memory of any backend.
   For integer-keyed workloads, skip the cache layer and use a `Judy`
   array directly ([php-judy benchmarks](https://github.com/orieg/php-judy/blob/main/BENCHMARK.md)).
