@@ -753,7 +753,8 @@ function vp_php(string $dir): string
 
 $opts = getopt('', [
     'child', 'arm:', 'reference:', 'rounds:', 'n:', 'iterations:', 'groups:',
-    'families:', 'floor:', 'dram-n:', 'label:', 'provenance:', 'out:', 'csv:', 'help',
+    'families:', 'floor:', 'dram-n:', 'label:', 'provenance:', 'out:', 'csv:',
+    'expect-lib:', 'help',
 ]);
 
 if (isset($opts['help'])) {
@@ -790,6 +791,20 @@ foreach (vp_multi($opts, 'arm') as $spec) {
 if (count($arms) < 2) {
     fwrite(STDERR, "need at least two --arm NAME=path arms (see --help)\n");
     exit(2);
+}
+
+// --expect-lib arm=/path/or/substring asserts WHICH external libJudy an arm
+// resolves at runtime. This is not paranoia about a hypothetical: setting
+// LD_LIBRARY_PATH so one arm could find its own shared build silently
+// redirected a DIFFERENT arm's distro libJudy to the same file, turning two
+// arms into one library and producing a perfectly clean, fully bootstrapped
+// table of nulls that meant nothing. The mapped paths were recorded correctly
+// throughout — the run was only wrong if you did not read them. An assertion
+// reads them for you.
+$expectLib = [];
+foreach (vp_multi($opts, 'expect-lib') as $spec) {
+    [$name, $want] = array_pad(explode('=', $spec, 2), 2, '');
+    $expectLib[$name] = $want;
 }
 
 $provenance = [];
@@ -891,6 +906,20 @@ PHP);
                 . implode(', ', $foreign) . "\n");
             exit(1);
         }
+        $libs = array_values(array_filter($j['paths'], static fn($p) => preg_match('#/libJudy[^/]*$#i', $p)));
+        if (isset($expectLib[$name])) {
+            $want = $expectLib[$name];
+            $hit  = false;
+            foreach ($libs as $lib) {
+                if ($lib === $want || str_contains($lib, $want)) { $hit = true; }
+            }
+            if (!$hit) {
+                fwrite(STDERR, "arm $name: expected to resolve a libJudy matching '$want' but mapped ["
+                    . ($libs ? implode(', ', $libs) : 'none — statically linked')
+                    . "]. Refusing to measure an arm that is not the library it claims to be.\n");
+                exit(1);
+            }
+        }
         $verify[$name][] = [
             'so'      => $b['so'],
             'version' => $j['version'],
@@ -898,6 +927,31 @@ PHP);
             'sha256'  => hash_file('sha256', $b['so']),
             'size'    => filesize($b['so']),
         ];
+    }
+}
+
+// Two arms that resolve the SAME external libJudy are the same library wearing
+// two names, whatever their extension binaries differ in. That is legitimate in
+// a rebuild control and fatal in a library comparison, so it is surfaced loudly
+// rather than decided here.
+$libByArm = [];
+foreach ($verify as $name => $list) {
+    $set = [];
+    foreach ($list as $v) {
+        foreach ($v['mapped'] as $p) {
+            if (preg_match('#/libJudy[^/]*$#i', $p)) { $set[$p] = true; }
+        }
+    }
+    $libByArm[$name] = array_keys($set);
+}
+foreach ($libByArm as $a => $la) {
+    foreach ($libByArm as $b => $lb) {
+        if ($a < $b && $la !== [] && $la === $lb) {
+            fwrite(STDERR, "WARNING: arms '$a' and '$b' both resolve " . implode(', ', $la)
+                . " — they are the SAME libJudy under two names. Any difference between them\n"
+                . "  is extension-binary noise, not a library effect. Use --expect-lib to assert\n"
+                . "  what each arm should resolve, and check LD_LIBRARY_PATH.\n");
+        }
     }
 }
 
