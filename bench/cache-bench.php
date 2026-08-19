@@ -125,6 +125,13 @@ if ($mode !== null) {
 
     $peak = getrusage()['ru_maxrss'] * (PHP_OS_FAMILY === 'Darwin' ? 1 : 1024);
     echo json_encode([
+        // The child reports the backend it ACTUALLY ran under, and the parent
+        // refuses to publish a table whose children disagree with it. A child
+        // does not inherit the parent's `-d extension=`, so before this was
+        // asserted a run driven as `php -d extension=…/judy.so bench/…` would
+        // print "ext-judy 2.6.0" in the header while every measured child
+        // silently used the pure-PHP polyfill.
+        'ext' => \extension_loaded('judy') ? \judy_version() : 'polyfill',
         'peak_rss' => $peak,
         'set_ops_s' => (int) ($n / ($tSet / 1e9)),
         'get_ops_s' => (int) ($n / ($tGet / 1e9)),
@@ -142,6 +149,22 @@ $ini = '';
 if (extension_loaded('apcu')) {
     $ini = '-d apc.enable_cli=1 -d apc.shm_size=512M';
 }
+
+/* A child process does not inherit the parent's `-d extension=…`. When the
+   extension comes from php.ini (CI installs it with PIE) that is invisible,
+   but comparing two ext-judy builds means loading each by path — and then
+   every child would silently fall back to the polyfill while the header
+   claimed the extension. Set JUDY_EXT_SO to the .so being measured and it is
+   forwarded to the children; the version assertion below is what actually
+   guarantees it worked. */
+$extSo = getenv('JUDY_EXT_SO') ?: '';
+if ($extSo !== '') {
+    if (!is_file($extSo)) {
+        fwrite(STDERR, "JUDY_EXT_SO does not exist: $extSo\n");
+        exit(1);
+    }
+    $ini .= ' -d extension=' . escapeshellarg($extSo);
+}
 $self = escapeshellarg(__FILE__);
 
 function med(array $xs): float
@@ -154,26 +177,47 @@ function med(array $xs): float
 echo "judy-cache benchmark — keys user.<uid>.item.<i>, $runs runs per cell, median [min..max]\n";
 echo "PHP " . PHP_VERSION . ", ext-judy " . (extension_loaded('judy') ? judy_version() : 'ABSENT (polyfill)') . ", apcu " . (extension_loaded('apcu') ? 'yes' : 'no') . "\n";
 
+$childExts = [];
+
 foreach ($sizes as $size) {
     echo "\n### n=" . number_format($size) . " entries (invalidate one 10-key group)\n\n";
     printf("| %-13s | %-14s | %-13s | %-13s | %-22s |\n", 'backend', 'peak RSS (MB)', 'set kops/s', 'get kops/s', 'group-invalidate (µs)');
     echo "|---------------|----------------|---------------|---------------|------------------------|\n";
-    foreach (backends() as $impl) {
-        $rss = $setr = $getr = $inv = [];
-        $failed = false;
-        for ($r = 0; $r < $runs; $r++) {
+
+    /* ARMS ARE INTERLEAVED: run r of every backend, then run r+1 of every
+       backend. Draining one backend's runs before starting the next makes the
+       comparison hostage to anything that drifts over the sweep — a thermal
+       ramp, another job starting, the page cache warming — because each
+       backend then occupies its own contiguous slice of wall-clock and any
+       drift is charged entirely to whichever arm held that slice. Interleaving
+       spreads a drift across all arms instead of biasing one. */
+    $samples = [];
+    $failed = [];
+    for ($r = 0; $r < $runs; $r++) {
+        foreach (backends() as $impl) {
+            if (isset($failed[$impl])) {
+                continue;
+            }
             $out = shell_exec(PHP_BINARY . " $ini $self _ _ $impl $size 2>/dev/null") ?? '';
             $j = json_decode(trim($out), true);
-            if (!is_array($j)) { $failed = true; break; }
-            $rss[] = $j['peak_rss'] / 1048576;
-            $setr[] = $j['set_ops_s'] / 1000;
-            $getr[] = $j['get_ops_s'] / 1000;
-            $inv[] = $j['invalidate_us'];
+            if (!is_array($j)) {
+                $failed[$impl] = true;
+                continue;
+            }
+            $childExts[$j['ext'] ?? 'unreported'] = true;
+            $samples[$impl]['rss'][]  = $j['peak_rss'] / 1048576;
+            $samples[$impl]['set'][]  = $j['set_ops_s'] / 1000;
+            $samples[$impl]['get'][]  = $j['get_ops_s'] / 1000;
+            $samples[$impl]['inv'][]  = $j['invalidate_us'];
         }
-        if ($failed) {
+    }
+
+    foreach (backends() as $impl) {
+        if (isset($failed[$impl]) || !isset($samples[$impl])) {
             printf("| %-13s | %-71s |\n", $impl, 'FAILED (composer install? extension?)');
             continue;
         }
+        ['rss' => $rss, 'set' => $setr, 'get' => $getr, 'inv' => $inv] = $samples[$impl];
         printf("| %-13s | %6.1f [%.1f..%.1f] | %6.0f [%d..%d] | %6.0f [%d..%d] | %8.0f [%d..%d] |\n",
             $impl,
             med($rss), min($rss), max($rss),
@@ -181,6 +225,19 @@ foreach ($sizes as $size) {
             med($getr), (int) min($getr), (int) max($getr),
             med($inv), (int) min($inv), (int) max($inv));
     }
+}
+
+/* The header above describes the PARENT. These numbers came from children.
+   Refuse to publish a table where those are not the same thing. */
+$parentExt = extension_loaded('judy') ? judy_version() : 'polyfill';
+$seen = array_keys($childExts);
+if ($seen !== [] && $seen !== [$parentExt]) {
+    fwrite(STDERR, "\nBACKEND MISMATCH — results discarded.\n"
+        . "  header/parent: $parentExt\n"
+        . "  children ran:  " . implode(', ', $seen) . "\n"
+        . "A child does not inherit `-d extension=`; pass JUDY_EXT_SO=/path/to/judy.so\n"
+        . "so the parent forwards it, or install the extension into php.ini.\n");
+    exit(1);
 }
 
 echo "\nInvalidation semantics per backend: judy* = deletePrefix (range walk);\n";

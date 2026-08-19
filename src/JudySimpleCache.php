@@ -45,12 +45,62 @@ class JudySimpleCache implements CacheInterface
         if (!\in_array($backend, [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE], true)) {
             throw new InvalidArgumentException('backend must be a string-to-mixed Judy type constant');
         }
+        self::warnIfTeardownUnsafe($storeSerialized);
         $this->values = new \Judy($backend);
         $this->expiries = new \Judy(match ($backend) {
             \Judy::STRING_TO_MIXED => \Judy::STRING_TO_INT,
             \Judy::STRING_TO_MIXED_HASH => \Judy::STRING_TO_INT_HASH,
             default => \Judy::STRING_TO_INT_ADAPTIVE,
         });
+    }
+
+    /**
+     * ext-judy before 2.6.0 has a use-after-free in the teardown of the
+     * STRING_TO_MIXED family — the three types this class is built on
+     * (php-judy#162, fixed in 2.6.0 by unlinking the container before the
+     * walk that frees its zvals). Teardown walks the Judy calling
+     * zval_ptr_dtor() on every value while the freed pointers are still
+     * reachable in it; dropping a *shared* GC-collectable value roots it
+     * instead of freeing it, and once the root buffer fills the collector runs
+     * synchronously inside that loop and re-walks the half-freed container.
+     * It surfaces as a "zend_mm_heap corrupted" abort, and it reaches this
+     * class through both `clear()` (which calls Judy::free()) and ordinary
+     * destruction.
+     *
+     * The trigger needs the stored values to BE GC-collectable, so it is
+     * gated on $storeSerialized rather than announced to everyone:
+     *
+     *   - storeSerialized: true (the default) stores serialize() strings.
+     *     Strings are refcounted but not GC-collectable, so zval_ptr_dtor
+     *     never roots one and the collector cannot fire inside teardown. Not
+     *     affected — verified across 20 trials on 2.5.2 with no abort.
+     *   - storeSerialized: false stores the caller's arrays and objects by
+     *     reference, which is exactly the shared-collectable case. Verified
+     *     against a locally built 2.5.2: 8 of 20 trials abort with
+     *     "zend_mm_heap corrupted"; the same script on 2.6.0 is 0 of 20.
+     *
+     * Warning rather than throwing: the abort is probabilistic and needs
+     * scale, so a hard failure would break deployments that are running, and
+     * a documented floor alone would not reach someone who opted into
+     * by-reference storage for the speed. Once per process, not per instance.
+     */
+    private static function warnIfTeardownUnsafe(bool $storeSerialized): void
+    {
+        static $warned = false;
+        if ($warned || $storeSerialized || !\extension_loaded('judy')) {
+            return;
+        }
+        if (\version_compare(\judy_version(), '2.6.0', '>=')) {
+            return;
+        }
+        $warned = true;
+        \trigger_error(
+            'judy-cache: ext-judy ' . \judy_version() . ' has a use-after-free in '
+            . 'STRING_TO_MIXED teardown (php-judy#162) that storeSerialized: false '
+            . 'can trigger, aborting the process with "zend_mm_heap corrupted". '
+            . 'Upgrade to ext-judy >= 2.6.0, or use the default storeSerialized: true.',
+            \E_USER_WARNING
+        );
     }
 
     public function get(string $key, mixed $default = null): mixed

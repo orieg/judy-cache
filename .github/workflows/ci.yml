@@ -22,13 +22,16 @@ jobs:
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php-version }}
-      - name: Install ext-judy via PIE
+      # Since ext-judy 2.6.0 the bundled, patched libJudy is the default build:
+      # ./configure needs no system library and downloads nothing. Forcing
+      # --with-judy=/usr here would test a configuration that is not what
+      # `pie install orieg/judy` gives a user of this package.
+      - name: Install ext-judy via PIE (default = bundled libJudy)
         if: matrix.judy == 'ext'
         run: |
-          sudo apt-get update && sudo apt-get install -y libjudy-dev
           curl -fsSL https://github.com/php/pie/releases/latest/download/pie.phar \
             -o /usr/local/bin/pie && chmod +x /usr/local/bin/pie
-          sudo pie install orieg/judy --with-judy=/usr
+          sudo pie install orieg/judy
           php -r 'echo "ext-judy ", judy_version(), PHP_EOL;'
       - name: Composer validate + install
         run: |
@@ -53,12 +56,11 @@ jobs:
           php-version: "8.4"
           extensions: apcu
           ini-values: apc.enable_cli=1, apc.shm_size=512M
-      - name: Install ext-judy via PIE
+      - name: Install ext-judy via PIE (default = bundled libJudy)
         run: |
-          sudo apt-get update && sudo apt-get install -y libjudy-dev
           curl -fsSL https://github.com/php/pie/releases/latest/download/pie.phar \
             -o /usr/local/bin/pie && chmod +x /usr/local/bin/pie
-          sudo pie install orieg/judy --with-judy=/usr
+          sudo pie install orieg/judy
       - name: Composer install
         run: composer install --no-interaction --no-progress
       - name: Run benchmark sweep (median of 5)
