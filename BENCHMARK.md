@@ -202,3 +202,100 @@ use-after-free. With `storeSerialized: false` and 20k shared objects, 2.5.2
 aborts with `zend_mm_heap corrupted` in **8 of 20 trials** and 2.6.0 in
 **0 of 20** (same host; a correctness observation, not a timing, so the
 contaminated host does not weaken it).
+
+## Does the extension's bundled libJudy reach this package?
+
+The section above compares **releases** (2.5.2 vs 2.6.0). That cannot isolate
+vendoring: it carries every other change in the release *and* a
+static-vs-shared linkage change, and it was run on a contended laptop. This
+section replaces that framing with a controlled measurement of the one
+variable that matters — **which libJudy the extension is linked against** —
+and answers the question a user actually has: *does the vendored library reach
+a PSR-16 cache, and in which configuration?*
+
+The instrument is [`bench/vendoring-probe.php`](bench/vendoring-probe.php).
+`cache-bench.php` cannot answer this: it compares cache *backends*, and its
+operations are dominated by `serialize()`/`unserialize()`, so a large relative
+gain inside libJudy is a small end-to-end one there. That is a fact about the
+workload, not a defect in the benchmark.
+
+### The arms are three builds of one version
+
+All three arms are **php-judy 2.6.0 built from one source tree with one
+toolchain**, differing only in `--with-judy`; the driver refuses to run if the
+arms disagree on `judy_version()`.
+
+| arm | `--with-judy` | libJudy |
+|---|---|---|
+| `bundled` | `bundled` — the default, and what `pie install orieg/judy` gives you | vendored + patched, **static** inside `judy.so` |
+| `system` | `/usr` | the distro's **shared** `libJudy.so` |
+| `pristine` | a directory holding an unpatched upstream build | upstream Judy 1.0.5, **static** inside `judy.so` |
+
+`system` is the comparison a distro user experiences, but it confounds the
+patches with static-vs-shared linkage. `pristine` is static like `bundled`, so
+`bundled`-vs-`pristine` isolates the php-judy patches alone; reading the two
+together separates the effects. "System libJudy" is also not one thing —
+Debian and Fedora ship 1.0.5 *with* the Baskins `jp_1Index` fix, Alpine and
+Homebrew ship it pristine — so each run records its arms' provenance verbatim.
+
+### The ladder, and Amdahl arithmetic that is measured rather than assumed
+
+Every family stores the same keys and differs only in how much non-Judy work
+surrounds each Judy call: the default serialized path, `storeSerialized: false`,
+int values, and the operations that serialize on neither side (`has`,
+`delete`, `keysByPrefix`, `deletePrefix`).
+
+Each PSR-16 family has a **bare-Judy mirror** issuing exactly the Judy calls
+the wrapper issues and nothing else — `get` is *three* Judy operations
+(`isset($values[$k])`, `isset($expiries[$k])`, `$values[$k]`), because that is
+what `JudySimpleCache::get()` does through `live()`. So
+
+```
+judy_share = t(mirror) / t(PSR-16 row)
+```
+
+is a measured decomposition, and the expected end-to-end movement is
+`judy_share × (the mirror's own delta)`. The tables print predicted and
+measured side by side, so the arithmetic behind every number's *size* is
+visible.
+
+Two caveats, stated with their direction rather than as generic uncertainty:
+
+- The mirror also pays the extension's own `ArrayAccess` dispatch, which is
+  not libJudy. `judy_share` is therefore an **upper bound**, and so is every
+  predicted end-to-end delta. A measured gain falling short of prediction is
+  expected, not anomalous.
+- Mirror payloads are built **before** the timer. If `jser` serialized inside
+  its own timed loop it would pay the same `serialize()` its host pays, and
+  `judy_share` would silently become "the fraction that is not PSR-16 wrapper
+  overhead" — a much larger and entirely wrong number (29% vs 60% on `set`).
+
+### Statistics
+
+Same discipline as php-judy's `scripts/bench-threearm.php`, reimplemented in
+the probe so this package depends on nothing:
+
+- arms **interleaved**, order reversed on odd rounds; all statistics are
+  **paired per-round ratios**, so between-round drift divides out
+- 95% **percentile-bootstrap CI** of the median ratio
+- a cell claims a direction only when the **whole CI clears the claim floor** —
+  a point estimate past the floor with a straddling CI is null, not a small win
+- per-residency floors from php-judy's pooled controls: **3% cache-resident,
+  1.3% out-of-cache**
+- **three independently linked builds per arm**, rotated across rounds; a delta
+  no larger than the spread between build pairs is vetoed as layout, not libJudy
+- a **PHP-array control** executing no libJudy re-centres every row, and its own
+  scatter is that run's measurement of the noise floor
+- **hygiene gated** at phase boundaries on both load average and foreign CPU;
+  over the threshold every verdict is suppressed
+- **peak RSS reported per arm** — the patches changed code, not data
+  structures, so identical footprints are a checked prediction
+- **every child proves which `.so` it loaded** from `/proc/self/maps`, by path
+  equality. All arms report the same `judy_version()`, so the version string
+  cannot tell them apart. The extension is selected with `PHP_INI_SCAN_DIR`,
+  because `-d extension=` is a silent no-op on an image whose `conf.d` already
+  enables judy.
+
+This is a **host-run instrument, not a CI job**: it needs several builds of the
+extension on one machine and a quiet box, neither of which a shared runner
+provides.
