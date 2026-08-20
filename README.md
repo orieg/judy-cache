@@ -200,6 +200,29 @@ new JudySimpleCache(backend: Judy::STRING_TO_MIXED_ADAPTIVE);
 The CI benchmark compares them; if one dominates across workloads, it will
 become the default in a minor release.
 
+## Versioning and releases
+
+Semantic versioning, with the `0.x` caveat that a minor bump may carry a
+breaking change — [CHANGELOG.md](CHANGELOG.md) lists each one and what to do
+about it.
+
+Two dependencies move together and are worth stating explicitly:
+
+- **`orieg/judy-polyfill` `^2.6`.** Its version number tracks the *ext-judy API
+  level* it implements, not its own feature count, so `^2.6` means "the 2.6
+  Judy contract" on either backend.
+- **ext-judy `>= 2.6.0`** when the extension is installed. Below that there is
+  a use-after-free in `STRING_TO_MIXED` teardown
+  ([php-judy#162](https://github.com/orieg/php-judy/issues/162)) that
+  `storeSerialized: false` can trigger. Composer cannot express "optional, but
+  at least this version", so this is enforced two other ways: `JudySimpleCache`
+  warns once at runtime when it sees an older extension, and CI fails if PIE
+  resolves below 2.6.0.
+
+Releasing: update `CHANGELOG.md` in the PR, merge it, then push the tag. The
+release workflow publishes a GitHub Release from that version's changelog
+section and fails if the section is missing.
+
 ## License
 
 MIT.
