@@ -32,7 +32,20 @@ jobs:
           curl -fsSL https://github.com/php/pie/releases/latest/download/pie.phar \
             -o /usr/local/bin/pie && chmod +x /usr/local/bin/pie
           sudo pie install orieg/judy
-          php -r 'echo "ext-judy ", judy_version(), PHP_EOL;'
+          # This package documents ext-judy >= 2.6.0 as its supported floor:
+          # earlier versions have a use-after-free in the teardown of the
+          # STRING_TO_MIXED types it is built on (php-judy#162), and
+          # JudySimpleCache warns at runtime when it sees one. Assert what PIE
+          # actually resolved rather than only printing it — a silent drop to
+          # an older release would otherwise test the configuration this
+          # package tells users not to run.
+          php -r '
+            $v = judy_version();
+            echo "ext-judy ", $v, PHP_EOL;
+            if (version_compare($v, "2.6.0", "<")) {
+                fwrite(STDERR, "::error::PIE resolved ext-judy $v; this package requires >= 2.6.0\n");
+                exit(1);
+            }'
       - name: Composer validate + install
         run: |
           composer validate --strict
@@ -71,3 +84,18 @@ jobs:
         with:
           name: bench-results
           path: bench-results.md
+
+  ci:
+    name: CI
+    needs: [tests, bench]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all matrix jobs passed
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more CI matrix jobs failed."
+            exit 1
+          fi
+          echo "All CI matrix jobs passed."
+
