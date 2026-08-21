@@ -550,24 +550,22 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
             }
 
             // Polyfill Step
-            if ($backend === 'polyfill' || ($backend === 'all' && $count <= 1000000)) {
+            if ($backend === 'all' || $backend === 'polyfill') {
                 $sendEvent('log', [
                     'level' => 'step',
                     'stage' => 'polyfill',
-                    'text' => sprintf("🧩 [judy-polyfill] Running %s items in pure-PHP fallback trie...", number_format($count)),
+                    'text' => sprintf("🧩 [judy-polyfill] Running %s items in pure-PHP fallback...", number_format($count)),
                 ]);
                 $resPolyfill = executeBenchmark('polyfill', $workload, $count);
                 $results['polyfill'] = $resPolyfill;
                 $sendEvent('log', [
                     'level' => 'success',
                     'stage' => 'polyfill',
-                    'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB", $resPolyfill['duration_ms'], $resPolyfill['mem_allocated_mb']),
-                ]);
-            } elseif ($backend === 'all' && $count > 1000000) {
-                $sendEvent('log', [
-                    'level' => 'warn',
-                    'stage' => 'polyfill',
-                    'text' => "ℹ️ [judy-polyfill] Skipped pure-PHP polyfill for >1M items to prevent PHP memory limit / worker timeout.",
+                    'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB &bull; Throughput: %s ops/s", 
+                        $resPolyfill['duration_ms'], 
+                        $resPolyfill['mem_allocated_mb'], 
+                        number_format($resPolyfill['ops_per_sec'])
+                    ),
                 ]);
             }
 
@@ -615,9 +613,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
                     $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
                 }
                 $results['array'] = executeBenchmark('array', $workload, $count, $body);
-                if ($count <= 1000000) {
-                    $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
-                }
+                $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
             } else {
                 $results[$backend] = executeBenchmark($backend, $workload, $count, $body);
             }
