@@ -15,6 +15,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Tab switcher
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabPanes = document.querySelectorAll('.tab-pane');
+  const terminalDot = document.getElementById('terminal-dot');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      tabPanes.forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const target = document.getElementById(btn.dataset.tab);
+      if (target) target.classList.add('active');
+    });
+  });
+
   // Scale Slider mapping (10k -> 10M)
   const SCALES = [
     { count: 10000, label: '10,000 keys (10k)' },
@@ -45,7 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnClearTerm = document.getElementById('btn-clear-term');
   const integrityCard = document.getElementById('integrity-card');
   const integrityDetails = document.getElementById('integrity-details');
-  const samplesCard = document.getElementById('samples-card');
   const samplesGrid = document.getElementById('samples-grid');
   const probeInput = document.getElementById('probe-input');
   const btnProbe = document.getElementById('btn-probe');
@@ -123,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
       logTerminal(`✓ Resident worker memory flushed cleanly. Current RSS: ${data.current_rss_mb} MB`, 'success');
       tableBody.innerHTML = `
         <tr>
-          <td colspan="6" class="placeholder-row">
+          <td colspan="6" class="placeholder-row compact-placeholder">
             <div class="placeholder-content">
               <span style="color: var(--accent-emerald)">✓ Worker memory cleared. Current RSS: ${data.current_rss_mb} MB</span>
             </div>
@@ -132,17 +146,17 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
       comparisonBox.style.display = 'none';
       integrityCard.style.display = 'none';
-      samplesCard.style.display = 'none';
       document.getElementById('kpi-mem').textContent = '—';
       document.getElementById('kpi-lat').textContent = '—';
       document.getElementById('kpi-ops').textContent = '—';
+      samplesGrid.innerHTML = '<div class="sample-item placeholder-sample">Memory cleared. Run a benchmark to inspect samples.</div>';
     } catch (e) {
       logTerminal(`❌ Failed to clear worker memory: ${e.message}`, 'error');
     } finally {
       resetBtn.disabled = false;
       resetBtn.innerHTML = `
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        <span>Clear Memory</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        <span>Clear</span>
       `;
     }
   });
@@ -155,10 +169,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     runBtn.disabled = true;
     btnSpinner.style.display = 'inline-block';
-    btnText.textContent = `Streaming ${fmt(count)} items...`;
+    btnText.textContent = `Running ${fmt(count)}...`;
     progressContainer.style.display = 'block';
-    resultsBadge.textContent = 'Streaming...';
+    resultsBadge.textContent = 'Executing...';
     resultsBadge.style.color = 'var(--accent-amber)';
+    terminalDot.style.display = 'inline-block';
 
     const sseUrl = `/api/stream-benchmark?count=${count}&backend=${backend}&workload=${currentWorkload}`;
     const eventSource = new EventSource(sseUrl);
@@ -191,6 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSpinner.style.display = 'none';
       btnText.textContent = 'Execute Benchmark';
       progressContainer.style.display = 'none';
+      terminalDot.style.display = 'none';
     }
   });
 
@@ -228,13 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Render Integrity Card
       if (judy.integrity) {
-        integrityCard.style.display = 'block';
-        integrityDetails.innerHTML = `<strong>${fmt(judy.total_keys || judy.total_entries || data.count)}</strong> keys intact in digital trie &bull; <strong>${judy.integrity.probed_samples}</strong> boundary probes verified with <strong>0 bit corruption</strong> &bull; Checksum: <code>${judy.integrity.checksum_crc || '0x0'}</code>`;
+        integrityCard.style.display = 'flex';
+        integrityDetails.innerHTML = `<strong>${fmt(judy.total_keys || judy.total_entries || data.count)}</strong> keys intact in trie &bull; <strong>${judy.integrity.probed_samples}</strong> boundary probes verified with <strong>0 bit corruption</strong> &bull; Checksum: <code>${judy.integrity.checksum_crc || '0x0'}</code>`;
       }
 
       // Render Live Samples Grid
       if (judy.samples && judy.samples.length > 0) {
-        samplesCard.style.display = 'block';
         samplesGrid.innerHTML = judy.samples.map(s => `
           <div class="sample-item">
             <div class="sample-key">Key: ${s.key}</div>
@@ -318,8 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ Stored key "<strong>${data.key}</strong>" in JudySimpleCache. Total resident keys: <strong>${data.total_cached}</strong></span>`;
-      logTerminal(`[Cache Playground] Set key "${data.key}" into persistent worker memory (Total: ${data.total_cached} items)`, 'success');
+      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ Stored "<strong>${data.key}</strong>". Total: <strong>${data.total_cached}</strong> (RSS: ${data.worker_rss_mb} MB)</span>`;
+      logTerminal(`[Cache Playground] Set key "${data.key}" into worker memory (Total: ${data.total_cached})`, 'success');
       fetchStatus();
     } catch (e) {
       playOutput.innerHTML = `<span style="color: var(--accent-rose)">❌ Error: ${e.message}</span>`;
@@ -332,10 +347,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/cache/get?key=${encodeURIComponent(key)}`);
       const data = await res.json();
       if (data.found) {
-        playOutput.innerHTML = `<span>Key: <strong>${data.key}</strong> &bull; Latency: <strong>${data.lookup_time_us} &mu;s</strong> &bull; Value: <code style="color: var(--badge-text)">${JSON.stringify(data.value)}</code></span>`;
+        playOutput.innerHTML = `<span><strong>${data.key}</strong> in <strong>${data.lookup_time_us} &mu;s</strong> &bull; <code style="color: var(--badge-text)">${JSON.stringify(data.value)}</code></span>`;
         logTerminal(`[Cache Playground] Found "${data.key}" in ${data.lookup_time_us} &mu;s`, 'info');
       } else {
-        playOutput.innerHTML = `<span style="color: var(--accent-amber)">⚠️ Key "${key}" not found in resident memory (nil).</span>`;
+        playOutput.innerHTML = `<span style="color: var(--accent-amber)">⚠️ Key "${key}" not found (nil).</span>`;
       }
     } catch (e) {
       playOutput.innerHTML = `<span style="color: var(--accent-rose)">❌ Error: ${e.message}</span>`;
@@ -352,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ O(range) sub-trie splice pruned <strong>${data.deleted}</strong> entries starting with "${prefix}" in <strong>${data.duration_ms} ms</strong>! (Remaining: ${data.remaining})</span>`;
+      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ Pruned <strong>${data.deleted}</strong> entries starting with "${prefix}" in <strong>${data.duration_ms} ms</strong>! (Remaining: ${data.remaining})</span>`;
       logTerminal(`[Cache Playground] Pruned ${data.deleted} entries with prefix "${prefix}" in ${data.duration_ms} ms via deletePrefix()`, 'highlight');
       fetchStatus();
     } catch (e) {
