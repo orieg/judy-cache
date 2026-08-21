@@ -282,10 +282,14 @@ document.addEventListener('DOMContentLoaded', () => {
       let details = '';
       if (m.prefix_invalidation_ms !== undefined) {
         details = `Prefix Delete: <strong>${m.prefix_invalidation_ms} ms</strong> (${m.algo_complexity})`;
+      } else if (badgeClass === 'badge-polyfill') {
+        details = `Pure-PHP fallback shim (${fmt(m.total_entries || m.total_keys || data.count)} entries &bull; ArrayAccess call overhead)`;
+      } else if (badgeClass === 'badge-array') {
+        details = `Native Zend Hash Table (${fmt(m.total_entries || m.total_keys || data.count)} entries &bull; inlined C opcodes)`;
       } else if (m.bytes_per_key !== undefined) {
-        details = `<strong>${m.bytes_per_key} bytes/key</strong> (libJudy: ${m.judy_internal_mb || 0} MB)`;
+        details = `<strong>${m.bytes_per_key} bytes/key</strong> (libJudy: ${m.judy_internal_mb || 0} MB &bull; zero Bucket structs)`;
       } else {
-        details = `${fmt(m.total_entries || m.total_keys || data.count)} entries`;
+        details = `${fmt(m.total_entries || m.total_keys || data.count)} entries (C digital radix trie)`;
       }
 
       const writeVal = m.write_ops_sec || m.ops_per_sec;
