@@ -261,9 +261,6 @@
               <button type="button" class="view-tab-btn" data-tab="tab-inspector">
                 <span class="tab-icon">🔍</span> Data Inspector & Probe
               </button>
-              <button type="button" class="view-tab-btn" data-tab="tab-architecture">
-                <span class="tab-icon">ℹ️</span> Architecture
-              </button>
             </div>
 
             <!-- Dynamic Content Body -->
@@ -357,28 +354,29 @@
                   </div>
                 </div>
               </div>
-
-              <!-- TAB 4: Architecture Explainer -->
-              <div class="tab-pane" id="tab-architecture">
-                <div class="explainer-pane-inner">
-                  <h3>Under The Hood: Why Judy Uses ~84% Less Memory</h3>
-                  <div class="explainer-grid">
-                    <div class="explainer-item">
-                      <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves</span>
-                      <p>ext-judy groups keys into adaptive 256-ary digital tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. It computes offsets dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) rather than storing pointer arrays.</p>
-                    </div>
-                    <div class="explainer-item">
-                      <span class="explainer-tag tag-array">2. Zend Hash Table Overhead</span>
-                      <p>A standard PHP array allocates a 36-byte <code>Bucket</code> struct per key, uint32 hash indices, collision chains, and powers-of-2 capacity allocations. Storing 10M keys in standard arrays requires <strong>4.68 GB RAM</strong> vs <strong>763 MB</strong> in Judy.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div> <!-- .tab-content-area -->
           </div> <!-- .unified-view-card -->
         </section>
       </div>
     </main>
+
+    <!-- Permanent Architecture & Memory Mechanics Explainer -->
+    <section class="panel architecture-banner compact-panel">
+      <div class="architecture-header">
+        <h3>Under The Hood: Why Judy Radix Tries Save ~84% Memory</h3>
+        <span class="architecture-subtitle">C Hardware Bitmap Leaves vs. Zend 36-Byte Bucket Tables</span>
+      </div>
+      <div class="explainer-grid">
+        <div class="explainer-item">
+          <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves (ext-judy 2.6.0)</span>
+          <p>Keys are grouped into adaptive 256-ary radix tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. Key offsets are calculated dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) with <strong>zero pointer arrays and zero per-entry structs</strong>.</p>
+        </div>
+        <div class="explainer-item">
+          <span class="explainer-tag tag-array">2. Zend Hash Table Overhead (Standard PHP Array)</span>
+          <p>Each entry allocates a <strong>36-byte <code>Bucket</code> struct</strong>, uint32 hash indices, collision chains, and powers-of-2 capacity doublings. At 10M keys, PHP arrays take <strong>4.68 GB RAM</strong> vs <strong>763 MB</strong> in Judy (~84% reduction).</p>
+        </div>
+      </div>
+    </section>
 
     <footer class="app-footer compact-footer">
       <p>Powered by <a href="https://frankenphp.dev" target="_blank" rel="noopener">FrankenPHP Worker Mode</a> &bull; <a href="https://github.com/orieg/php-judy" target="_blank" rel="noopener">php-judy 2.6.0</a> &bull; <a href="https://github.com/orieg/judy-cache" target="_blank" rel="noopener">judy-cache</a> &bull; <a href="https://github.com/orieg/judy-polyfill" target="_blank" rel="noopener">judy-polyfill</a></p>

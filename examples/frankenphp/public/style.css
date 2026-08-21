@@ -1150,45 +1150,59 @@ html[data-theme="light"] .badge-polyfill { color: #d97706; }
   color: var(--term-text);
 }
 
-/* ── Explainer Card (Compact) ────────────────────────────────────── */
-.explainer-card.compact-explainer {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.875rem;
+/* ── Permanent Architecture Explainer Banner ─────────────────────── */
+.architecture-banner {
+  margin-top: 0.875rem;
 }
 
-.explainer-card.compact-explainer h3 {
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-muted);
+.architecture-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
   margin-bottom: 0.5rem;
+}
+
+.architecture-header h3 {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-main);
+}
+
+.architecture-subtitle {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
 }
 
 .explainer-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
+  gap: 0.875rem;
 }
 
 .explainer-item {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
-  line-height: 1.35;
+  line-height: 1.4;
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
 }
 
 .explainer-tag {
   display: inline-block;
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   margin-bottom: 0.25rem;
 }
 
-.tag-judy { color: var(--accent-emerald); }
-.tag-array { color: var(--accent-rose); }
+.tag-judy { color: var(--badge-text); }
+.tag-array { color: #818cf8; }
+
+html[data-theme="light"] .tag-array { color: #4f46e5; }
 
 /* ── Footer (Compact) ────────────────────────────────────────────── */
 .app-footer.compact-footer {
