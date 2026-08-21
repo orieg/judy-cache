@@ -165,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
   runBtn.addEventListener('click', () => {
     const scaleObj = SCALES[parseInt(scaleSlider.value, 10)];
     const count = scaleObj.count;
-    const backend = document.querySelector('input[name="backend"]:checked').value;
+    const backend = 'all';
 
     runBtn.disabled = true;
     btnSpinner.style.display = 'inline-block';

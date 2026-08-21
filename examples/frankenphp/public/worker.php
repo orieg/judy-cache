@@ -550,7 +550,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
             }
 
             // Polyfill Step
-            if ($backend === 'polyfill' || ($backend === 'all' && $count <= 200000)) {
+            if ($backend === 'polyfill' || ($backend === 'all' && $count <= 1000000)) {
                 $sendEvent('log', [
                     'level' => 'step',
                     'stage' => 'polyfill',
@@ -563,11 +563,11 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
                     'stage' => 'polyfill',
                     'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB", $resPolyfill['duration_ms'], $resPolyfill['mem_allocated_mb']),
                 ]);
-            } elseif ($backend === 'all' && $count > 200000) {
+            } elseif ($backend === 'all' && $count > 1000000) {
                 $sendEvent('log', [
                     'level' => 'warn',
                     'stage' => 'polyfill',
-                    'text' => "ℹ️ [judy-polyfill] Skipped pure-PHP polyfill for >200k items in 'All' mode to protect latency.",
+                    'text' => "ℹ️ [judy-polyfill] Skipped pure-PHP polyfill for >1M items to prevent PHP memory limit / worker timeout.",
                 ]);
             }
 
@@ -615,7 +615,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
                     $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
                 }
                 $results['array'] = executeBenchmark('array', $workload, $count, $body);
-                if ($count <= 200000) {
+                if ($count <= 1000000) {
                     $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
                 }
             } else {
