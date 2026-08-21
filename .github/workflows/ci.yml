@@ -71,3 +71,18 @@ jobs:
         with:
           name: bench-results
           path: bench-results.md
+
+  ci:
+    name: CI
+    needs: [tests, bench]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all matrix jobs passed
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more CI matrix jobs failed."
+            exit 1
+          fi
+          echo "All CI matrix jobs passed."
+
