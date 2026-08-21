@@ -17,7 +17,7 @@ use Psr\SimpleCache\CacheInterface;
  * class exposes beyond PSR-16: deletePrefix() and keysByPrefix() run on the
  * key order directly instead of scanning every entry.
  */
-class JudySimpleCache implements CacheInterface
+class JudySimpleCache implements CacheInterface, \Countable
 {
     private \Judy $values;
     private \Judy $expiries;

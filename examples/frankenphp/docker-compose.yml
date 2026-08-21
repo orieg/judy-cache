@@ -1,0 +1,10 @@
+services:
+  frankenphp-judy:
+    build:
+      context: ../../
+      dockerfile: examples/frankenphp/Dockerfile
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - SERVER_NAME=:8080
