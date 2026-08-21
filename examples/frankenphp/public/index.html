@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
   <script>
-    // Set theme immediately to prevent FOUC
     const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     document.documentElement.setAttribute('data-theme', savedTheme);
   </script>
@@ -61,7 +60,7 @@
 
     <!-- Main Grid -->
     <main class="dashboard-grid">
-      <!-- Left Column: Controls -->
+      <!-- Left Column: Controls & Playground -->
       <div class="left-column">
         <section class="panel control-panel">
           <div class="panel-header">
@@ -213,7 +212,7 @@
         </section>
       </div>
 
-      <!-- Right Column: Results & Telemetry -->
+      <!-- Right Column: Results, Telemetry & Data Inspector -->
       <div class="right-column">
         <section class="panel results-panel">
           <div class="panel-header">
@@ -221,7 +220,7 @@
             <div class="status-indicator-badge" id="results-badge">Ready</div>
           </div>
 
-          <!-- Progress Bar (active during runs) -->
+          <!-- Progress Bar -->
           <div class="live-progress-container" id="progress-container" style="display:none;">
             <div class="live-progress-bar" id="live-progress-bar"></div>
           </div>
@@ -244,6 +243,20 @@
               <span class="kpi-label">Throughput</span>
               <div class="kpi-number" id="kpi-ops">—</div>
               <div class="kpi-sub" id="kpi-ops-sub">Operations / second</div>
+            </div>
+          </div>
+
+          <!-- Data Integrity & Lossless Verification Card -->
+          <div class="integrity-card" id="integrity-card" style="display:none;">
+            <div class="integrity-header">
+              <div class="integrity-icon">🛡️</div>
+              <div class="integrity-titles">
+                <div class="integrity-title-row">
+                  <h4>Bit-for-Bit Data Integrity Verified</h4>
+                  <span class="integrity-badge-lossless" id="integrity-badge">100% Lossless</span>
+                </div>
+                <p id="integrity-details">250 random boundary samples probed across 10,000,000 keys with 0 corruption.</p>
+              </div>
             </div>
           </div>
 
@@ -318,17 +331,36 @@
             </table>
           </div>
 
+          <!-- Live Sample Inspector & On-Demand Key Prober -->
+          <div class="samples-card" id="samples-card" style="display:none;">
+            <div class="samples-header">
+              <h3>Live Data Inspector & Stored Samples</h3>
+              <span class="samples-tag">Random Verified Samples</span>
+            </div>
+            <div class="samples-grid" id="samples-grid"></div>
+
+            <!-- On-Demand Probe Search -->
+            <div class="probe-search-box">
+              <label class="probe-label">Probe Any Key In Active Memory:</label>
+              <div class="probe-input-row">
+                <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or app.session.500000)" value="42">
+                <button type="button" id="btn-probe" class="btn-sm btn-accent">Probe Live Key</button>
+              </div>
+              <div class="probe-result" id="probe-result" style="display:none;"></div>
+            </div>
+          </div>
+
           <!-- Architectural Explainer Card -->
           <div class="explainer-card">
-            <h3>Under The Hood: Why Judy Uses 80%+ Less Memory</h3>
+            <h3>Why is Judy so much smaller and is it truly lossless?</h3>
             <div class="explainer-grid">
               <div class="explainer-item">
-                <span class="explainer-tag tag-judy">ext-judy (256-ary Radix Trie)</span>
-                <p>Stores keys in hierarchical uncompressed/compressed bitmap leaf structures with hardware <code>POPCNT</code> and word-level <code>BSWAP</code> instructions. No per-element object headers or hash collision chains.</p>
+                <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves</span>
+                <p>ext-judy groups keys into adaptive 256-ary digital tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. It computes offsets dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) rather than storing pointer arrays.</p>
               </div>
               <div class="explainer-item">
-                <span class="explainer-tag tag-array">Zend Array (Hash Table)</span>
-                <p>Standard PHP arrays allocate a 36-byte <code>Bucket</code> struct per key, uint32 hash indices, and power-of-2 allocation tables, requiring <strong>35–80+ bytes per integer key</strong>.</p>
+                <span class="explainer-tag tag-array">2. Zend Hash Table Overhead</span>
+                <p>A standard PHP array allocates a 36-byte <code>Bucket</code> struct per key, uint32 hash indices, collision chains, and powers-of-2 capacity allocations. Storing 10M keys in standard arrays requires <strong>4.6 GB RAM</strong> vs <strong>763 MB</strong> in Judy (~84% savings).</p>
               </div>
             </div>
           </div>

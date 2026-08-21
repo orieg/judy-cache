@@ -757,6 +757,57 @@ input[type="range"] {
   color: var(--text-muted);
 }
 
+/* ── Data Integrity Card ─────────────────────────────────────────── */
+.integrity-card {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 14px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.integrity-header {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.integrity-icon {
+  font-size: 1.5rem;
+}
+
+.integrity-titles {
+  flex: 1;
+}
+
+.integrity-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.15rem;
+}
+
+.integrity-title-row h4 {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent-emerald);
+}
+
+.integrity-badge-lossless {
+  background: var(--accent-emerald);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.integrity-titles p {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 /* ── Visual Comparison Chart Box ─────────────────────────────────── */
 .chart-box {
   background: var(--bg-card);
@@ -916,6 +967,112 @@ input[type="range"] {
   gap: 0.5rem;
   color: var(--text-muted);
   font-size: 0.8125rem;
+}
+
+/* ── Live Sample Inspector ───────────────────────────────────────── */
+.samples-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.samples-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.875rem;
+}
+
+.samples-header h3 {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.samples-tag {
+  font-size: 0.6875rem;
+  font-family: var(--font-mono);
+  color: var(--accent-emerald);
+}
+
+.samples-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.sample-item {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.sample-key {
+  font-weight: 700;
+  color: var(--badge-text);
+  margin-bottom: 0.2rem;
+}
+
+.sample-val {
+  color: var(--text-muted);
+  font-size: 0.6875rem;
+  word-break: break-all;
+}
+
+.sample-status {
+  display: inline-block;
+  font-size: 0.625rem;
+  color: var(--accent-emerald);
+  margin-top: 0.25rem;
+}
+
+.probe-search-box {
+  border-top: 1px solid var(--border);
+  padding-top: 0.875rem;
+}
+
+.probe-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.probe-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.probe-input-row input {
+  flex: 1;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-main);
+  outline: none;
+}
+
+.probe-result {
+  margin-top: 0.6rem;
+  background: var(--term-bg);
+  border: 1px solid var(--term-border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--term-text);
 }
 
 /* ── Explainer Card ──────────────────────────────────────────────── */

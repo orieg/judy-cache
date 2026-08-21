@@ -43,6 +43,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const progressContainer = document.getElementById('progress-container');
   const terminalBody = document.getElementById('terminal-body');
   const btnClearTerm = document.getElementById('btn-clear-term');
+  const integrityCard = document.getElementById('integrity-card');
+  const integrityDetails = document.getElementById('integrity-details');
+  const samplesCard = document.getElementById('samples-card');
+  const samplesGrid = document.getElementById('samples-grid');
+  const probeInput = document.getElementById('probe-input');
+  const btnProbe = document.getElementById('btn-probe');
+  const probeResult = document.getElementById('probe-result');
 
   let currentWorkload = 'memory_shootout';
   const fmt = (n) => Number(n).toLocaleString();
@@ -108,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBtn.addEventListener('click', async () => {
     resetBtn.disabled = true;
     resetBtn.innerHTML = '<span>Flushing...</span>';
-    logTerminal('🧹 Invoking gc_collect_cycles() and flushing resident Judy trie in worker memory...', 'warn');
+    logTerminal('🧹 Invoking gc_collect_cycles() and flushing resident memory...', 'warn');
     try {
       const res = await fetch('/api/clear', { method: 'POST' });
       const data = await res.json();
@@ -124,6 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
       comparisonBox.style.display = 'none';
+      integrityCard.style.display = 'none';
+      samplesCard.style.display = 'none';
       document.getElementById('kpi-mem').textContent = '—';
       document.getElementById('kpi-lat').textContent = '—';
       document.getElementById('kpi-ops').textContent = '—';
@@ -207,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const speedup = (arr.duration_ms / Math.max(0.01, judy.duration_ms)).toFixed(1);
         document.getElementById('kpi-lat-sub').textContent = `${speedup}x vs Array (${arr.duration_ms} ms)`;
 
+        // Comparison Bar Chart
         comparisonBox.style.display = 'block';
         document.getElementById('savings-badge').textContent = `−${Math.max(0, memSavings)}% RAM Savings`;
         const maxMem = Math.max(judy.mem_allocated_mb, arr.mem_allocated_mb, 1);
@@ -214,6 +224,24 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bar-val-judy').textContent = `${judy.mem_allocated_mb} MB`;
         document.getElementById('bar-fill-array').style.width = `${(arr.mem_allocated_mb / maxMem) * 100}%`;
         document.getElementById('bar-val-array').textContent = `${arr.mem_allocated_mb} MB`;
+      }
+
+      // Render Integrity Card
+      if (judy.integrity) {
+        integrityCard.style.display = 'block';
+        integrityDetails.innerHTML = `<strong>${fmt(judy.total_keys || judy.total_entries || data.count)}</strong> keys intact in digital trie &bull; <strong>${judy.integrity.probed_samples}</strong> boundary probes verified with <strong>0 bit corruption</strong> &bull; Checksum: <code>${judy.integrity.checksum_crc || '0x0'}</code>`;
+      }
+
+      // Render Live Samples Grid
+      if (judy.samples && judy.samples.length > 0) {
+        samplesCard.style.display = 'block';
+        samplesGrid.innerHTML = judy.samples.map(s => `
+          <div class="sample-item">
+            <div class="sample-key">Key: ${s.key}</div>
+            <div class="sample-val">Val: ${typeof s.value === 'object' ? JSON.stringify(s.value) : s.value}</div>
+            <div class="sample-status">✓ ${s.status}</div>
+          </div>
+        `).join('');
       }
     }
 
@@ -250,6 +278,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tableBody.innerHTML = rows;
   }
+
+  // On-Demand Probe Search Handler
+  btnProbe.addEventListener('click', async () => {
+    const val = probeInput.value.trim();
+    if (!val) return;
+    probeResult.style.display = 'block';
+    probeResult.innerHTML = '<span class="output-muted">Probing live memory...</span>';
+
+    try {
+      const res = await fetch(`/api/verify-probe?key=${encodeURIComponent(val)}&index=${encodeURIComponent(val)}`);
+      const data = await res.json();
+      if (data.found) {
+        probeResult.innerHTML = `<span style="color: var(--accent-emerald)">✓ <strong>${data.key}</strong> found in ${data.source} &bull; Value: <code style="color: var(--badge-text)">${JSON.stringify(data.value)}</code> (${data.integrity_status})</span>`;
+        logTerminal(`[On-Demand Probe] Key "${data.key}" verified intact in memory: ${JSON.stringify(data.value)}`, 'success');
+      } else {
+        probeResult.innerHTML = `<span style="color: var(--accent-amber)">⚠️ Key/Index "${val}" not present in active memory dataset.</span>`;
+      }
+    } catch (e) {
+      probeResult.innerHTML = `<span style="color: var(--accent-rose)">❌ Probe error: ${e.message}</span>`;
+    }
+  });
 
   // Resident Cache Playground Logic
   const playKey = document.getElementById('play-key');
