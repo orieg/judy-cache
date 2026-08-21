@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-// Prevent memory limits or timeouts during heavy benchmarks
+// Uncap memory and time limits for heavy benchmarks
 ini_set('memory_limit', '-1');
 set_time_limit(0);
 
@@ -18,11 +18,10 @@ $residentCache = new JudySimpleCache();
 $residentCounter = class_exists('Judy') ? new Judy(Judy::INT_TO_INT) : [];
 
 /**
- * Benchmark runner for different backends and workloads
+ * Execute a single benchmark run
  */
 function executeBenchmark(string $backend, string $workload, int $count, array $params = []): array
 {
-    // Force garbage collection before measurement
     gc_collect_cycles();
     $memBefore = memory_get_usage(true);
     $realMemBefore = memory_get_usage();
@@ -66,7 +65,6 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = count($polyfillTrie);
             } else {
-                // Native PHP Array Cache
                 $arrayCache = [];
                 for ($i = 0; $i < $count; $i++) {
                     $arrayCache["{$prefix}{$i}"] = ['id' => $i, 'v' => 1];
@@ -96,7 +94,6 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                     }
                 }
                 $tPopulate = hrtime(true);
-                // Prefix Invalidation on tenant.1.*
                 $tPrefix0 = hrtime(true);
                 $deletedCount = $cache->deletePrefix("tenant.1.");
                 $tPrefix1 = hrtime(true);
@@ -105,9 +102,8 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = $cache->count();
-                $metrics['algo_complexity'] = 'O(range) Sub-trie leaf splice';
+                $metrics['algo_complexity'] = 'O(range) Sub-trie splice';
             } else {
-                // Array full-scan simulation
                 $arrayCache = [];
                 for ($t = 1; $t <= $tenants; $t++) {
                     for ($k = 1; $k <= $keysPerTenant; $k++) {
@@ -115,7 +111,6 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                     }
                 }
                 $tPopulate = hrtime(true);
-                // Linear scan to match prefix
                 $tPrefix0 = hrtime(true);
                 $deletedCount = 0;
                 $prefixMatch = "tenant.1.";
@@ -132,12 +127,11 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = count($arrayCache);
-                $metrics['algo_complexity'] = 'O(N) Full hashtable keyspace scan';
+                $metrics['algo_complexity'] = 'O(N) Linear scan';
             }
             break;
 
         case 'int_counter':
-            // High-speed integer counters (e.g. rate-limiting, IP hits, metric counters)
             if ($backend === 'judy') {
                 $judy = new Judy(Judy::INT_TO_INT);
                 for ($i = 0; $i < $count; $i++) {
@@ -165,7 +159,6 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
 
         case 'memory_shootout':
         default:
-            // Pure footprint test
             if ($backend === 'judy') {
                 $judy = new Judy(Judy::INT_TO_INT);
                 for ($i = 0; $i < $count; $i++) {
@@ -209,7 +202,6 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-    // CORS & Headers
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
@@ -219,6 +211,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
         return;
     }
 
+    // Status API
     if ($uri === '/api/status') {
         header('Content-Type: application/json');
         echo json_encode([
@@ -238,32 +231,100 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
         return;
     }
 
-    if ($uri === '/api/benchmark' && $method === 'POST') {
-        header('Content-Type: application/json');
+    // Streaming Benchmark API (Server-Sent Events for Live Progress Terminal)
+    if ($uri === '/api/stream-benchmark') {
+        header('Content-Type: text/event-stream');
+        header('Cache-Control: no-cache');
+        header('X-Accel-Buffering: no');
+
+        $count = max(1000, min(10000000, (int)($_GET['count'] ?? 100000)));
+        $backend = $_GET['backend'] ?? 'all';
+        $workload = $_GET['workload'] ?? 'memory_shootout';
+
+        $sendEvent = function (string $type, array $data) {
+            echo "event: {$type}\n";
+            echo "data: " . json_encode($data) . "\n\n";
+            if (ob_get_level() > 0) ob_flush();
+            flush();
+        };
+
+        $sendEvent('log', [
+            'level' => 'info',
+            'text' => sprintf("⚡️ [Worker #%d] Starting benchmark: workload=%s, count=%s keys", getmypid(), $workload, number_format($count)),
+        ]);
+
+        $results = [];
+
         try {
-            $raw = file_get_contents('php://input');
-            $body = json_decode($raw, true) ?? [];
-            $count = max(1000, min(10000000, (int)($body['count'] ?? 100000)));
-            $backend = $body['backend'] ?? 'all';
-            $workload = $body['workload'] ?? 'memory_shootout';
-
-            $results = [];
-
-            if ($backend === 'all') {
+            // Judy Step
+            if ($backend === 'all' || $backend === 'judy') {
                 if (extension_loaded('judy')) {
-                    $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
+                    $sendEvent('log', [
+                        'level' => 'step',
+                        'stage' => 'judy',
+                        'text' => sprintf("🚀 [ext-judy 2.6.0] Allocating %s items in digital trie (hardware POPCNT + BSWAP enabled)...", number_format($count)),
+                    ]);
+                    $resJudy = executeBenchmark('judy', $workload, $count);
+                    $results['judy'] = $resJudy;
+                    $sendEvent('log', [
+                        'level' => 'success',
+                        'stage' => 'judy',
+                        'text' => sprintf("✓ [ext-judy 2.6.0] Finished in %sms &bull; Allocated: %s MB &bull; Throughput: %s ops/s", $resJudy['duration_ms'], $resJudy['mem_allocated_mb'], number_format($resJudy['ops_per_sec'])),
+                    ]);
                 }
-                // Array can run up to 10M with unconstrained memory_limit
-                $results['array'] = executeBenchmark('array', $workload, $count, $body);
-                // Polyfill is pure PHP; skip when > 200k in "all" mode to prevent 30s UI hang
-                if ($count <= 200000) {
-                    $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
-                }
-            } else {
-                $results[$backend] = executeBenchmark($backend, $workload, $count, $body);
             }
 
-            echo json_encode([
+            // Array Step
+            if ($backend === 'all' || $backend === 'array') {
+                $sendEvent('log', [
+                    'level' => 'step',
+                    'stage' => 'array',
+                    'text' => sprintf("🐘 [PHP Array] Allocating %s items in Zend Hash Table (36-byte Bucket structs)...", number_format($count)),
+                ]);
+                $resArray = executeBenchmark('array', $workload, $count);
+                $results['array'] = $resArray;
+                $sendEvent('log', [
+                    'level' => 'success',
+                    'stage' => 'array',
+                    'text' => sprintf("✓ [PHP Array] Finished in %sms &bull; Allocated: %s MB &bull; Throughput: %s ops/s", $resArray['duration_ms'], $resArray['mem_allocated_mb'], number_format($resArray['ops_per_sec'])),
+                ]);
+            }
+
+            // Polyfill Step (if small enough or explicitly selected)
+            if ($backend === 'polyfill' || ($backend === 'all' && $count <= 200000)) {
+                $sendEvent('log', [
+                    'level' => 'step',
+                    'stage' => 'polyfill',
+                    'text' => sprintf("🧩 [judy-polyfill] Running %s items in pure-PHP fallback trie...", number_format($count)),
+                ]);
+                $resPolyfill = executeBenchmark('polyfill', $workload, $count);
+                $results['polyfill'] = $resPolyfill;
+                $sendEvent('log', [
+                    'level' => 'success',
+                    'stage' => 'polyfill',
+                    'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB", $resPolyfill['duration_ms'], $resPolyfill['mem_allocated_mb']),
+                ]);
+            } elseif ($backend === 'all' && $count > 200000) {
+                $sendEvent('log', [
+                    'level' => 'warn',
+                    'stage' => 'polyfill',
+                    'text' => "ℹ️ [judy-polyfill] Skipped pure-PHP polyfill for >200k items in 'All' mode to protect latency.",
+                ]);
+            }
+
+            // Summary Log
+            if (isset($results['judy'], $results['array'])) {
+                $memDiff = $results['array']['mem_allocated_mb'] - $results['judy']['mem_allocated_mb'];
+                $pct = $results['array']['mem_allocated_mb'] > 0
+                    ? round(($memDiff / $results['array']['mem_allocated_mb']) * 100)
+                    : 0;
+                $sendEvent('log', [
+                    'level' => 'highlight',
+                    'text' => sprintf("🎉 [Telemetry Summary] ext-judy 2.6.0 reduced memory footprint by −%d%% (%s MB saved)!", max(0, $pct), number_format($memDiff, 1)),
+                ]);
+            }
+
+            $sendEvent('result', [
                 'workload' => $workload,
                 'count' => $count,
                 'results' => $results,
@@ -271,13 +332,82 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
                 'requests_served' => $requestsServed,
             ]);
         } catch (\Throwable $e) {
-            http_response_code(500);
-            echo json_encode([
-                'error' => $e->getMessage(),
+            $sendEvent('error', [
+                'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
         }
+        return;
+    }
+
+    // Interactive Resident Cache Playground APIs
+    if ($uri === '/api/cache/set' && $method === 'POST') {
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $key = (string)($body['key'] ?? '');
+        $val = $body['value'] ?? '';
+        $ttl = isset($body['ttl']) ? (int)$body['ttl'] : null;
+
+        header('Content-Type: application/json');
+        try {
+            $residentCache->set($key, $val, $ttl);
+            echo json_encode([
+                'success' => true,
+                'key' => $key,
+                'total_cached' => $residentCache->count(),
+                'worker_rss_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
+            ]);
+        } catch (\Throwable $e) {
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        return;
+    }
+
+    if ($uri === '/api/cache/get') {
+        $key = (string)($_GET['key'] ?? '');
+        header('Content-Type: application/json');
+        $t0 = hrtime(true);
+        $val = $residentCache->get($key);
+        $t1 = hrtime(true);
+        echo json_encode([
+            'found' => $val !== null,
+            'key' => $key,
+            'value' => $val,
+            'lookup_time_us' => round(($t1 - $t0) / 1e3, 3),
+            'total_cached' => $residentCache->count(),
+        ]);
+        return;
+    }
+
+    if ($uri === '/api/cache/delete-prefix' && $method === 'POST') {
+        $body = json_decode(file_get_contents('php://input'), true) ?? [];
+        $prefix = (string)($body['prefix'] ?? '');
+        header('Content-Type: application/json');
+        try {
+            $t0 = hrtime(true);
+            $deleted = $residentCache->deletePrefix($prefix);
+            $t1 = hrtime(true);
+            echo json_encode([
+                'success' => true,
+                'prefix' => $prefix,
+                'deleted' => $deleted,
+                'duration_ms' => round(($t1 - $t0) / 1e6, 4),
+                'remaining' => $residentCache->count(),
+            ]);
+        } catch (\Throwable $e) {
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        return;
+    }
+
+    if ($uri === '/api/cache/keys') {
+        $prefix = (string)($_GET['prefix'] ?? '');
+        header('Content-Type: application/json');
+        echo json_encode([
+            'prefix' => $prefix,
+            'keys' => $residentCache->keysByPrefix($prefix, 50),
+            'total_cached' => $residentCache->count(),
+        ]);
         return;
     }
 

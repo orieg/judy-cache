@@ -1,18 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Theme management
+  // Theme toggle
   const themeToggle = document.getElementById('theme-toggle');
-  
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }
-
   themeToggle.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme') || 'dark';
     applyTheme(current === 'dark' ? 'light' : 'dark');
   });
-
-  // Listen for OS system theme changes
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (!localStorage.getItem('theme')) {
       applyTheme(e.matches ? 'dark' : 'light');
@@ -44,10 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
   const resultsBadge = document.getElementById('results-badge');
   const tableBody = document.getElementById('table-body');
   const comparisonBox = document.getElementById('comparison-box');
+  const progressContainer = document.getElementById('progress-container');
+  const terminalBody = document.getElementById('terminal-body');
+  const btnClearTerm = document.getElementById('btn-clear-term');
 
   let currentWorkload = 'memory_shootout';
-
   const fmt = (n) => Number(n).toLocaleString();
+
+  function logTerminal(text, level = 'info') {
+    const time = new Date().toLocaleTimeString([], { hour12: false });
+    const line = document.createElement('div');
+    line.className = `term-line ${level}`;
+    line.innerHTML = `<span class="term-time">[${time}]</span> ${text}`;
+    terminalBody.appendChild(line);
+    terminalBody.scrollTop = terminalBody.scrollHeight;
+  }
+
+  btnClearTerm.addEventListener('click', () => {
+    terminalBody.innerHTML = '';
+    logTerminal('Terminal cleared.', 'muted');
+  });
 
   function updateScaleIndex(idx) {
     idx = Math.max(0, Math.min(SCALES.length - 1, parseInt(idx, 10)));
@@ -68,12 +80,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Preset Card Toggle
   presetCards.forEach(card => {
     card.addEventListener('click', () => {
       presetCards.forEach(c => c.classList.remove('active'));
       card.classList.add('active');
       currentWorkload = card.dataset.workload;
+      logTerminal(`Workload switched to: <strong>${card.querySelector('strong').textContent}</strong>`, 'info');
     });
   });
 
@@ -96,10 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
   resetBtn.addEventListener('click', async () => {
     resetBtn.disabled = true;
     resetBtn.innerHTML = '<span>Flushing...</span>';
+    logTerminal('🧹 Invoking gc_collect_cycles() and flushing resident Judy trie in worker memory...', 'warn');
     try {
       const res = await fetch('/api/clear', { method: 'POST' });
       const data = await res.json();
       fetchStatus();
+      logTerminal(`✓ Resident worker memory flushed cleanly. Current RSS: ${data.current_rss_mb} MB`, 'success');
       tableBody.innerHTML = `
         <tr>
           <td colspan="6" class="placeholder-row">
@@ -114,72 +128,60 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('kpi-lat').textContent = '—';
       document.getElementById('kpi-ops').textContent = '—';
     } catch (e) {
-      alert('Failed to clear worker memory');
+      logTerminal(`❌ Failed to clear worker memory: ${e.message}`, 'error');
     } finally {
       resetBtn.disabled = false;
       resetBtn.innerHTML = `
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        <span>Clear Worker Memory</span>
+        <span>Clear Memory</span>
       `;
     }
   });
 
-  // Execute Benchmark
-  runBtn.addEventListener('click', async () => {
+  // Execute Streaming Benchmark (SSE)
+  runBtn.addEventListener('click', () => {
     const scaleObj = SCALES[parseInt(scaleSlider.value, 10)];
     const count = scaleObj.count;
     const backend = document.querySelector('input[name="backend"]:checked').value;
 
     runBtn.disabled = true;
     btnSpinner.style.display = 'inline-block';
-    btnText.textContent = `Running ${fmt(count)} items...`;
-    resultsBadge.textContent = 'Executing...';
+    btnText.textContent = `Streaming ${fmt(count)} items...`;
+    progressContainer.style.display = 'block';
+    resultsBadge.textContent = 'Streaming...';
     resultsBadge.style.color = 'var(--accent-amber)';
 
-    try {
-      const res = await fetch('/api/benchmark', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          count,
-          backend,
-          workload: currentWorkload,
-        }),
-      });
+    const sseUrl = `/api/stream-benchmark?count=${count}&backend=${backend}&workload=${currentWorkload}`;
+    const eventSource = new EventSource(sseUrl);
 
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (err) {
-        throw new Error(text.replace(/<[^>]*>/g, '').trim() || 'Invalid server response');
-      }
+    eventSource.addEventListener('log', (e) => {
+      const data = JSON.parse(e.data);
+      logTerminal(data.text, data.level || 'info');
+    });
 
-      if (!res.ok || data.error) {
-        throw new Error(data.error || `HTTP ${res.status}`);
-      }
-
+    eventSource.addEventListener('result', (e) => {
+      const data = JSON.parse(e.data);
       renderResults(data);
       resultsBadge.textContent = 'Completed';
       resultsBadge.style.color = 'var(--accent-emerald)';
       fetchStatus();
-    } catch (err) {
+      eventSource.close();
+      cleanup();
+    });
+
+    eventSource.addEventListener('error', (e) => {
+      logTerminal('❌ Streaming error or benchmark failure occurred.', 'error');
       resultsBadge.textContent = 'Error';
       resultsBadge.style.color = 'var(--accent-rose)';
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="placeholder-row">
-            <div class="placeholder-content" style="color: var(--accent-rose)">
-              <strong>Benchmark Error</strong>
-              <span>${err.message}</span>
-            </div>
-          </td>
-        </tr>
-      `;
-    } finally {
+      eventSource.close();
+      cleanup();
+    });
+
+    function cleanup() {
       runBtn.disabled = false;
       btnSpinner.style.display = 'none';
       btnText.textContent = 'Execute Benchmark';
+      progressContainer.style.display = 'none';
     }
   });
 
@@ -205,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const speedup = (arr.duration_ms / Math.max(0.01, judy.duration_ms)).toFixed(1);
         document.getElementById('kpi-lat-sub').textContent = `${speedup}x vs Array (${arr.duration_ms} ms)`;
 
-        // Comparison Bar Chart
         comparisonBox.style.display = 'block';
         document.getElementById('savings-badge').textContent = `−${Math.max(0, memSavings)}% RAM Savings`;
         const maxMem = Math.max(judy.mem_allocated_mb, arr.mem_allocated_mb, 1);
@@ -249,4 +250,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tableBody.innerHTML = rows;
   }
+
+  // Resident Cache Playground Logic
+  const playKey = document.getElementById('play-key');
+  const playVal = document.getElementById('play-val');
+  const playOutput = document.getElementById('play-output');
+
+  document.getElementById('btn-play-set').addEventListener('click', async () => {
+    const key = playKey.value.trim();
+    let val = playVal.value.trim();
+    try { val = JSON.parse(val); } catch (e) {}
+
+    try {
+      const res = await fetch('/api/cache/set', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value: val }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ Stored key "<strong>${data.key}</strong>" in JudySimpleCache. Total resident keys: <strong>${data.total_cached}</strong></span>`;
+      logTerminal(`[Cache Playground] Set key "${data.key}" into persistent worker memory (Total: ${data.total_cached} items)`, 'success');
+      fetchStatus();
+    } catch (e) {
+      playOutput.innerHTML = `<span style="color: var(--accent-rose)">❌ Error: ${e.message}</span>`;
+    }
+  });
+
+  document.getElementById('btn-play-get').addEventListener('click', async () => {
+    const key = playKey.value.trim();
+    try {
+      const res = await fetch(`/api/cache/get?key=${encodeURIComponent(key)}`);
+      const data = await res.json();
+      if (data.found) {
+        playOutput.innerHTML = `<span>Key: <strong>${data.key}</strong> &bull; Latency: <strong>${data.lookup_time_us} &mu;s</strong> &bull; Value: <code style="color: var(--badge-text)">${JSON.stringify(data.value)}</code></span>`;
+        logTerminal(`[Cache Playground] Found "${data.key}" in ${data.lookup_time_us} &mu;s`, 'info');
+      } else {
+        playOutput.innerHTML = `<span style="color: var(--accent-amber)">⚠️ Key "${key}" not found in resident memory (nil).</span>`;
+      }
+    } catch (e) {
+      playOutput.innerHTML = `<span style="color: var(--accent-rose)">❌ Error: ${e.message}</span>`;
+    }
+  });
+
+  document.getElementById('btn-play-prefix').addEventListener('click', async () => {
+    const prefix = 'tenant.1.';
+    try {
+      const res = await fetch('/api/cache/delete-prefix', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prefix }),
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      playOutput.innerHTML = `<span style="color: var(--accent-emerald)">✓ O(range) sub-trie splice pruned <strong>${data.deleted}</strong> entries starting with "${prefix}" in <strong>${data.duration_ms} ms</strong>! (Remaining: ${data.remaining})</span>`;
+      logTerminal(`[Cache Playground] Pruned ${data.deleted} entries with prefix "${prefix}" in ${data.duration_ms} ms via deletePrefix()`, 'highlight');
+      fetchStatus();
+    } catch (e) {
+      playOutput.innerHTML = `<span style="color: var(--accent-rose)">❌ Error: ${e.message}</span>`;
+    }
+  });
 });
