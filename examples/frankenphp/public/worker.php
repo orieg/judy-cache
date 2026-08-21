@@ -83,6 +83,20 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = $cache->count();
+
+                try {
+                    $r = new \ReflectionClass($cache);
+                    $propV = $r->getProperty('values');
+                    $propV->setAccessible(true);
+                    $vJudy = $propV->getValue($cache);
+                    $propE = $r->getProperty('expiries');
+                    $propE->setAccessible(true);
+                    $eJudy = $propE->getValue($cache);
+                    $judyBytes = ($vJudy instanceof \Judy ? $vJudy->memoryUsage() : 0) + ($eJudy instanceof \Judy ? $eJudy->memoryUsage() : 0);
+                    $metrics['judy_internal_mb'] = round($judyBytes / 1024 / 1024, 2);
+                    $metrics['bytes_per_key'] = round($judyBytes / max(1, $count), 2);
+                } catch (\Throwable $e) {}
+
                 $lastBenchmarkDataset = ['type' => 'judy_cache', 'ref' => $cache, 'count' => $count, 'prefix' => $prefix];
             } elseif ($backend === 'polyfill') {
                 $polyfillTrie = new PolyfillJudy(PolyfillJudy::STRING_TO_MIXED);
@@ -150,10 +164,39 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $samples[] = ['key' => 'tenant.2.order.1', 'value' => $cache->get('tenant.2.order.1'), 'status' => 'Intact & Accessible'];
 
                 $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = $cache->count();
                 $metrics['algo_complexity'] = 'O(range) Sub-trie splice';
+            } elseif ($backend === 'polyfill') {
+                $polyfillData = [];
+                for ($t = 1; $t <= $tenants; $t++) {
+                    for ($k = 1; $k <= $keysPerTenant; $k++) {
+                        $polyfillData["tenant.{$t}.order.{$k}"] = ['order_id' => $k, 'tenant' => $t, 'status' => 'paid'];
+                    }
+                }
+                $tPopulate = hrtime(true);
+                $tPrefix0 = hrtime(true);
+                $deletedCount = 0;
+                $prefixMatch = "tenant.1.";
+                $prefixLen = strlen($prefixMatch);
+                foreach ($polyfillData as $k => $v) {
+                    if (strncmp($k, $prefixMatch, $prefixLen) === 0) {
+                        unset($polyfillData[$k]);
+                        $deletedCount++;
+                    }
+                }
+                $tPrefix1 = hrtime(true);
+
+                $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
+                $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
+                $metrics['deleted_keys'] = $deletedCount;
+                $metrics['remaining_keys'] = count($polyfillData);
+                $metrics['algo_complexity'] = 'O(N) PHP scan';
             } else {
                 $arrayCache = [];
                 for ($t = 1; $t <= $tenants; $t++) {
@@ -175,7 +218,9 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $tPrefix1 = hrtime(true);
 
                 $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = count($arrayCache);
                 $metrics['algo_complexity'] = 'O(N) Linear scan';
@@ -313,11 +358,18 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
     $memAfter = memory_get_usage(true);
     $realMemAfter = memory_get_usage();
 
+    // In long-running worker processes, libJudy allocates off-heap via C malloc.
+    // Ensure total allocated RAM accurately reflects both Zend heap + libJudy allocations.
+    $zendAllocMb = max(0, $realMemAfter - $realMemBefore) / 1024 / 1024;
+    $judyInternalMb = $metrics['judy_internal_mb'] ?? 0;
+    $metrics['mem_allocated_mb'] = round(max($zendAllocMb + $judyInternalMb, $judyInternalMb > 0 ? $judyInternalMb : $zendAllocMb), 2);
+
+    $procMem = getProcessMemory();
+    $metrics['peak_rss_mb'] = ($procMem['current_rss_mb'] ?? 0) > 0 ? $procMem['current_rss_mb'] : round(memory_get_usage(true) / 1024 / 1024, 1);
+
     $durationMs = ($t1 - $t0) / 1e6;
     $metrics['duration_ms'] = round($durationMs, 2);
     $metrics['ops_per_sec'] = round($count / max(1e-6, ($t1 - $t0) / 1e9));
-    $metrics['mem_allocated_mb'] = round(max(0, $realMemAfter - $realMemBefore) / 1024 / 1024, 2);
-    $metrics['peak_rss_mb'] = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
     // Data Integrity & Lossless Verification Payload
     $metrics['integrity'] = [
@@ -498,24 +550,22 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
             }
 
             // Polyfill Step
-            if ($backend === 'polyfill' || ($backend === 'all' && $count <= 200000)) {
+            if ($backend === 'all' || $backend === 'polyfill') {
                 $sendEvent('log', [
                     'level' => 'step',
                     'stage' => 'polyfill',
-                    'text' => sprintf("🧩 [judy-polyfill] Running %s items in pure-PHP fallback trie...", number_format($count)),
+                    'text' => sprintf("🧩 [judy-polyfill] Running %s items in pure-PHP fallback...", number_format($count)),
                 ]);
                 $resPolyfill = executeBenchmark('polyfill', $workload, $count);
                 $results['polyfill'] = $resPolyfill;
                 $sendEvent('log', [
                     'level' => 'success',
                     'stage' => 'polyfill',
-                    'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB", $resPolyfill['duration_ms'], $resPolyfill['mem_allocated_mb']),
-                ]);
-            } elseif ($backend === 'all' && $count > 200000) {
-                $sendEvent('log', [
-                    'level' => 'warn',
-                    'stage' => 'polyfill',
-                    'text' => "ℹ️ [judy-polyfill] Skipped pure-PHP polyfill for >200k items in 'All' mode to protect latency.",
+                    'text' => sprintf("✓ [judy-polyfill] Finished in %sms &bull; Allocated: %s MB &bull; Throughput: %s ops/s", 
+                        $resPolyfill['duration_ms'], 
+                        $resPolyfill['mem_allocated_mb'], 
+                        number_format($resPolyfill['ops_per_sec'])
+                    ),
                 ]);
             }
 
@@ -563,9 +613,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
                     $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
                 }
                 $results['array'] = executeBenchmark('array', $workload, $count, $body);
-                if ($count <= 200000) {
-                    $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
-                }
+                $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
             } else {
                 $results[$backend] = executeBenchmark($backend, $workload, $count, $body);
             }

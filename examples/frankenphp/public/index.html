@@ -135,39 +135,6 @@
             </div>
           </div>
 
-          <!-- Backend Selection -->
-          <div class="control-group compact-group">
-            <div class="backend-options compact-backends">
-              <label class="backend-option">
-                <input type="radio" name="backend" value="all" checked>
-                <div class="backend-pill">
-                  <span class="backend-title">⚡️ Compare All</span>
-                </div>
-              </label>
-
-              <label class="backend-option">
-                <input type="radio" name="backend" value="judy">
-                <div class="backend-pill">
-                  <span class="backend-title">🚀 ext-judy 2.6.0 (C)</span>
-                </div>
-              </label>
-
-              <label class="backend-option">
-                <input type="radio" name="backend" value="array">
-                <div class="backend-pill">
-                  <span class="backend-title">🐘 PHP Array</span>
-                </div>
-              </label>
-
-              <label class="backend-option">
-                <input type="radio" name="backend" value="polyfill">
-                <div class="backend-pill">
-                  <span class="backend-title">🧩 judy-polyfill</span>
-                </div>
-              </label>
-            </div>
-          </div>
-
           <!-- Action Buttons -->
           <div class="control-actions compact-actions">
             <button id="btn-run" class="btn-action-primary">
@@ -301,10 +268,10 @@
                     <tr>
                       <th>Backend</th>
                       <th>Duration</th>
-                      <th>Write Ops/s</th>
-                      <th>Read Ops/s</th>
+                      <th id="th-col-write">Write Ops/s</th>
+                      <th id="th-col-read">Read Ops/s</th>
                       <th>Allocated RAM</th>
-                      <th>Peak RSS</th>
+                      <th>Live VmRSS</th>
                       <th>Key Insights</th>
                     </tr>
                   </thead>
