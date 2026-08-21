@@ -255,6 +255,30 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
     return $metrics;
 }
 
+function getProcessMemory(): array
+{
+    $vmRss = 0;
+    $vmPeak = 0;
+    if (file_exists('/proc/self/status')) {
+        $status = @file_get_contents('/proc/self/status');
+        if ($status && preg_match('/VmRSS:\s+(\d+)\s+kB/', $status, $m)) {
+            $vmRss = round((int)$m[1] / 1024, 1);
+        }
+        if ($status && preg_match('/VmPeak:\s+(\d+)\s+kB/', $status, $m)) {
+            $vmPeak = round((int)$m[1] / 1024, 1);
+        }
+    }
+    if ($vmRss === 0) {
+        $vmRss = round(memory_get_usage(true) / 1024 / 1024, 1);
+        $vmPeak = round(memory_get_peak_usage(true) / 1024 / 1024, 1);
+    }
+    return [
+        'current_rss_mb' => $vmRss,
+        'peak_rss_mb' => $vmPeak,
+        'zend_emalloc_mb' => round(memory_get_usage(false) / 1024 / 1024, 1),
+    ];
+}
+
 // FrankenPHP worker request handler
 $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, &$residentCounter, &$lastBenchmarkDataset) {
     $requestsServed++;
@@ -273,6 +297,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
     // Status API
     if ($uri === '/api/status') {
         header('Content-Type: application/json');
+        $mem = getProcessMemory();
         echo json_encode([
             'status' => 'running',
             'runtime' => 'FrankenPHP Worker Mode',
@@ -282,8 +307,9 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
             'pid' => getmypid(),
             'requests_served_by_worker' => $requestsServed,
             'worker_uptime_sec' => round(microtime(true) - $workerStartedAt, 1),
-            'current_memory_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
-            'peak_memory_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
+            'current_memory_mb' => $mem['current_rss_mb'],
+            'peak_memory_mb' => $mem['peak_rss_mb'],
+            'zend_memory_mb' => $mem['zend_emalloc_mb'],
             'resident_cache_items' => $residentCache->count(),
             'resident_counter_items' => is_countable($residentCounter) ? count($residentCounter) : 0,
         ]);

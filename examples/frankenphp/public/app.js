@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/status');
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      workerInfo.innerHTML = `PID <strong>${data.pid}</strong> &bull; RSS <strong>${data.current_memory_mb} MB</strong> &bull; Req <strong>#${data.requests_served_by_worker}</strong>`;
+      workerInfo.innerHTML = `PID <strong>${data.pid}</strong> &bull; RSS <strong>${data.current_memory_mb} MB</strong> (Peak: <strong>${data.peak_memory_mb} MB</strong>) &bull; Req <strong>#${data.requests_served_by_worker}</strong>`;
     } catch (e) {
       workerInfo.textContent = 'FrankenPHP worker active (refreshing...)';
     }
