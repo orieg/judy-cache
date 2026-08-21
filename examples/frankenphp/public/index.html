@@ -248,140 +248,134 @@
             <span class="integrity-tag">100% Lossless</span>
           </div>
 
-          <!-- Distinct Tab Navigation Bar (Under Cards, Above Content) -->
-          <div class="view-tabs-strip">
-            <button type="button" class="view-tab-btn active" data-tab="tab-overview">
-              <span class="tab-icon">📊</span> Results & Comparison
-            </button>
-            <button type="button" class="view-tab-btn" data-tab="tab-terminal">
-              <span class="tab-icon">📟</span> Live Execution Log <span class="tab-dot" id="terminal-dot" style="display:none;"></span>
-            </button>
-            <button type="button" class="view-tab-btn" data-tab="tab-inspector">
-              <span class="tab-icon">🔍</span> Data Inspector & Probe
-            </button>
-            <button type="button" class="view-tab-btn" data-tab="tab-architecture">
-              <span class="tab-icon">ℹ️</span> Architecture
-            </button>
-          </div>
-
-          <!-- Tab Content Panes (The Dynamic Content Below Tabs) -->
-          <div class="tab-content-area">
-            <!-- TAB 1: Overview (Comparison Bars + Table) -->
-            <div class="tab-pane active" id="tab-overview">
-            <!-- Visual Comparison Chart Box -->
-            <div class="chart-box compact-chart" id="comparison-box" style="display:none;">
-              <div class="chart-box-header">
-                <h3>Allocated Memory Comparison</h3>
-                <span class="savings-pill" id="savings-badge">−84% Memory Savings</span>
-              </div>
-
-              <div class="visual-bars compact-bars">
-                <div class="bar-item">
-                  <div class="bar-meta">
-                    <span class="bar-name">ext-judy 2.6.0 (C Trie)</span>
-                    <span class="bar-val" id="bar-val-judy">—</span>
-                  </div>
-                  <div class="progress-track">
-                    <div class="progress-fill fill-judy" id="bar-fill-judy" style="width: 0%;"></div>
-                  </div>
-                </div>
-
-                <div class="bar-item">
-                  <div class="bar-meta">
-                    <span class="bar-name">Native PHP Array (Hash Table)</span>
-                    <span class="bar-val" id="bar-val-array">—</span>
-                  </div>
-                  <div class="progress-track">
-                    <div class="progress-fill fill-array" id="bar-fill-array" style="width: 0%;"></div>
-                  </div>
-                </div>
-              </div>
+          <!-- Unified Telemetry View Card -->
+          <div class="unified-view-card">
+            <!-- Tabs as the Integrated Header of the Card -->
+            <div class="view-tabs-strip">
+              <button type="button" class="view-tab-btn active" data-tab="tab-overview">
+                <span class="tab-icon">📊</span> Results & Comparison
+              </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-terminal">
+                <span class="tab-icon">📟</span> Live Execution Log <span class="tab-dot" id="terminal-dot" style="display:none;"></span>
+              </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-inspector">
+                <span class="tab-icon">🔍</span> Data Inspector & Probe
+              </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-architecture">
+                <span class="tab-icon">ℹ️</span> Architecture
+              </button>
             </div>
 
-            <!-- Detailed Results Table -->
-            <div class="table-card compact-table-card">
-              <table class="metrics-table compact-table">
-                <thead>
-                  <tr>
-                    <th>Backend</th>
-                    <th>Duration</th>
-                    <th>Throughput</th>
-                    <th>Allocated RAM</th>
-                    <th>Peak RSS</th>
-                    <th>Key Insights</th>
-                  </tr>
-                </thead>
-                <tbody id="table-body">
-                  <tr>
-                    <td colspan="6" class="placeholder-row compact-placeholder">
-                      <div class="placeholder-content">
-                        <span>Select a scale & click <strong>Execute Benchmark</strong> to run live in FrankenPHP.</span>
+            <!-- Dynamic Content Body -->
+            <div class="tab-content-area">
+              <!-- TAB 1: Overview (Integrated Comparison Bars + Table) -->
+              <div class="tab-pane active" id="tab-overview">
+                <!-- Integrated Memory Bar Strip -->
+                <div class="integrated-bar-strip" id="comparison-box" style="display:none;">
+                  <div class="bar-strip-header">
+                    <span class="bar-strip-title">Allocated RAM Footprint</span>
+                    <span class="savings-pill" id="savings-badge">−84% RAM Savings</span>
+                  </div>
+                  <div class="visual-bars compact-bars">
+                    <div class="bar-item">
+                      <div class="bar-meta">
+                        <span class="bar-name">ext-judy 2.6.0 (C)</span>
+                        <span class="bar-val" id="bar-val-judy">—</span>
                       </div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- TAB 2: Live Terminal Log -->
-          <div class="tab-pane" id="tab-terminal">
-            <div class="terminal-card compact-terminal">
-              <div class="terminal-header">
-                <div class="terminal-dots">
-                  <span></span><span></span><span></span>
+                      <div class="progress-track">
+                        <div class="progress-fill fill-judy" id="bar-fill-judy" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                    <div class="bar-item">
+                      <div class="bar-meta">
+                        <span class="bar-name">Native PHP Array</span>
+                        <span class="bar-val" id="bar-val-array">—</span>
+                      </div>
+                      <div class="progress-track">
+                        <div class="progress-fill fill-array" id="bar-fill-array" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <span class="terminal-title">FrankenPHP Worker Execution Log (SSE Live Stream)</span>
-                <button type="button" id="btn-clear-term" class="btn-terminal-clear">Clear</button>
-              </div>
-              <div class="terminal-body" id="terminal-body">
-                <div class="term-line info"><span class="term-time">[Ready]</span> FrankenPHP worker initialized on PHP 8.5. ext-judy 2.6.0 loaded.</div>
-                <div class="term-line muted"><span class="term-time">[Idle]</span> Select scale and click "Execute Benchmark" to stream live CPU & memory execution.</div>
-              </div>
-            </div>
-          </div>
 
-          <!-- TAB 3: Data Inspector & Live Key Prober -->
-          <div class="tab-pane" id="tab-inspector">
-            <div class="samples-card compact-samples" id="samples-card">
-              <div class="samples-header">
-                <h3>Stored Data Samples (Bit-for-Bit Verified)</h3>
-                <span class="samples-tag">Random Verified Samples</span>
-              </div>
-              <div class="samples-grid compact-samples-grid" id="samples-grid">
-                <div class="sample-item placeholder-sample">Run a benchmark to inspect stored samples.</div>
+                <!-- Detailed Results Table -->
+                <table class="metrics-table compact-table">
+                  <thead>
+                    <tr>
+                      <th>Backend</th>
+                      <th>Duration</th>
+                      <th>Throughput</th>
+                      <th>Allocated RAM</th>
+                      <th>Peak RSS</th>
+                      <th>Key Insights</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-body">
+                    <tr>
+                      <td colspan="6" class="placeholder-row compact-placeholder">
+                        <div class="placeholder-content">
+                          <span>Select a scale & click <strong>Execute Benchmark</strong> to run live in FrankenPHP.</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
-              <!-- On-Demand Probe Search -->
-              <div class="probe-search-box compact-probe">
-                <label class="probe-label">Probe Any Key / Index In Active Worker Memory:</label>
-                <div class="probe-input-row">
-                  <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or app.session.500000)" value="42">
-                  <button type="button" id="btn-probe" class="btn-xs btn-accent">Probe Key</button>
+              <!-- TAB 2: Live Terminal Log -->
+              <div class="tab-pane" id="tab-terminal">
+                <div class="terminal-body-integrated" id="terminal-body">
+                  <div class="term-line info"><span class="term-time">[Ready]</span> FrankenPHP worker initialized on PHP 8.5. ext-judy 2.6.0 loaded.</div>
+                  <div class="term-line muted"><span class="term-time">[Idle]</span> Select scale and click "Execute Benchmark" to stream live CPU & memory execution.</div>
                 </div>
-                <div class="probe-result compact-probe-result" id="probe-result" style="display:none;"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- TAB 4: Architecture Explainer -->
-          <div class="tab-pane" id="tab-architecture">
-            <div class="explainer-card compact-explainer">
-              <h3>Under The Hood: Why Judy Uses ~84% Less Memory</h3>
-              <div class="explainer-grid">
-                <div class="explainer-item">
-                  <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves</span>
-                  <p>ext-judy groups keys into adaptive 256-ary digital tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. It computes offsets dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) rather than storing pointer arrays.</p>
-                </div>
-                <div class="explainer-item">
-                  <span class="explainer-tag tag-array">2. Zend Hash Table Overhead</span>
-                  <p>A standard PHP array allocates a 36-byte <code>Bucket</code> struct per key, uint32 hash indices, collision chains, and powers-of-2 capacity allocations. Storing 10M keys in standard arrays requires <strong>4.68 GB RAM</strong> vs <strong>763 MB</strong> in Judy.</p>
+                <div class="terminal-footer-integrated">
+                  <span class="terminal-footer-note">Real-time SSE EventStream from Worker PID</span>
+                  <button type="button" id="btn-clear-term" class="btn-terminal-clear">Clear Log</button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div> <!-- .tab-content-area -->
-      </section>
+
+              <!-- TAB 3: Data Inspector & Live Key Prober -->
+              <div class="tab-pane" id="tab-inspector">
+                <div class="samples-pane-inner">
+                  <div class="samples-header">
+                    <h3>Stored Data Samples (Bit-for-Bit Verified)</h3>
+                    <span class="samples-tag">Random Verified Samples</span>
+                  </div>
+                  <div class="samples-grid compact-samples-grid" id="samples-grid">
+                    <div class="sample-item placeholder-sample">Run a benchmark to inspect stored samples.</div>
+                  </div>
+
+                  <!-- On-Demand Probe Search -->
+                  <div class="probe-search-box compact-probe">
+                    <label class="probe-label">Probe Any Key / Index In Active Worker Memory:</label>
+                    <div class="probe-input-row">
+                      <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or app.session.500000)" value="42">
+                      <button type="button" id="btn-probe" class="btn-xs btn-accent">Probe Key</button>
+                    </div>
+                    <div class="probe-result compact-probe-result" id="probe-result" style="display:none;"></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 4: Architecture Explainer -->
+              <div class="tab-pane" id="tab-architecture">
+                <div class="explainer-pane-inner">
+                  <h3>Under The Hood: Why Judy Uses ~84% Less Memory</h3>
+                  <div class="explainer-grid">
+                    <div class="explainer-item">
+                      <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves</span>
+                      <p>ext-judy groups keys into adaptive 256-ary digital tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. It computes offsets dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) rather than storing pointer arrays.</p>
+                    </div>
+                    <div class="explainer-item">
+                      <span class="explainer-tag tag-array">2. Zend Hash Table Overhead</span>
+                      <p>A standard PHP array allocates a 36-byte <code>Bucket</code> struct per key, uint32 hash indices, collision chains, and powers-of-2 capacity allocations. Storing 10M keys in standard arrays requires <strong>4.68 GB RAM</strong> vs <strong>763 MB</strong> in Judy.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- .tab-content-area -->
+          </div> <!-- .unified-view-card -->
+        </section>
       </div>
     </main>
 
