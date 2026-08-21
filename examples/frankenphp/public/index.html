@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Judy Arrays & judy-cache — Live FrankenPHP Testbed</title>
+  <meta name="color-scheme" content="dark light">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css">
+  <script>
+    const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    document.documentElement.setAttribute('data-theme', savedTheme);
+  </script>
+</head>
+<body>
+  <div class="app-layout single-screen">
+    <!-- Navbar -->
+    <header class="app-navbar compact">
+      <div class="nav-left">
+        <div class="brand-badge">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-titles">
+          <div class="brand-row">
+            <h1>Judy Arrays & judy-cache</h1>
+            <span class="version-tag">php-judy 2.6.0</span>
+          </div>
+          <p class="brand-subtitle">High-performance memory testbed on <strong>FrankenPHP Worker Mode</strong></p>
+        </div>
+      </div>
+
+      <div class="nav-right">
+        <div class="worker-badge" id="worker-status">
+          <span class="pulse-dot"></span>
+          <span id="worker-info">Connecting to FrankenPHP worker...</span>
+        </div>
+
+        <button id="theme-toggle" class="btn-icon" aria-label="Toggle theme" title="Switch between dark and light mode">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Single-Screen Grid -->
+    <main class="dashboard-grid compact-grid">
+      <!-- Left Column: Controls & Playground -->
+      <div class="left-column">
+        <section class="panel control-panel compact-panel">
+          <div class="panel-header-compact">
+            <h2>Workload Setup</h2>
+            <span class="panel-tag">Interactive</span>
+          </div>
+
+          <!-- Workload Selector -->
+          <div class="control-group compact-group">
+            <div class="preset-cards compact-cards">
+              <button type="button" class="preset-card active" data-workload="memory_shootout">
+                <div class="preset-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"></path><path d="M10 2v6h4V2"></path><circle cx="12" cy="14" r="2"></circle></svg>
+                </div>
+                <div class="preset-text">
+                  <strong>Memory Footprint</strong>
+                  <span>Peak RSS shootout</span>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-workload="prefix_invalidation">
+                <div class="preset-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                </div>
+                <div class="preset-text">
+                  <strong>Prefix Prune</strong>
+                  <span>O(range) deletePrefix</span>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-workload="cache_rw">
+                <div class="preset-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+                </div>
+                <div class="preset-text">
+                  <strong>PSR-16 Cache R/W</strong>
+                  <span>Throughput benchmark</span>
+                </div>
+              </button>
+
+              <button type="button" class="preset-card" data-workload="int_counter">
+                <div class="preset-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="9" x2="20" y2="9"></line><line x1="4" y1="15" x2="20" y2="15"></line><line x1="10" y1="3" x2="8" y2="21"></line><line x1="16" y1="3" x2="14" y2="21"></line></svg>
+                </div>
+                <div class="preset-text">
+                  <strong>Int Counters</strong>
+                  <span>Rate-limit & IP counter</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Scale / Item Count Slider (Up to 10M) -->
+          <div class="control-group compact-group">
+            <div class="slider-header-row">
+              <label for="scale-slider" class="group-label">Scale (Item Count)</label>
+              <span class="scale-counter" id="scale-display">100,000 keys (100k)</span>
+            </div>
+
+            <input type="range" id="scale-slider" min="0" max="8" step="1" value="2">
+
+            <div class="scale-chips compact-chips">
+              <button type="button" class="chip" data-idx="0">10k</button>
+              <button type="button" class="chip" data-idx="1">50k</button>
+              <button type="button" class="chip active" data-idx="2">100k</button>
+              <button type="button" class="chip" data-idx="3">250k</button>
+              <button type="button" class="chip" data-idx="4">500k</button>
+              <button type="button" class="chip" data-idx="5">1M</button>
+              <button type="button" class="chip" data-idx="6">2.5M</button>
+              <button type="button" class="chip" data-idx="7">5M</button>
+              <button type="button" class="chip" data-idx="8">10M</button>
+            </div>
+          </div>
+
+          <!-- Backend Selection -->
+          <div class="control-group compact-group">
+            <div class="backend-options compact-backends">
+              <label class="backend-option">
+                <input type="radio" name="backend" value="all" checked>
+                <div class="backend-pill">
+                  <span class="backend-title">⚡️ Compare All</span>
+                </div>
+              </label>
+
+              <label class="backend-option">
+                <input type="radio" name="backend" value="judy">
+                <div class="backend-pill">
+                  <span class="backend-title">🚀 ext-judy 2.6.0 (C)</span>
+                </div>
+              </label>
+
+              <label class="backend-option">
+                <input type="radio" name="backend" value="array">
+                <div class="backend-pill">
+                  <span class="backend-title">🐘 PHP Array</span>
+                </div>
+              </label>
+
+              <label class="backend-option">
+                <input type="radio" name="backend" value="polyfill">
+                <div class="backend-pill">
+                  <span class="backend-title">🧩 judy-polyfill</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="control-actions compact-actions">
+            <button id="btn-run" class="btn-action-primary">
+              <span class="loader-spinner" id="btn-spinner" style="display:none;"></span>
+              <span id="btn-text">Execute Benchmark</span>
+            </button>
+            <button id="btn-reset" class="btn-action-secondary" title="Flush resident worker memory">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Clear</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Live Resident Cache Playground -->
+        <section class="panel playground-panel compact-panel">
+          <div class="panel-header-compact">
+            <h2>Cache Playground</h2>
+            <span class="panel-tag">Live Worker RAM</span>
+          </div>
+
+          <div class="playground-form compact-form">
+            <div class="input-row">
+              <input type="text" id="play-key" placeholder="Key" value="tenant.1.orders.42">
+              <input type="text" id="play-val" placeholder="Value" value='{"total": 199.99}'>
+            </div>
+            <div class="btn-group-row compact-btn-row">
+              <button type="button" id="btn-play-set" class="btn-xs btn-accent">Set</button>
+              <button type="button" id="btn-play-get" class="btn-xs btn-outline">Get (&mu;s)</button>
+              <button type="button" id="btn-play-prefix" class="btn-xs btn-danger">Prune "tenant.1."</button>
+            </div>
+            <div class="playground-output compact-output" id="play-output">
+              <span class="output-muted">Ready for live key operations...</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Right Column: Telemetry & Tabbed Views -->
+      <div class="right-column">
+        <section class="panel results-panel compact-panel">
+          <!-- Panel Header -->
+          <div class="panel-header-compact">
+            <h2>Live Benchmark Telemetry</h2>
+            <div class="status-indicator-badge" id="results-badge">Ready</div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div class="live-progress-container" id="progress-container" style="display:none;">
+            <div class="live-progress-bar" id="live-progress-bar"></div>
+          </div>
+
+          <!-- KPI Cards (Persistent Summary) -->
+          <div class="kpi-grid compact-kpi">
+            <div class="kpi-card">
+              <span class="kpi-label">Judy Memory</span>
+              <div class="kpi-number" id="kpi-mem">—</div>
+              <div class="kpi-sub" id="kpi-mem-sub">Allocated RAM</div>
+            </div>
+
+            <div class="kpi-card">
+              <span class="kpi-label">Execution Latency</span>
+              <div class="kpi-number" id="kpi-lat">—</div>
+              <div class="kpi-sub" id="kpi-lat-sub">Run duration</div>
+            </div>
+
+            <div class="kpi-card">
+              <span class="kpi-label">Throughput</span>
+              <div class="kpi-number" id="kpi-ops">—</div>
+              <div class="kpi-sub" id="kpi-ops-sub">Operations / second</div>
+            </div>
+          </div>
+
+          <!-- Data Integrity Banner -->
+          <div class="integrity-banner" id="integrity-card" style="display:none;">
+            <span class="integrity-icon">🛡️</span>
+            <span class="integrity-title">Bit-for-Bit Verified:</span>
+            <span class="integrity-text" id="integrity-details">10,000,000 keys intact &bull; 0 bit corruption</span>
+            <span class="integrity-tag">100% Lossless</span>
+          </div>
+
+          <!-- Unified Telemetry View Card -->
+          <div class="unified-view-card">
+            <!-- Tabs as the Integrated Header of the Card -->
+            <div class="view-tabs-strip">
+              <button type="button" class="view-tab-btn active" data-tab="tab-overview">
+                <span class="tab-icon">📊</span> Results & Comparison
+              </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-terminal">
+                <span class="tab-icon">📟</span> Live Execution Log <span class="tab-dot" id="terminal-dot" style="display:none;"></span>
+              </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-inspector">
+                <span class="tab-icon">🔍</span> Data Inspector & Probe
+              </button>
+            </div>
+
+            <!-- Dynamic Content Body -->
+            <div class="tab-content-area">
+              <!-- TAB 1: Overview (Integrated Comparison Bars + Table) -->
+              <div class="tab-pane active" id="tab-overview">
+                <!-- Integrated Memory Bar Strip -->
+                <div class="integrated-bar-strip" id="comparison-box" style="display:none;">
+                  <div class="bar-strip-header">
+                    <span class="bar-strip-title">Allocated RAM Footprint</span>
+                    <span class="savings-pill" id="savings-badge">−84% RAM Savings</span>
+                  </div>
+                  <div class="visual-bars compact-bars">
+                    <div class="bar-item">
+                      <div class="bar-meta">
+                        <span class="bar-name">ext-judy 2.6.0 (C)</span>
+                        <span class="bar-val" id="bar-val-judy">—</span>
+                      </div>
+                      <div class="progress-track">
+                        <div class="progress-fill fill-judy" id="bar-fill-judy" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                    <div class="bar-item">
+                      <div class="bar-meta">
+                        <span class="bar-name">Native PHP Array</span>
+                        <span class="bar-val" id="bar-val-array">—</span>
+                      </div>
+                      <div class="progress-track">
+                        <div class="progress-fill fill-array" id="bar-fill-array" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Detailed Results Table -->
+                <table class="metrics-table compact-table">
+                  <thead>
+                    <tr>
+                      <th>Backend</th>
+                      <th>Duration</th>
+                      <th>Write Ops/s</th>
+                      <th>Read Ops/s</th>
+                      <th>Allocated RAM</th>
+                      <th>Peak RSS</th>
+                      <th>Key Insights</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-body">
+                    <tr>
+                      <td colspan="7" class="placeholder-row compact-placeholder">
+                        <div class="placeholder-content">
+                          <span>Select a scale & click <strong>Execute Benchmark</strong> to run live in FrankenPHP.</span>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- TAB 2: Live Terminal Log -->
+              <div class="tab-pane" id="tab-terminal">
+                <div class="terminal-body-integrated" id="terminal-body">
+                  <div class="term-line info"><span class="term-time">[Ready]</span> FrankenPHP worker initialized on PHP 8.5. ext-judy 2.6.0 loaded.</div>
+                  <div class="term-line muted"><span class="term-time">[Idle]</span> Select scale and click "Execute Benchmark" to stream live CPU & memory execution.</div>
+                </div>
+                <div class="terminal-footer-integrated">
+                  <span class="terminal-footer-note">Real-time SSE EventStream from Worker PID</span>
+                  <button type="button" id="btn-clear-term" class="btn-terminal-clear">Clear Log</button>
+                </div>
+              </div>
+
+              <!-- TAB 3: Data Inspector & Live Key Prober -->
+              <div class="tab-pane" id="tab-inspector">
+                <div class="samples-pane-inner">
+                  <div class="samples-header">
+                    <h3>Stored Data Samples (Bit-for-Bit Verified)</h3>
+                    <span class="samples-tag">Random Verified Samples</span>
+                  </div>
+                  <div class="samples-grid compact-samples-grid" id="samples-grid">
+                    <div class="sample-item placeholder-sample">Run a benchmark to inspect stored samples.</div>
+                  </div>
+
+                  <!-- On-Demand Probe Search -->
+                  <div class="probe-search-box compact-probe">
+                    <label class="probe-label">Probe Any Key / Index In Active Worker Memory:</label>
+                    <div class="probe-input-row">
+                      <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or app.session.500000)" value="42">
+                      <button type="button" id="btn-probe" class="btn-xs btn-accent">Probe Key</button>
+                    </div>
+                    <div class="probe-result compact-probe-result" id="probe-result" style="display:none;"></div>
+                  </div>
+                </div>
+              </div>
+            </div> <!-- .tab-content-area -->
+          </div> <!-- .unified-view-card -->
+        </section>
+      </div>
+    </main>
+
+    <!-- Permanent Architecture & Memory Mechanics Explainer -->
+    <section class="panel architecture-banner compact-panel">
+      <div class="architecture-header">
+        <h3>Under The Hood: Why Judy Radix Tries Save ~84% Memory</h3>
+        <span class="architecture-subtitle">C Hardware Bitmap Leaves vs. Zend 36-Byte Bucket Tables</span>
+      </div>
+      <div class="explainer-grid">
+        <div class="explainer-item">
+          <span class="explainer-tag tag-judy">1. 256-ary Compressed Bitmap Leaves (ext-judy 2.6.0)</span>
+          <p>Keys are grouped into adaptive 256-ary radix tree leaves (<code>LEAF1</code>..<code>LEAF7</code>, <code>LEAF_B1</code>) with bit-packed immediate values. Key offsets are calculated dynamically using single-cycle CPU instructions (<code>POPCNT</code>, <code>BSWAP</code>) with <strong>zero pointer arrays and zero per-entry structs</strong>.</p>
+        </div>
+        <div class="explainer-item">
+          <span class="explainer-tag tag-array">2. Zend Hash Table Overhead (Standard PHP Array)</span>
+          <p>Each entry allocates a <strong>36-byte <code>Bucket</code> struct</strong>, uint32 hash indices, collision chains, and powers-of-2 capacity doublings. At 10M keys, PHP arrays take <strong>4.68 GB RAM</strong> vs <strong>763 MB</strong> in Judy (~84% reduction).</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="app-footer compact-footer">
+      <p>Powered by <a href="https://frankenphp.dev" target="_blank" rel="noopener">FrankenPHP Worker Mode</a> &bull; <a href="https://github.com/orieg/php-judy" target="_blank" rel="noopener">php-judy 2.6.0</a> &bull; <a href="https://github.com/orieg/judy-cache" target="_blank" rel="noopener">judy-cache</a> &bull; <a href="https://github.com/orieg/judy-polyfill" target="_blank" rel="noopener">judy-polyfill</a></p>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

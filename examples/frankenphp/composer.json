@@ -1,0 +1,19 @@
+{
+    "name": "orieg/judy-cache-frankenphp-demo",
+    "description": "Interactive FrankenPHP Worker Demo for Judy arrays and judy-cache",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "psr/simple-cache": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Orieg\\JudyCache\\": "/app/judy-cache/src/",
+            "Orieg\\JudyPolyfill\\": "/app/judy-polyfill/src/"
+        },
+        "files": [
+            "/app/judy-polyfill/src/bootstrap.php"
+        ]
+    }
+}
