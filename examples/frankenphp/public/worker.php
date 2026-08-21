@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+// Prevent memory limits or timeouts during heavy benchmarks
+ini_set('memory_limit', '-1');
+set_time_limit(0);
+
 require __DIR__ . '/../vendor/autoload.php';
 
 use Orieg\JudyCache\JudySimpleCache;
@@ -25,56 +29,56 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
     $t0 = hrtime(true);
 
     $metrics = [];
-    $keysSample = [];
 
     switch ($workload) {
         case 'cache_rw':
             $prefix = $params['prefix'] ?? 'app.session.';
+            $sampleReads = min($count, 50000);
+
             if ($backend === 'judy') {
                 $cache = new JudySimpleCache();
                 for ($i = 0; $i < $count; $i++) {
-                    $cache->set("{$prefix}{$i}", ['user_id' => $i, 'active' => true, 'ts' => 1700000000 + $i]);
+                    $cache->set("{$prefix}{$i}", ['id' => $i, 'v' => 1]);
                 }
                 $tWrite = hrtime(true);
                 $hits = 0;
-                for ($i = 0; $i < min($count, 50000); $i++) {
+                for ($i = 0; $i < $sampleReads; $i++) {
                     if ($cache->get("{$prefix}{$i}") !== null) $hits++;
                 }
                 $tRead = hrtime(true);
-                $metrics['write_ops_sec'] = round($count / (($tWrite - $t0) / 1e9));
-                $metrics['read_ops_sec'] = round(min($count, 50000) / (($tRead - $tWrite) / 1e9));
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = $cache->count();
             } elseif ($backend === 'polyfill') {
-                // Force use of pure-PHP polyfill
                 $polyfillTrie = new PolyfillJudy(PolyfillJudy::STRING_TO_MIXED);
                 for ($i = 0; $i < $count; $i++) {
-                    $polyfillTrie["{$prefix}{$i}"] = serialize(['user_id' => $i, 'active' => true, 'ts' => 1700000000 + $i]);
+                    $polyfillTrie["{$prefix}{$i}"] = serialize(['id' => $i, 'v' => 1]);
                 }
                 $tWrite = hrtime(true);
                 $hits = 0;
-                for ($i = 0; $i < min($count, 50000); $i++) {
+                for ($i = 0; $i < $sampleReads; $i++) {
                     if (isset($polyfillTrie["{$prefix}{$i}"])) $hits++;
                 }
                 $tRead = hrtime(true);
-                $metrics['write_ops_sec'] = round($count / (($tWrite - $t0) / 1e9));
-                $metrics['read_ops_sec'] = round(min($count, 50000) / (($tRead - $tWrite) / 1e9));
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = count($polyfillTrie);
             } else {
                 // Native PHP Array Cache
                 $arrayCache = [];
                 for ($i = 0; $i < $count; $i++) {
-                    $arrayCache["{$prefix}{$i}"] = ['user_id' => $i, 'active' => true, 'ts' => 1700000000 + $i];
+                    $arrayCache["{$prefix}{$i}"] = ['id' => $i, 'v' => 1];
                 }
                 $tWrite = hrtime(true);
                 $hits = 0;
-                for ($i = 0; $i < min($count, 50000); $i++) {
+                for ($i = 0; $i < $sampleReads; $i++) {
                     if (isset($arrayCache["{$prefix}{$i}"])) $hits++;
                 }
                 $tRead = hrtime(true);
-                $metrics['write_ops_sec'] = round($count / (($tWrite - $t0) / 1e9));
-                $metrics['read_ops_sec'] = round(min($count, 50000) / (($tRead - $tWrite) / 1e9));
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = count($arrayCache);
             }
@@ -88,7 +92,7 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $cache = new JudySimpleCache();
                 for ($t = 1; $t <= $tenants; $t++) {
                     for ($k = 1; $k <= $keysPerTenant; $k++) {
-                        $cache->set("tenant.{$t}.order.{$k}", ['amount' => $k * 10, 'status' => 'paid']);
+                        $cache->set("tenant.{$t}.order.{$k}", $k);
                     }
                 }
                 $tPopulate = hrtime(true);
@@ -107,7 +111,7 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $arrayCache = [];
                 for ($t = 1; $t <= $tenants; $t++) {
                     for ($k = 1; $k <= $keysPerTenant; $k++) {
-                        $arrayCache["tenant.{$t}.order.{$k}"] = ['amount' => $k * 10, 'status' => 'paid'];
+                        $arrayCache["tenant.{$t}.order.{$k}"] = $k;
                     }
                 }
                 $tPopulate = hrtime(true);
@@ -192,8 +196,8 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
 
     $durationMs = ($t1 - $t0) / 1e6;
     $metrics['duration_ms'] = round($durationMs, 2);
-    $metrics['ops_per_sec'] = round($count / (($t1 - $t0) / 1e9));
-    $metrics['mem_allocated_mb'] = round(($realMemAfter - $realMemBefore) / 1024 / 1024, 2);
+    $metrics['ops_per_sec'] = round($count / max(1e-6, ($t1 - $t0) / 1e9));
+    $metrics['mem_allocated_mb'] = round(max(0, $realMemAfter - $realMemBefore) / 1024 / 1024, 2);
     $metrics['peak_rss_mb'] = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
     return $metrics;
@@ -205,7 +209,7 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
     $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-    // CORS & JSON Headers
+    // CORS & Headers
     header('Access-Control-Allow-Origin: *');
     header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
     header('Access-Control-Allow-Headers: Content-Type');
@@ -235,35 +239,45 @@ $handler = function () use (&$requestsServed, $workerStartedAt, $residentCache, 
     }
 
     if ($uri === '/api/benchmark' && $method === 'POST') {
-        $raw = file_get_contents('php://input');
-        $body = json_decode($raw, true) ?? [];
-        $count = max(1000, min(1000000, (int)($body['count'] ?? 100000)));
-        $backend = $body['backend'] ?? 'all';
-        $workload = $body['workload'] ?? 'memory_shootout';
-
-        $results = [];
-
-        if ($backend === 'all') {
-            if (extension_loaded('judy')) {
-                $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
-            }
-            $results['array'] = executeBenchmark('array', $workload, $count, $body);
-            if ($count <= 250000) {
-                // Polyfill is pure PHP, limit to 250k to prevent timeout
-                $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
-            }
-        } else {
-            $results[$backend] = executeBenchmark($backend, $workload, $count, $body);
-        }
-
         header('Content-Type: application/json');
-        echo json_encode([
-            'workload' => $workload,
-            'count' => $count,
-            'results' => $results,
-            'worker_pid' => getmypid(),
-            'requests_served' => $requestsServed,
-        ]);
+        try {
+            $raw = file_get_contents('php://input');
+            $body = json_decode($raw, true) ?? [];
+            $count = max(1000, min(10000000, (int)($body['count'] ?? 100000)));
+            $backend = $body['backend'] ?? 'all';
+            $workload = $body['workload'] ?? 'memory_shootout';
+
+            $results = [];
+
+            if ($backend === 'all') {
+                if (extension_loaded('judy')) {
+                    $results['judy'] = executeBenchmark('judy', $workload, $count, $body);
+                }
+                // Array can run up to 10M with unconstrained memory_limit
+                $results['array'] = executeBenchmark('array', $workload, $count, $body);
+                // Polyfill is pure PHP; skip when > 200k in "all" mode to prevent 30s UI hang
+                if ($count <= 200000) {
+                    $results['polyfill'] = executeBenchmark('polyfill', $workload, $count, $body);
+                }
+            } else {
+                $results[$backend] = executeBenchmark($backend, $workload, $count, $body);
+            }
+
+            echo json_encode([
+                'workload' => $workload,
+                'count' => $count,
+                'results' => $results,
+                'worker_pid' => getmypid(),
+                'requests_served' => $requestsServed,
+            ]);
+        } catch (\Throwable $e) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        }
         return;
     }
 
