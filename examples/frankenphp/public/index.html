@@ -208,14 +208,9 @@
       <!-- Right Column: Telemetry & Tabbed Views -->
       <div class="right-column">
         <section class="panel results-panel compact-panel">
-          <!-- Header with Navigation Tabs -->
-          <div class="panel-header-tabbed">
-            <div class="tab-switcher">
-              <button type="button" class="tab-btn active" data-tab="tab-overview">📊 Results Overview</button>
-              <button type="button" class="tab-btn" data-tab="tab-terminal">📟 Live Terminal <span class="tab-dot" id="terminal-dot" style="display:none;"></span></button>
-              <button type="button" class="tab-btn" data-tab="tab-inspector">🔍 Data Inspector</button>
-              <button type="button" class="tab-btn" data-tab="tab-architecture">ℹ️ Architecture</button>
-            </div>
+          <!-- Panel Header -->
+          <div class="panel-header-compact">
+            <h2>Live Benchmark Telemetry</h2>
             <div class="status-indicator-badge" id="results-badge">Ready</div>
           </div>
 
@@ -224,7 +219,7 @@
             <div class="live-progress-bar" id="live-progress-bar"></div>
           </div>
 
-          <!-- KPI Cards (Compact & Heroic) -->
+          <!-- KPI Cards (Persistent Summary) -->
           <div class="kpi-grid compact-kpi">
             <div class="kpi-card">
               <span class="kpi-label">Judy Memory</span>
@@ -253,8 +248,26 @@
             <span class="integrity-tag">100% Lossless</span>
           </div>
 
-          <!-- TAB 1: Overview (Comparison Bars + Table) -->
-          <div class="tab-pane active" id="tab-overview">
+          <!-- Distinct Tab Navigation Bar (Under Cards, Above Content) -->
+          <div class="view-tabs-strip">
+            <button type="button" class="view-tab-btn active" data-tab="tab-overview">
+              <span class="tab-icon">📊</span> Results & Comparison
+            </button>
+            <button type="button" class="view-tab-btn" data-tab="tab-terminal">
+              <span class="tab-icon">📟</span> Live Execution Log <span class="tab-dot" id="terminal-dot" style="display:none;"></span>
+            </button>
+            <button type="button" class="view-tab-btn" data-tab="tab-inspector">
+              <span class="tab-icon">🔍</span> Data Inspector & Probe
+            </button>
+            <button type="button" class="view-tab-btn" data-tab="tab-architecture">
+              <span class="tab-icon">ℹ️</span> Architecture
+            </button>
+          </div>
+
+          <!-- Tab Content Panes (The Dynamic Content Below Tabs) -->
+          <div class="tab-content-area">
+            <!-- TAB 1: Overview (Comparison Bars + Table) -->
+            <div class="tab-pane active" id="tab-overview">
             <!-- Visual Comparison Chart Box -->
             <div class="chart-box compact-chart" id="comparison-box" style="display:none;">
               <div class="chart-box-header">
@@ -367,7 +380,8 @@
               </div>
             </div>
           </div>
-        </section>
+        </div> <!-- .tab-content-area -->
+      </section>
       </div>
     </main>
 

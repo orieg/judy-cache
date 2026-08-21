@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Tab switcher
-  const tabBtns = document.querySelectorAll('.tab-btn');
+  const tabBtns = document.querySelectorAll('.view-tab-btn, .tab-btn');
   const tabPanes = document.querySelectorAll('.tab-pane');
   const terminalDot = document.getElementById('terminal-dot');
 
