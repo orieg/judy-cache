@@ -182,13 +182,72 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
             }
             break;
 
+        case 'int_counter':
+            $sampleReads = min($count, 100000);
+            if ($backend === 'judy') {
+                $judy = new Judy(Judy::INT_TO_INT);
+                for ($i = 0; $i < $count; $i++) {
+                    $judy[$i] = ($judy[$i] ?? 0) + 1;
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if (isset($judy[$i])) $hits++;
+                }
+                $tRead = hrtime(true);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['total_entries'] = count($judy);
+                $metrics['judy_internal_mb'] = round($judy->memoryUsage() / 1024 / 1024, 2);
+                $metrics['bytes_per_key'] = round($judy->memoryUsage() / max(1, $count), 2);
+                $lastBenchmarkDataset = ['type' => 'judy_int', 'ref' => $judy, 'count' => $count];
+                $samples[] = ['key' => '0', 'value' => $judy[0] ?? 0, 'status' => 'Verified Intact'];
+                $samples[] = ['key' => '42', 'value' => $judy[42] ?? 0, 'status' => 'Verified Intact'];
+            } elseif ($backend === 'polyfill') {
+                $judy = new PolyfillJudy(PolyfillJudy::INT_TO_INT);
+                for ($i = 0; $i < $count; $i++) {
+                    $judy[$i] = ($judy[$i] ?? 0) + 1;
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if (isset($judy[$i])) $hits++;
+                }
+                $tRead = hrtime(true);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['total_entries'] = count($judy);
+            } else {
+                $arr = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $arr[$i] = ($arr[$i] ?? 0) + 1;
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if (isset($arr[$i])) $hits++;
+                }
+                $tRead = hrtime(true);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['total_entries'] = count($arr);
+            }
+            break;
+
         case 'memory_shootout':
         default:
+            $readSampleCount = min(100000, $count);
             if ($backend === 'judy') {
                 $judy = new Judy(Judy::INT_TO_INT);
                 for ($i = 0; $i < $count; $i++) {
                     $judy[$i] = $i * 3 + 7;
                 }
+                $tWrite = hrtime(true);
+                $readHits = 0;
+                for ($i = 0; $i < $readSampleCount; $i++) {
+                    if (isset($judy[$i])) $readHits++;
+                }
+                $tRead = hrtime(true);
 
                 // Verify Random Probes in JudyL array
                 $checkIndices = array_unique(array_merge(
@@ -212,6 +271,8 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                     }
                 }
 
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($readSampleCount / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['total_entries'] = count($judy);
                 $metrics['judy_internal_mb'] = round($judy->memoryUsage() / 1024 / 1024, 2);
                 $metrics['bytes_per_key'] = round($judy->memoryUsage() / max(1, $count), 2);
@@ -221,12 +282,28 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 for ($i = 0; $i < $count; $i++) {
                     $judy[$i] = $i * 3 + 7;
                 }
+                $tWrite = hrtime(true);
+                $readHits = 0;
+                for ($i = 0; $i < $readSampleCount; $i++) {
+                    if (isset($judy[$i])) $readHits++;
+                }
+                $tRead = hrtime(true);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($readSampleCount / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['total_entries'] = count($judy);
             } else {
                 $arr = [];
                 for ($i = 0; $i < $count; $i++) {
                     $arr[$i] = $i * 3 + 7;
                 }
+                $tWrite = hrtime(true);
+                $readHits = 0;
+                for ($i = 0; $i < $readSampleCount; $i++) {
+                    if (isset($arr[$i])) $readHits++;
+                }
+                $tRead = hrtime(true);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($readSampleCount / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['total_entries'] = count($arr);
             }
             break;

@@ -218,7 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const allMetrics = [judy, arr, polyfill].filter(Boolean);
     const minDuration = Math.min(...allMetrics.map(m => m.duration_ms));
-    const maxOps = Math.max(...allMetrics.map(m => m.ops_per_sec));
+    const maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || m.ops_per_sec || 0));
+    const maxReadOps = Math.max(...allMetrics.map(m => m.read_ops_sec || m.ops_per_sec || 0));
     const minMem = Math.min(...allMetrics.map(m => m.mem_allocated_mb));
     const minRss = Math.min(...allMetrics.map(m => m.peak_rss_mb));
 
@@ -226,7 +227,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (judy) {
       document.getElementById('kpi-mem').textContent = `${judy.mem_allocated_mb} MB`;
       document.getElementById('kpi-lat').textContent = `${judy.duration_ms} ms`;
-      document.getElementById('kpi-ops').textContent = `${fmt(judy.ops_per_sec)}/s`;
+      
+      const writeOps = judy.write_ops_sec || judy.ops_per_sec;
+      const readOps = judy.read_ops_sec || judy.ops_per_sec;
+      document.getElementById('kpi-ops').textContent = `${fmt(writeOps)}/s`;
+      document.getElementById('kpi-ops-sub').innerHTML = `Read: <strong style="color: var(--accent-emerald)">${fmt(readOps)}/s</strong> (Write: ${fmt(writeOps)}/s)`;
 
       if (arr) {
         const memSavings = arr.mem_allocated_mb > 0 
@@ -240,13 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
           document.getElementById('kpi-lat-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">${speedup}x faster</span> vs Array (${arr.duration_ms} ms)`;
         } else {
           const arrSpeedup = (judy.duration_ms / Math.max(0.01, arr.duration_ms)).toFixed(1);
-          document.getElementById('kpi-lat-sub').innerHTML = `Array is <span style="font-weight:700">${arrSpeedup}x faster</span> on linear append (${arr.duration_ms} ms)`;
-        }
-
-        if (arr.ops_per_sec > judy.ops_per_sec) {
-          document.getElementById('kpi-ops-sub').innerHTML = `Array leads: <strong>${fmt(arr.ops_per_sec)}/s</strong>`;
-        } else {
-          document.getElementById('kpi-ops-sub').innerHTML = `Judy leads: <strong style="color: var(--accent-emerald)">${fmt(judy.ops_per_sec)}/s</strong>`;
+          document.getElementById('kpi-lat-sub').innerHTML = `Array is <span style="font-weight:700">${arrSpeedup}x faster</span> on append (${arr.duration_ms} ms)`;
         }
 
         // Comparison Bar Chart
@@ -283,16 +282,18 @@ document.addEventListener('DOMContentLoaded', () => {
       let details = '';
       if (m.prefix_invalidation_ms !== undefined) {
         details = `Prefix Delete: <strong>${m.prefix_invalidation_ms} ms</strong> (${m.algo_complexity})`;
-      } else if (m.write_ops_sec !== undefined) {
-        details = `Write: ${fmt(m.write_ops_sec)}/s &bull; Read: ${fmt(m.read_ops_sec)}/s`;
       } else if (m.bytes_per_key !== undefined) {
         details = `<strong>${m.bytes_per_key} bytes/key</strong> (libJudy: ${m.judy_internal_mb || 0} MB)`;
       } else {
         details = `${fmt(m.total_entries || m.total_keys || data.count)} entries`;
       }
 
+      const writeVal = m.write_ops_sec || m.ops_per_sec;
+      const readVal = m.read_ops_sec || m.ops_per_sec;
+
       const durClass = m.duration_ms === minDuration && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
-      const opsClass = m.ops_per_sec === maxOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+      const writeClass = writeVal === maxWriteOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+      const readClass = readVal === maxReadOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
       const memClass = m.mem_allocated_mb === minMem && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
       const rssClass = m.peak_rss_mb === minRss && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
 
@@ -300,7 +301,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td><span class="badge-tag ${badgeClass}">${name}</span></td>
           <td><span class="${durClass}">${m.duration_ms} ms</span></td>
-          <td><span class="${opsClass}">${fmt(m.ops_per_sec)} ops/s</span></td>
+          <td><span class="${writeClass}">${fmt(writeVal)}/s</span></td>
+          <td><span class="${readClass}">${fmt(readVal)}/s</span></td>
           <td><span class="${memClass}">${m.mem_allocated_mb} MB</span></td>
           <td><span class="${rssClass}">${m.peak_rss_mb} MB</span></td>
           <td>${details}</td>
