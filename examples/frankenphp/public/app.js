@@ -216,6 +216,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const arr = results.array;
     const polyfill = results.polyfill;
 
+    const allMetrics = [judy, arr, polyfill].filter(Boolean);
+    const minDuration = Math.min(...allMetrics.map(m => m.duration_ms));
+    const maxOps = Math.max(...allMetrics.map(m => m.ops_per_sec));
+    const minMem = Math.min(...allMetrics.map(m => m.mem_allocated_mb));
+    const minRss = Math.min(...allMetrics.map(m => m.peak_rss_mb));
+
     // Update KPI Hero Cards
     if (judy) {
       document.getElementById('kpi-mem').textContent = `${judy.mem_allocated_mb} MB`;
@@ -229,8 +235,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('kpi-mem-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">−${Math.max(0, memSavings)}%</span> vs Array (${arr.mem_allocated_mb} MB)`;
 
-        const speedup = (arr.duration_ms / Math.max(0.01, judy.duration_ms)).toFixed(1);
-        document.getElementById('kpi-lat-sub').textContent = `${speedup}x vs Array (${arr.duration_ms} ms)`;
+        if (judy.duration_ms <= arr.duration_ms) {
+          const speedup = (arr.duration_ms / Math.max(0.01, judy.duration_ms)).toFixed(1);
+          document.getElementById('kpi-lat-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">${speedup}x faster</span> vs Array (${arr.duration_ms} ms)`;
+        } else {
+          const arrSpeedup = (judy.duration_ms / Math.max(0.01, arr.duration_ms)).toFixed(1);
+          document.getElementById('kpi-lat-sub').innerHTML = `Array is <span style="font-weight:700">${arrSpeedup}x faster</span> on linear append (${arr.duration_ms} ms)`;
+        }
+
+        if (arr.ops_per_sec > judy.ops_per_sec) {
+          document.getElementById('kpi-ops-sub').innerHTML = `Array leads: <strong>${fmt(arr.ops_per_sec)}/s</strong>`;
+        } else {
+          document.getElementById('kpi-ops-sub').innerHTML = `Judy leads: <strong style="color: var(--accent-emerald)">${fmt(judy.ops_per_sec)}/s</strong>`;
+        }
 
         // Comparison Bar Chart
         comparisonBox.style.display = 'block';
@@ -260,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Build Table Rows
+    // Build Table Rows with Per-Metric Winner Badges
     const formatRow = (name, m, badgeClass) => {
       if (!m) return '';
       let details = '';
@@ -274,13 +291,18 @@ document.addEventListener('DOMContentLoaded', () => {
         details = `${fmt(m.total_entries || m.total_keys || data.count)} entries`;
       }
 
+      const durClass = m.duration_ms === minDuration && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+      const opsClass = m.ops_per_sec === maxOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+      const memClass = m.mem_allocated_mb === minMem && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+      const rssClass = m.peak_rss_mb === minRss && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+
       return `
         <tr>
           <td><span class="badge-tag ${badgeClass}">${name}</span></td>
-          <td><strong>${m.duration_ms} ms</strong></td>
-          <td>${fmt(m.ops_per_sec)} ops/s</td>
-          <td><strong>${m.mem_allocated_mb} MB</strong></td>
-          <td>${m.peak_rss_mb} MB</td>
+          <td><span class="${durClass}">${m.duration_ms} ms</span></td>
+          <td><span class="${opsClass}">${fmt(m.ops_per_sec)} ops/s</span></td>
+          <td><span class="${memClass}">${m.mem_allocated_mb} MB</span></td>
+          <td><span class="${rssClass}">${m.peak_rss_mb} MB</span></td>
           <td>${details}</td>
         </tr>
       `;
