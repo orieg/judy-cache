@@ -83,6 +83,20 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
                 $metrics['hits'] = $hits;
                 $metrics['total_keys'] = $cache->count();
+
+                try {
+                    $r = new \ReflectionClass($cache);
+                    $propV = $r->getProperty('values');
+                    $propV->setAccessible(true);
+                    $vJudy = $propV->getValue($cache);
+                    $propE = $r->getProperty('expiries');
+                    $propE->setAccessible(true);
+                    $eJudy = $propE->getValue($cache);
+                    $judyBytes = ($vJudy instanceof \Judy ? $vJudy->memoryUsage() : 0) + ($eJudy instanceof \Judy ? $eJudy->memoryUsage() : 0);
+                    $metrics['judy_internal_mb'] = round($judyBytes / 1024 / 1024, 2);
+                    $metrics['bytes_per_key'] = round($judyBytes / max(1, $count), 2);
+                } catch (\Throwable $e) {}
+
                 $lastBenchmarkDataset = ['type' => 'judy_cache', 'ref' => $cache, 'count' => $count, 'prefix' => $prefix];
             } elseif ($backend === 'polyfill') {
                 $polyfillTrie = new PolyfillJudy(PolyfillJudy::STRING_TO_MIXED);
@@ -344,11 +358,18 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
     $memAfter = memory_get_usage(true);
     $realMemAfter = memory_get_usage();
 
+    // In long-running worker processes, libJudy allocates off-heap via C malloc.
+    // Ensure total allocated RAM accurately reflects both Zend heap + libJudy allocations.
+    $zendAllocMb = max(0, $realMemAfter - $realMemBefore) / 1024 / 1024;
+    $judyInternalMb = $metrics['judy_internal_mb'] ?? 0;
+    $metrics['mem_allocated_mb'] = round(max($zendAllocMb + $judyInternalMb, $judyInternalMb > 0 ? $judyInternalMb : $zendAllocMb), 2);
+
+    $procMem = getProcessMemory();
+    $metrics['peak_rss_mb'] = ($procMem['current_rss_mb'] ?? 0) > 0 ? $procMem['current_rss_mb'] : round(memory_get_usage(true) / 1024 / 1024, 1);
+
     $durationMs = ($t1 - $t0) / 1e6;
     $metrics['duration_ms'] = round($durationMs, 2);
     $metrics['ops_per_sec'] = round($count / max(1e-6, ($t1 - $t0) / 1e9));
-    $metrics['mem_allocated_mb'] = round(max(0, $realMemAfter - $realMemBefore) / 1024 / 1024, 2);
-    $metrics['peak_rss_mb'] = round(memory_get_peak_usage(true) / 1024 / 1024, 2);
 
     // Data Integrity & Lossless Verification Payload
     $metrics['integrity'] = [
