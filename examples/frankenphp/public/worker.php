@@ -150,10 +150,39 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $samples[] = ['key' => 'tenant.2.order.1', 'value' => $cache->get('tenant.2.order.1'), 'status' => 'Intact & Accessible'];
 
                 $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = $cache->count();
                 $metrics['algo_complexity'] = 'O(range) Sub-trie splice';
+            } elseif ($backend === 'polyfill') {
+                $polyfillData = [];
+                for ($t = 1; $t <= $tenants; $t++) {
+                    for ($k = 1; $k <= $keysPerTenant; $k++) {
+                        $polyfillData["tenant.{$t}.order.{$k}"] = ['order_id' => $k, 'tenant' => $t, 'status' => 'paid'];
+                    }
+                }
+                $tPopulate = hrtime(true);
+                $tPrefix0 = hrtime(true);
+                $deletedCount = 0;
+                $prefixMatch = "tenant.1.";
+                $prefixLen = strlen($prefixMatch);
+                foreach ($polyfillData as $k => $v) {
+                    if (strncmp($k, $prefixMatch, $prefixLen) === 0) {
+                        unset($polyfillData[$k]);
+                        $deletedCount++;
+                    }
+                }
+                $tPrefix1 = hrtime(true);
+
+                $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
+                $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
+                $metrics['deleted_keys'] = $deletedCount;
+                $metrics['remaining_keys'] = count($polyfillData);
+                $metrics['algo_complexity'] = 'O(N) PHP scan';
             } else {
                 $arrayCache = [];
                 for ($t = 1; $t <= $tenants; $t++) {
@@ -175,7 +204,9 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
                 $tPrefix1 = hrtime(true);
 
                 $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tPopulate - $t0) / 1e9));
                 $metrics['prefix_invalidation_ms'] = round(($tPrefix1 - $tPrefix0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($deletedCount / max(1e-6, ($tPrefix1 - $tPrefix0) / 1e9));
                 $metrics['deleted_keys'] = $deletedCount;
                 $metrics['remaining_keys'] = count($arrayCache);
                 $metrics['algo_complexity'] = 'O(N) Linear scan';

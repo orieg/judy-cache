@@ -215,23 +215,64 @@ document.addEventListener('DOMContentLoaded', () => {
     const judy = results.judy;
     const arr = results.array;
     const polyfill = results.polyfill;
+    const workload = data.workload;
 
     const allMetrics = [judy, arr, polyfill].filter(Boolean);
     const minDuration = Math.min(...allMetrics.map(m => m.duration_ms));
-    const maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || m.ops_per_sec || 0));
-    const maxReadOps = Math.max(...allMetrics.map(m => m.read_ops_sec || m.ops_per_sec || 0));
     const minMem = Math.min(...allMetrics.map(m => m.mem_allocated_mb));
     const minRss = Math.min(...allMetrics.map(m => m.peak_rss_mb));
+
+    const thWrite = document.getElementById('th-col-write');
+    const thRead = document.getElementById('th-col-read');
+
+    let maxWriteOps = 0;
+    let maxReadOps = 0;
+    let minPruneTime = Infinity;
+    let maxPruneOps = 0;
+
+    if (workload === 'prefix_invalidation') {
+      if (thWrite) thWrite.textContent = 'Populate Rate';
+      if (thRead) thRead.textContent = 'Prune Speed (Rate)';
+      maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || 0));
+      minPruneTime = Math.min(...allMetrics.map(m => m.prefix_invalidation_ms || Infinity));
+      maxPruneOps = Math.max(...allMetrics.map(m => m.prune_ops_sec || 0));
+    } else if (workload === 'int_counter') {
+      if (thWrite) thWrite.textContent = 'Increment Ops/s';
+      if (thRead) thRead.textContent = 'Lookup Ops/s';
+      maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || 0));
+      maxReadOps = Math.max(...allMetrics.map(m => m.read_ops_sec || 0));
+    } else if (workload === 'cache_rw') {
+      if (thWrite) thWrite.textContent = 'set() Ops/s';
+      if (thRead) thRead.textContent = 'get() Ops/s';
+      maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || 0));
+      maxReadOps = Math.max(...allMetrics.map(m => m.read_ops_sec || 0));
+    } else {
+      if (thWrite) thWrite.textContent = 'Write Ops/s';
+      if (thRead) thRead.textContent = 'Read Ops/s';
+      maxWriteOps = Math.max(...allMetrics.map(m => m.write_ops_sec || m.ops_per_sec || 0));
+      maxReadOps = Math.max(...allMetrics.map(m => m.read_ops_sec || m.ops_per_sec || 0));
+    }
 
     // Update KPI Hero Cards
     if (judy) {
       document.getElementById('kpi-mem').textContent = `${judy.mem_allocated_mb} MB`;
       document.getElementById('kpi-lat').textContent = `${judy.duration_ms} ms`;
-      
-      const writeOps = judy.write_ops_sec || judy.ops_per_sec;
-      const readOps = judy.read_ops_sec || judy.ops_per_sec;
-      document.getElementById('kpi-ops').textContent = `${fmt(writeOps)}/s`;
-      document.getElementById('kpi-ops-sub').innerHTML = `Read: <strong style="color: var(--accent-emerald)">${fmt(readOps)}/s</strong> (Write: ${fmt(writeOps)}/s)`;
+
+      if (workload === 'prefix_invalidation') {
+        document.getElementById('kpi-ops').textContent = `${fmt(judy.prune_ops_sec || judy.ops_per_sec)}/s`;
+        document.getElementById('kpi-ops-sub').innerHTML = `Prune Time: <strong style="color: var(--accent-emerald)">${judy.prefix_invalidation_ms} ms</strong> (${fmt(judy.deleted_keys)} keys pruned)`;
+      } else if (workload === 'int_counter') {
+        document.getElementById('kpi-ops').textContent = `${fmt(judy.write_ops_sec)}/s`;
+        document.getElementById('kpi-ops-sub').innerHTML = `Lookups: <strong style="color: var(--accent-emerald)">${fmt(judy.read_ops_sec)}/s</strong> (Atomic +1)`;
+      } else if (workload === 'cache_rw') {
+        document.getElementById('kpi-ops').textContent = `${fmt(judy.write_ops_sec)}/s`;
+        document.getElementById('kpi-ops-sub').innerHTML = `get(): <strong style="color: var(--accent-emerald)">${fmt(judy.read_ops_sec)}/s</strong> (set(): ${fmt(judy.write_ops_sec)}/s)`;
+      } else {
+        const writeOps = judy.write_ops_sec || judy.ops_per_sec;
+        const readOps = judy.read_ops_sec || judy.ops_per_sec;
+        document.getElementById('kpi-ops').textContent = `${fmt(writeOps)}/s`;
+        document.getElementById('kpi-ops-sub').innerHTML = `Read: <strong style="color: var(--accent-emerald)">${fmt(readOps)}/s</strong> (Write: ${fmt(writeOps)}/s)`;
+      }
 
       if (arr) {
         const memSavings = arr.mem_allocated_mb > 0 
@@ -240,7 +281,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('kpi-mem-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">−${Math.max(0, memSavings)}%</span> vs Array (${arr.mem_allocated_mb} MB)`;
 
-        if (judy.duration_ms <= arr.duration_ms) {
+        if (workload === 'prefix_invalidation' && arr.prefix_invalidation_ms && judy.prefix_invalidation_ms) {
+          const pruneSpeedup = (arr.prefix_invalidation_ms / Math.max(0.0001, judy.prefix_invalidation_ms)).toFixed(1);
+          document.getElementById('kpi-lat-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">${pruneSpeedup}x faster prune</span> vs Array (${arr.prefix_invalidation_ms} ms)`;
+        } else if (judy.duration_ms <= arr.duration_ms) {
           const speedup = (arr.duration_ms / Math.max(0.01, judy.duration_ms)).toFixed(1);
           document.getElementById('kpi-lat-sub').innerHTML = `<span style="color: var(--accent-emerald); font-weight:700">${speedup}x faster</span> vs Array (${arr.duration_ms} ms)`;
         } else {
@@ -292,12 +336,24 @@ document.addEventListener('DOMContentLoaded', () => {
         details = `${fmt(m.total_entries || m.total_keys || data.count)} entries (C digital radix trie)`;
       }
 
-      const writeVal = m.write_ops_sec || m.ops_per_sec;
-      const readVal = m.read_ops_sec || m.ops_per_sec;
+      let writeCol = '';
+      let readCol = '';
+
+      if (workload === 'prefix_invalidation') {
+        const pruneClass = m.prefix_invalidation_ms === minPruneTime && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+        const writeClass = m.write_ops_sec === maxWriteOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+        writeCol = `<span class="${writeClass}">${fmt(m.write_ops_sec)}/s</span>`;
+        readCol = `<span class="${pruneClass}"><strong>${m.prefix_invalidation_ms} ms</strong> (${fmt(m.prune_ops_sec)}/s)</span>`;
+      } else {
+        const writeVal = m.write_ops_sec || m.ops_per_sec;
+        const readVal = m.read_ops_sec || m.ops_per_sec;
+        const writeClass = writeVal === maxWriteOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+        const readClass = readVal === maxReadOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
+        writeCol = `<span class="${writeClass}">${fmt(writeVal)}/s</span>`;
+        readCol = `<span class="${readClass}">${fmt(readVal)}/s</span>`;
+      }
 
       const durClass = m.duration_ms === minDuration && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
-      const writeClass = writeVal === maxWriteOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
-      const readClass = readVal === maxReadOps && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
       const memClass = m.mem_allocated_mb === minMem && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
       const rssClass = m.peak_rss_mb === minRss && allMetrics.length > 1 ? 'metric-winner' : 'metric-neutral';
 
@@ -305,8 +361,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr>
           <td><span class="badge-tag ${badgeClass}">${name}</span></td>
           <td><span class="${durClass}">${m.duration_ms} ms</span></td>
-          <td><span class="${writeClass}">${fmt(writeVal)}/s</span></td>
-          <td><span class="${readClass}">${fmt(readVal)}/s</span></td>
+          <td>${writeCol}</td>
+          <td>${readCol}</td>
           <td><span class="${memClass}">${m.mem_allocated_mb} MB</span></td>
           <td><span class="${rssClass}">${m.peak_rss_mb} MB</span></td>
           <td>${details}</td>
