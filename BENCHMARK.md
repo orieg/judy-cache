@@ -124,9 +124,14 @@ shared-memory segment as mapped pages; treat its memory column as approximate.
 - **Raw throughput**: a plain PHP array is fastest at set/get (509/585
   kops/s vs judy-cache's 274/306). You buy bounded memory and O(range)
   invalidation, not raw speed.
-- **Backend choice**: the trie default beats the hash/adaptive backends on
-  memory (172 vs 231 MB at 1M) with equal invalidation latency, which is
-  why it stays the default.
+- **Backend choice**: built natively on `Judy::STRING_TO_ENTRY` for optimal single-trie metadata packing and C-level TTL eviction.
+
+## Single-Trie `STRING_TO_ENTRY` Architecture (Issue #11)
+
+`JudySimpleCache` uses `Judy::STRING_TO_ENTRY` natively in C.
+- **Zero userland packing overhead**: Expiry timestamp (`uint32`) and 16-bit metadata flags (`uint16`) are stored directly in C struct entries (`judy_cache_entry_t`), removing userland envelope framing (`\x00JE\x01`) and `substr()` / `unpack()` calls on every `get()` and `set()`.
+- **In-C Single-Pass TTL Eviction**: `pruneExpired()` walks the trie directly in C to evict expired items without copying keys or paying userland loop overhead when no external allocations exist.
+- **Large-Value Storage**: Routing large payloads to `SlabArena` or `SharedMemoryPool` uses raw 8-byte uint64 binary chunk offsets (`pack('P', $offset)`), and `enableInterning` stores 8-byte binary XXH3 digests in an integer-keyed `INT_TO_MIXED` / `INT_TO_INT` pool.
 
 ## Did 2.6.0 change judy-cache's numbers?
 
