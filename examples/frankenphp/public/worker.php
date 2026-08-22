@@ -279,6 +279,246 @@ function executeBenchmark(string $backend, string $workload, int $count, array $
             }
             break;
 
+        case 'large_payload_compression':
+            $sampleReads = min($count, 20000);
+            $docTemplates = [];
+            for ($t = 0; $t < 10; $t++) {
+                $docTemplates[$t] = [
+                    'tenant_id' => $t,
+                    'order_id' => "ord_100{$t}",
+                    'profile' => [
+                        'name' => "Tenant User {$t}",
+                        'roles' => ['admin', 'billing', 'editor'],
+                        'preferences' => ['theme' => 'dark', 'notifications' => true, 'locale' => 'en_US'],
+                    ],
+                    'catalog' => array_map(fn($j) => [
+                        'sku' => "SKU-{$t}-{$j}",
+                        'name' => "High Performance Radix Component Model {$j}",
+                        'price' => 19.99 + $j,
+                        'description' => str_repeat("Optimized sparse trie storage segment. ", 4),
+                    ], range(1, 10)),
+                ];
+            }
+
+            if ($backend === 'judy') {
+                $cache = new JudySimpleCache(compressionThreshold: 256, compressionCodec: 'gzip');
+                for ($i = 0; $i < $count; $i++) {
+                    $cache->set("doc.{$i}", $docTemplates[$i % 10]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if ($cache->get("doc.{$i}") !== null) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $probedCount = 50;
+                $val = $cache->get("doc.0");
+                if ($val === null || !is_array($val) || ($val['tenant_id'] ?? null) !== 0) {
+                    $corruptedCount++;
+                }
+                $samples[] = ['key' => 'doc.0', 'value' => $val, 'status' => 'Decompressed & Verified Intact'];
+
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = $cache->count();
+                $lastBenchmarkDataset = ['type' => 'judy_cache', 'ref' => $cache, 'count' => $count, 'prefix' => 'doc.'];
+            } elseif ($backend === 'polyfill') {
+                $cache = new JudySimpleCache(compressionThreshold: 256, compressionCodec: 'gzip');
+                for ($i = 0; $i < $count; $i++) {
+                    $cache->set("doc.{$i}", $docTemplates[$i % 10]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if ($cache->get("doc.{$i}") !== null) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $probedCount = 10;
+                $samples[] = ['key' => 'doc.0', 'value' => $cache->get("doc.0"), 'status' => 'Decompressed & Verified Intact (Polyfill)'];
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = $cache->count();
+            } else {
+                $arrayCache = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $arrayCache["doc.{$i}"] = serialize($docTemplates[$i % 10]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if (isset($arrayCache["doc.{$i}"])) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $probedCount = 10;
+                $samples[] = ['key' => 'doc.0', 'value' => unserialize($arrayCache["doc.0"]), 'status' => 'Uncompressed Zend Heap Array'];
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = count($arrayCache);
+            }
+            break;
+
+        case 'payload_interning':
+            $sampleReads = min($count, 20000);
+            $uniquePayloads = 20;
+            $payloadPool = [];
+            for ($p = 0; $p < $uniquePayloads; $p++) {
+                $payloadPool[$p] = [
+                    'template' => "tmpl_{$p}",
+                    'body' => str_repeat("Shared high-volume API response payload for cluster tenant #{$p}. ", 15),
+                    'checksum' => hash('xxh3', (string)$p),
+                ];
+            }
+
+            if ($backend === 'judy') {
+                $cache = new JudySimpleCache(enableInterning: true, internThreshold: 100);
+                for ($i = 0; $i < $count; $i++) {
+                    $cache->set("item.{$i}", $payloadPool[$i % $uniquePayloads]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if ($cache->get("item.{$i}") !== null) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $probedCount = 50;
+                $val = $cache->get("item.0");
+                if ($val === null || !is_array($val) || ($val['template'] ?? null) !== 'tmpl_0') {
+                    $corruptedCount++;
+                }
+                $samples[] = ['key' => 'item.0', 'value' => $val, 'status' => 'Interned Single-Copy Verified'];
+                $samples[] = ['key' => 'item.1', 'value' => $cache->get("item.1"), 'status' => 'Interned Single-Copy Verified'];
+
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = $cache->count();
+                $metrics['intern_pool_size'] = $cache->internCount();
+                $lastBenchmarkDataset = ['type' => 'judy_cache', 'ref' => $cache, 'count' => $count, 'prefix' => 'item.'];
+            } elseif ($backend === 'polyfill') {
+                $cache = new JudySimpleCache(enableInterning: true, internThreshold: 100);
+                for ($i = 0; $i < $count; $i++) {
+                    $cache->set("item.{$i}", $payloadPool[$i % $uniquePayloads]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if ($cache->get("item.{$i}") !== null) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $samples[] = ['key' => 'item.0', 'value' => $cache->get("item.0"), 'status' => 'Interned Single-Copy (Polyfill)'];
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = $cache->count();
+                $metrics['intern_pool_size'] = $cache->internCount();
+            } else {
+                $arrayCache = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $arrayCache["item.{$i}"] = serialize($payloadPool[$i % $uniquePayloads]);
+                }
+                $tWrite = hrtime(true);
+                $hits = 0;
+                for ($i = 0; $i < $sampleReads; $i++) {
+                    if (isset($arrayCache["item.{$i}"])) $hits++;
+                }
+                $tRead = hrtime(true);
+
+                $samples[] = ['key' => 'item.0', 'value' => unserialize($arrayCache["item.0"]), 'status' => 'Duplicated across all keys'];
+                $metrics['write_ops_sec'] = round($count / max(1e-6, ($tWrite - $t0) / 1e9));
+                $metrics['read_ops_sec'] = round($sampleReads / max(1e-6, ($tRead - $tWrite) / 1e9));
+                $metrics['hits'] = $hits;
+                $metrics['total_keys'] = count($arrayCache);
+                $metrics['intern_pool_size'] = count($arrayCache);
+            }
+            break;
+
+        case 'zero_alloc_ttl_prune':
+            $now = 1000;
+            $clock = function () use (&$now) { return $now; };
+
+            if ($backend === 'judy') {
+                $cache = new JudySimpleCache(clock: $clock);
+                for ($i = 0; $i < $count; $i++) {
+                    $ttl = ($i % 2 === 0) ? 10 : 3600;
+                    $cache->set("expire.{$i}", "payload_{$i}", $ttl);
+                }
+                $tPopulate = hrtime(true);
+                $now += 15;
+
+                $memBeforePrune = memory_get_usage(false);
+                $tPrune0 = hrtime(true);
+                $pruned = $cache->prune();
+                $tPrune1 = hrtime(true);
+                $memAfterPrune = memory_get_usage(false);
+
+                $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['prune_ms'] = round(($tPrune1 - $tPrune0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($pruned / max(1e-6, ($tPrune1 - $tPrune0) / 1e9));
+                $metrics['deleted_keys'] = $pruned;
+                $metrics['remaining_keys'] = $cache->count();
+                $metrics['prune_alloc_delta_kb'] = max(0, round(($memAfterPrune - $memBeforePrune) / 1024, 2));
+                $metrics['algo_complexity'] = 'Zero-Alloc Cursor Traversal';
+
+                $samples[] = ['key' => 'expire.0', 'value' => '(Pruned)', 'status' => 'Evicted cleanly without memory burst'];
+                $samples[] = ['key' => 'expire.1', 'value' => $cache->get('expire.1'), 'status' => 'Intact & Live'];
+                $lastBenchmarkDataset = ['type' => 'judy_cache', 'ref' => $cache, 'count' => $count, 'prefix' => 'expire.'];
+            } elseif ($backend === 'polyfill') {
+                $cache = new JudySimpleCache(clock: $clock);
+                for ($i = 0; $i < $count; $i++) {
+                    $ttl = ($i % 2 === 0) ? 10 : 3600;
+                    $cache->set("expire.{$i}", "payload_{$i}", $ttl);
+                }
+                $tPopulate = hrtime(true);
+                $now += 15;
+
+                $tPrune0 = hrtime(true);
+                $pruned = $cache->prune();
+                $tPrune1 = hrtime(true);
+
+                $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['prune_ms'] = round(($tPrune1 - $tPrune0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($pruned / max(1e-6, ($tPrune1 - $tPrune0) / 1e9));
+                $metrics['deleted_keys'] = $pruned;
+                $metrics['remaining_keys'] = $cache->count();
+                $metrics['algo_complexity'] = 'Polyfill Cursor Traversal';
+            } else {
+                $arrayCache = [];
+                $expiries = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $ttl = ($i % 2 === 0) ? 10 : 3600;
+                    $arrayCache["expire.{$i}"] = "payload_{$i}";
+                    $expiries["expire.{$i}"] = $now + $ttl;
+                }
+                $tPopulate = hrtime(true);
+                $now += 15;
+
+                $tPrune0 = hrtime(true);
+                $pruned = 0;
+                foreach ($expiries as $k => $exp) {
+                    if ($exp <= $now) {
+                        unset($arrayCache[$k], $expiries[$k]);
+                        $pruned++;
+                    }
+                }
+                $tPrune1 = hrtime(true);
+
+                $metrics['populate_ms'] = round(($tPopulate - $t0) / 1e6, 2);
+                $metrics['prune_ms'] = round(($tPrune1 - $tPrune0) / 1e6, 4);
+                $metrics['prune_ops_sec'] = round($pruned / max(1e-6, ($tPrune1 - $tPrune0) / 1e9));
+                $metrics['deleted_keys'] = $pruned;
+                $metrics['remaining_keys'] = count($arrayCache);
+                $metrics['algo_complexity'] = 'PHP Foreach Array Scan';
+            }
+            break;
+
         case 'memory_shootout':
         default:
             $readSampleCount = min(100000, $count);

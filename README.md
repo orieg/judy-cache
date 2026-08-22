@@ -67,6 +67,7 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 
 Explore runnable implementations in [`examples/`](examples/):
 
+* **[Large-Value Storage Shootout](examples/large-values/)**: Standalone headless CLI benchmark evaluating transparent adaptive compression, content-addressable interning, zero-alloc cursor pruning, and multi-worker memory models ($W \times \text{Size}$).
 * **[FrankenPHP Worker Mode Testbed](examples/frankenphp/)**: Interactive web dashboard with real-time SSE telemetry, live process VmRSS metrics, CRC lossless integrity verification, and side-by-side shootouts ($10\text{k} \dots 10\text{M}$ keys).
 * **[Multi-Worker Owner Process](examples/owner-process/)**: Reference implementation of an IPC/Unix-socket cache daemon providing a single-writer cache across multi-worker pools.
 
