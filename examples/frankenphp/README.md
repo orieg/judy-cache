@@ -7,8 +7,11 @@ An interactive testbed running **FrankenPHP in persistent Worker Mode** with `ph
 ## Features
 - **FrankenPHP Worker Mode**: Shows true resident memory retention across HTTP requests.
 - **Interactive Web UI**: Adjust workload parameters via live sliders ($10\text{k} \dots 10\text{M}$ items).
-- **Benchmarking & Validation**:
+- **Benchmarking & Validation Workloads**:
   - **Memory Footprint**: Direct peak RSS and bytes/key shootout (Native Judy vs. Standard PHP Arrays vs. Polyfill).
+  - **Adaptive Compression**: Multi-KB JSON API & HTML document storage showing ~85% resident memory reduction.
+  - **Payload Interning**: Content-addressable single-copy deduplication collapsing RAM by >90% on shared templates.
+  - **Zero-Alloc TTL Pruning**: $O(1)$ cursor eviction sweeps maintaining flat heap memory during expirations.
   - **$\mathcal{O}(\text{range})$ Prefix Invalidation**: Benchmark `deletePrefix("tenant.1.")` sub-trie splices vs. $O(N)$ linear hashtable key scans.
   - **PSR-16 Cache Throughput**: Sustained read/write throughput tests.
   - **Integer Counters / Rate Limiting**: High-volume atomic integer increment workloads.

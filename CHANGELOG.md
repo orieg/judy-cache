@@ -7,6 +7,14 @@ this package uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While the major version is `0`, a minor bump may carry a breaking change; each
 one is listed under Changed with what to do about it.
 
+## [Unreleased]
+
+### Added
+
+- **Zero-allocation cursor pruning**: `prune()` now iterates the expiry trie directly using `first()` and `searchNext()` cursor traversal instead of materializing full array copies with `toArray()`. This eliminates $O(N)$ memory spikes during maintenance sweeps and removes numeric key coercion risks at source. ([#11])
+- **Transparent adaptive compression**: Optional compression (`compressionThreshold`, `compressionCodec`: `'gzip'`, `'deflate'`, `'zstd'`, `'lz4'`) for large payloads. Binary framing header `\x00JC\x01` enables automatic decompression on `get()`, adaptively bypassing compression if compressed payload size is not strictly smaller. ([#11])
+- **Content-addressable interning**: Optional payload deduplication pool (`enableInterning`, `internThreshold`) mapping duplicate payloads across distinct keys to a single shared reference-counted pool. ([#11])
+
 ## [0.2.0] - 2026-08-19
 
 ### Changed
@@ -74,4 +82,5 @@ one is listed under Changed with what to do about it.
 [#1]: https://github.com/orieg/judy-cache/pull/1
 [#3]: https://github.com/orieg/judy-cache/pull/3
 [#4]: https://github.com/orieg/judy-cache/pull/4
+[#11]: https://github.com/orieg/judy-cache/issues/11
 [php-judy#162]: https://github.com/orieg/php-judy/issues/162

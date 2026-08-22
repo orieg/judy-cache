@@ -67,6 +67,7 @@ $judy->deletePrefix('report.');                 // range invalidation underneath
 
 Explore runnable implementations in [`examples/`](examples/):
 
+* **[Large-Value Storage Shootout](examples/large-values/)**: Standalone headless CLI benchmark evaluating transparent adaptive compression, content-addressable interning, zero-alloc cursor pruning, and multi-worker memory models ($W \times \text{Size}$).
 * **[FrankenPHP Worker Mode Testbed](examples/frankenphp/)**: Interactive web dashboard with real-time SSE telemetry, live process VmRSS metrics, CRC lossless integrity verification, and side-by-side shootouts ($10\text{k} \dots 10\text{M}$ keys).
 * **[Multi-Worker Owner Process](examples/owner-process/)**: Reference implementation of an IPC/Unix-socket cache daemon providing a single-writer cache across multi-worker pools.
 
@@ -76,7 +77,9 @@ Explore runnable implementations in [`examples/`](examples/):
 
 - **Keys**: Standard PSR-16 rules (`{}()/\@:` reserved). Use `.` as your hierarchy separator (`user.42.profile`).
 - **Values**: Serialized snapshots by default (like Symfony's `ArrayAdapter`), ensuring fetched objects are safe from mutation. Pass `storeSerialized: false` for faster by-reference storage.
-- **TTL**: `int` seconds or `DateInterval`. Expired entries are evicted lazily on access, or eagerly via `prune()`.
+- **TTL & Pruning**: `int` seconds or `DateInterval`. Expired entries are evicted lazily on access, or eagerly via zero-allocation cursor `prune()`.
+- **Adaptive Compression**: Pass `compressionThreshold: 1024` (bytes) and `compressionCodec: 'gzip'` (`'gzip'`, `'deflate'`, `'zstd'`, `'lz4'`) to auto-compress payloads exceeding the threshold. Automatically skips compression if the compressed size exceeds original payload size.
+- **Content-Addressable Interning**: Pass `enableInterning: true` (and optional `internThreshold: 256`) to deduplicate identical payloads across distinct keys into a shared, reference-counted pool.
 - **Clock**: Injectable (`new JudySimpleCache(clock: fn() => $timestamp)`) for deterministic testing.
 - **Backend Choice**: Defaults to `Judy::STRING_TO_MIXED`. Alternate trie backends can be selected via the constructor (e.g. `backend: Judy::STRING_TO_MIXED_ADAPTIVE`).
 
