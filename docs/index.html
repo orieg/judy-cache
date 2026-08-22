@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>judy-cache — High-Performance PSR-16 Cache for Long-Running PHP</title>
+  <meta name="description" content="Official documentation for judy-cache. Zero-fragmentation PSR-16 cache with O(range) prefix invalidation for FrankenPHP, Swoole, RoadRunner, and Laravel Octane.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="judy-cache — High-Performance PSR-16 Cache for Long-Running PHP">
+  <meta property="og:description" content="Zero-fragmentation PSR-16 cache with O(range) prefix invalidation, single-trie metadata packing, and zero-copy shared memory.">
+  <meta property="og:url" content="https://orieg.github.io/judy-cache/">
+  <meta property="og:site_name" content="judy-cache">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="judy-cache — High-Performance PSR-16 Cache for Long-Running PHP">
+  <meta name="twitter:description" content="Zero-fragmentation PSR-16 cache with O(range) prefix invalidation, single-trie metadata packing, and zero-copy shared memory.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x1f680;</text></svg>">
+
+  <script>
+    (function() {
+      const saved = localStorage.getItem('judy-cache-theme');
+      const attr = document.documentElement.getAttribute('data-theme');
+      if (saved) {
+        document.documentElement.setAttribute('data-theme', saved);
+      } else if (!attr) {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      }
+    })();
+  </script>
+
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #111827;
+      --card-inner: #0b1120;
+      --border: #1f293d;
+      --border-accent: rgba(56, 189, 248, 0.4);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --heading: #f8fafc;
+      --accent: #38bdf8;
+      --accent-hover: #7dd3fc;
+      --accent-green: #10b981;
+      --accent-purple: #a855f7;
+      --accent-orange: #f59e0b;
+      --code-bg: #030712;
+      --bench-bg: #0d1117;
+      --navbar-bg: rgba(9, 13, 22, 0.85);
+      --nav-pill-bg: rgba(56, 189, 248, 0.1);
+      --nav-pill-border: rgba(56, 189, 248, 0.25);
+      --btn-secondary-bg: #111827;
+      --btn-secondary-hover: #1e293b;
+      --btn-secondary-border: #1f293d;
+      --btn-secondary-text: #f8fafc;
+      --spotlight-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      --spotlight-border: rgba(99, 102, 241, 0.4);
+      color-scheme: dark;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --card-inner: #f1f5f9;
+      --border: #e2e8f0;
+      --border-accent: rgba(2, 132, 199, 0.4);
+      --text: #334155;
+      --text-muted: #64748b;
+      --heading: #0f172a;
+      --accent: #0284c7;
+      --accent-hover: #0369a1;
+      --accent-green: #059669;
+      --accent-purple: #9333ea;
+      --accent-orange: #d97706;
+      --code-bg: #0f172a;
+      --bench-bg: #ffffff;
+      --navbar-bg: rgba(248, 250, 252, 0.88);
+      --nav-pill-bg: rgba(2, 132, 199, 0.08);
+      --nav-pill-border: rgba(2, 132, 199, 0.25);
+      --btn-secondary-bg: #ffffff;
+      --btn-secondary-hover: #f1f5f9;
+      --btn-secondary-border: #cbd5e1;
+      --btn-secondary-text: #0f172a;
+      --spotlight-bg: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 50%, #f0fdf4 100%);
+      --spotlight-border: rgba(99, 102, 241, 0.3);
+      color-scheme: light;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    a { color: var(--accent); text-decoration: none; transition: color 0.15s ease; }
+    a:hover { color: var(--accent-hover); }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--navbar-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--heading);
+      text-decoration: none;
+    }
+    .nav-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #10b981, #38bdf8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #090d16;
+      font-weight: 900;
+      font-size: 15px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+    .nav-links a:hover {
+      color: var(--heading);
+      text-decoration: none;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .theme-toggle-btn {
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--btn-secondary-border);
+      color: var(--text);
+      cursor: pointer;
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+    .theme-toggle-btn:hover {
+      background: var(--btn-secondary-hover);
+      border-color: var(--border-accent);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #059669, #047857);
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .btn-secondary {
+      background: var(--btn-secondary-bg);
+      border: 1px solid var(--btn-secondary-border);
+      color: var(--btn-secondary-text);
+    }
+    .btn-secondary:hover {
+      background: var(--btn-secondary-hover);
+      border-color: var(--border-accent);
+      color: var(--heading);
+      text-decoration: none;
+      transform: translateY(-1px);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 4.5rem 0 3rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-green);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+      padding: 0.3rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 1.25rem;
+    }
+    .hero h1 {
+      font-size: 2.75rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--heading);
+      margin-bottom: 1rem;
+      line-height: 1.15;
+    }
+    .hero-gradient {
+      background: linear-gradient(135deg, #10b981 0%, #38bdf8 50%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero .subtitle {
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      max-width: 700px;
+      margin: 0 auto 1.75rem;
+    }
+    .install-box {
+      max-width: 480px;
+      margin: 0 auto 2rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.6rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    }
+    .install-cmd {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.9rem;
+      color: var(--accent-green);
+    }
+    .copy-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+    }
+    .copy-btn:hover {
+      color: var(--heading);
+      border-color: var(--accent-green);
+    }
+
+    /* Section styling */
+    .section-block {
+      margin-bottom: 4rem;
+    }
+    .section-title {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 700;
+      color: var(--accent-green);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-bottom: 1.75rem;
+    }
+
+    /* Feature Grid */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: all 0.2s ease;
+    }
+    .feature-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .feature-card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--heading);
+      margin-bottom: 0.5rem;
+    }
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* Code Blocks */
+    .code-tabs {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .code-nav {
+      display: flex;
+      background: var(--card-inner);
+      border-bottom: 1px solid var(--border);
+      padding: 0.4rem 0.5rem;
+      gap: 0.4rem;
+      overflow-x: auto;
+    }
+    .code-tab-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.5rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .code-tab-btn:hover {
+      color: var(--heading);
+    }
+    .code-tab-btn.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-green);
+    }
+    .code-pane {
+      display: none;
+      position: relative;
+    }
+    .code-pane.active {
+      display: block;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--text);
+      padding: 1.25rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+    .keyword { color: #f472b6; }
+    .class-name { color: #38bdf8; }
+    .method { color: #60a5fa; }
+    .string { color: #34d399; }
+    .number { color: #fbbf24; }
+    .comment { color: #64748b; font-style: italic; }
+
+    /* Benchmark visual cards */
+    .bench-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .bench-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .bench-card h3 {
+      font-size: 1.1rem;
+      color: var(--heading);
+      margin-bottom: 0.5rem;
+    }
+    .bench-bar-group {
+      margin-top: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .bench-bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .bench-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .bench-bar-track {
+      height: 10px;
+      background: var(--card-inner);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .bench-bar-fill {
+      height: 100%;
+      border-radius: 5px;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 3.5rem 0 2rem;
+      background: var(--navbar-bg);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .footer-links a:hover {
+      color: var(--heading);
+    }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 2.1rem; }
+      .navbar { padding: 0.75rem 1rem; }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="https://orieg.github.io/judy-cache/" class="nav-brand">
+    <div class="nav-logo">&#x1f680;</div>
+    <span>judy-cache</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Architecture</a></li>
+    <li><a href="#examples">Code Showcase</a></li>
+    <li><a href="#benchmarks">Shootout</a></li>
+    <li><a href="#install">Install</a></li>
+  </ul>
+  <div class="nav-actions">
+    <button class="theme-toggle-btn" id="themeToggle" aria-label="Toggle theme" title="Toggle dark/light mode">
+      <span id="themeIcon">🌓</span>
+    </button>
+    <a class="btn btn-secondary" href="https://github.com/orieg/judy-cache" target="_blank" rel="noopener">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span>GitHub</span>
+    </a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div class="hero-badge">
+      <span>Release v0.3.0 Live</span> &bull; <span>PSR-16 & PSR-6</span>
+    </div>
+    <h1>Zero-Fragmentation Cache <br><span class="hero-gradient">For Long-Running PHP Workers</span></h1>
+    <p class="subtitle">Built for FrankenPHP, Swoole, RoadRunner, and Octane. Flat 53 &micro;s prefix invalidation, in-C batch eviction, and zero-copy shared memory.</p>
+    
+    <div class="install-box">
+      <span class="install-cmd" id="installText">composer require orieg/judy-cache</span>
+      <button class="copy-btn" onclick="navigator.clipboard.writeText('composer require orieg/judy-cache'); this.textContent='Copied!'; setTimeout(()=>this.textContent='Copy', 2000)">Copy</button>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 0.85rem; flex-wrap: wrap;">
+      <a class="btn btn-primary" href="#examples">Interactive Guide &rarr;</a>
+      <a class="btn btn-secondary" href="https://github.com/orieg/judy-cache/blob/main/BENCHMARK.md" target="_blank" rel="noopener">Measured Benchmarks</a>
+      <a class="btn btn-secondary" href="https://orieg.github.io/php-judy/">Underlying PHP Judy</a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+
+  <!-- Core Architecture Highlights -->
+  <section class="section-block" id="features">
+    <div class="section-title">Core Architecture</div>
+    <p class="section-desc">Designed from the ground up to prevent Zend MM heap fragmentation in long-running persistent runtimes.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">&#x26a1;</div>
+        <h3>Flat O(range) Prefix Invalidation</h3>
+        <p>Drop whole tenant namespaces or resource trees in <strong>53 &micro;s flat</strong> regardless of array size — <strong>1,500x faster than APCu regex sweeps</strong> and <strong>17,000x faster than Symfony ArrayAdapter</strong>.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x1f9e9;</div>
+        <h3>Single-Trie STRING_TO_ENTRY</h3>
+        <p>Stores values with uint32 expiry timestamps and 16-bit metadata flags directly packed into C struct entries. Zero userland payload envelopes (<code style="color: var(--accent);">\x00JE\x01</code>) and 50% lower key index RAM.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x1f9f9;</div>
+        <h3>Single-Pass In-C TTL Eviction</h3>
+        <p><code style="color: var(--accent-green);">$cache-&gt;prune()</code> invokes native in-C <code style="color: var(--accent-green);">pruneExpired()</code> directly. Evicts 100,000 expired entries in <strong>12.9 ms with 0 PHP heap allocations</strong>.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x1f4be;</div>
+        <h3>SlabArena & SharedMemoryPool</h3>
+        <p>Pre-allocated bitmap-managed chunk allocator and zero-copy <code style="color: var(--accent);">shmop</code> shared memory pool across worker processes, eliminating memory leaks.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x1f517;</div>
+        <h3>Raw Binary XXH3 Interning</h3>
+        <p>Content-addressable payload deduplication using 8-byte uint64 XXH3 digests, yielding <strong>-93% net cache RAM</strong> on repeated document payloads.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">&#x1fa9c;</div>
+        <h3>Adaptive Compression</h3>
+        <p>Transparent multi-codec compression (Zstandard, LZ4, Gzip, Deflate) with 16-bit flag metadata encoding and automatic payload expansion bypass.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Interactive Code Showcase -->
+  <section class="section-block" id="examples">
+    <div class="section-title">Code Showcase</div>
+    <p class="section-desc">Practical usage patterns across PSR-16, namespace invalidation, multi-worker pools, and Symfony integration.</p>
+
+    <div class="code-tabs">
+      <div class="code-nav" id="codeNav">
+        <button class="code-tab-btn active" data-target="code-psr16">PSR-16 Standard</button>
+        <button class="code-tab-btn" data-target="code-prefix">O(range) Invalidation</button>
+        <button class="code-tab-btn" data-target="code-shm">Multi-Worker Shared Memory</button>
+        <button class="code-tab-btn" data-target="code-compression">Transparent Compression</button>
+        <button class="code-tab-btn" data-target="code-symfony">Symfony Cache Adapter</button>
+      </div>
+
+      <!-- Tab 1: PSR16 -->
+      <div class="code-pane active" id="code-psr16">
+<pre><code><span class="keyword">&lt;?php</span>
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\JudySimpleCache</span>;
+
+<span class="comment">// Initialize high-performance in-memory cache</span>
+<span class="variable">$cache</span> = <span class="keyword">new</span> <span class="class-name">JudySimpleCache</span>();
+
+<span class="comment">// Standard PSR-16 operations</span>
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'user.profile.42'</span>, [<span class="string">'name'</span> =&gt; <span class="string">'Nicolas'</span>, <span class="string">'role'</span> =&gt; <span class="string">'admin'</span>], <span class="variable">$ttl</span> = <span class="number">300</span>);
+
+<span class="variable">$profile</span> = <span class="variable">$cache</span>-&gt;<span class="method">get</span>(<span class="string">'user.profile.42'</span>);
+<span class="variable">$exists</span>  = <span class="variable">$cache</span>-&gt;<span class="method">has</span>(<span class="string">'user.profile.42'</span>);
+
+<span class="comment">// Bulk operations</span>
+<span class="variable">$cache</span>-&gt;<span class="method">setMultiple</span>([
+    <span class="string">'stats.hits'</span> =&gt; <span class="number">1024</span>,
+    <span class="string">'stats.miss'</span> =&gt; <span class="number">12</span>,
+], <span class="number">3600</span>);
+
+<span class="variable">$items</span> = <span class="variable">$cache</span>-&gt;<span class="method">getMultiple</span>([<span class="string">'stats.hits'</span>, <span class="string">'stats.miss'</span>]);</code></pre>
+      </div>
+
+      <!-- Tab 2: Prefix Invalidation -->
+      <div class="code-pane" id="code-prefix">
+<pre><code><span class="keyword">&lt;?php</span>
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\JudySimpleCache</span>;
+
+<span class="variable">$cache</span> = <span class="keyword">new</span> <span class="class-name">JudySimpleCache</span>();
+
+<span class="comment">// Populate structured namespace keys</span>
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'tenant.101.orders.1'</span>, <span class="variable">$order1</span>);
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'tenant.101.orders.2'</span>, <span class="variable">$order2</span>);
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'tenant.102.orders.1'</span>, <span class="variable">$otherOrder</span>);
+
+<span class="comment">// Invalidate all keys under tenant 101 in 53 microseconds flat</span>
+<span class="variable">$deletedCount</span> = <span class="variable">$cache</span>-&gt;<span class="method">deletePrefix</span>(<span class="string">'tenant.101.'</span>);
+
+<span class="comment">// Extract all keys under a prefix without scanning entire cache</span>
+<span class="variable">$tenantKeys</span> = <span class="variable">$cache</span>-&gt;<span class="method">keysByPrefix</span>(<span class="string">'tenant.102.'</span>);</code></pre>
+      </div>
+
+      <!-- Tab 3: Shared Memory -->
+      <div class="code-pane" id="code-shm">
+<pre><code><span class="keyword">&lt;?php</span>
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\JudySimpleCache</span>;
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\Storage\SharedMemoryPool</span>;
+
+<span class="comment">// Allocate 64 MB zero-copy shared memory segment across worker processes</span>
+<span class="variable">$shm</span> = <span class="keyword">new</span> <span class="class-name">SharedMemoryPool</span>(<span class="variable">$shmKey</span> = <span class="number">0x1234</span>, <span class="variable">$size</span> = <span class="number">64</span> * <span class="number">1024</span> * <span class="number">1024</span>);
+
+<span class="comment">// Attach cache instance to shared segment</span>
+<span class="variable">$cache</span> = <span class="keyword">new</span> <span class="class-name">JudySimpleCache</span>(
+    <span class="variable">shmPool</span>: <span class="variable">$shm</span>,
+    <span class="variable">enableInterning</span>: <span class="keyword">true</span> <span class="comment">// Content-addressable payload deduplication</span>
+);
+
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'shared.heavy.document'</span>, <span class="variable">$jsonBlob</span>);</code></pre>
+      </div>
+
+      <!-- Tab 4: Compression -->
+      <div class="code-pane" id="code-compression">
+<pre><code><span class="keyword">&lt;?php</span>
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\JudySimpleCache</span>;
+
+<span class="comment">// Enable adaptive transparent compression for large payloads</span>
+<span class="variable">$cache</span> = <span class="keyword">new</span> <span class="class-name">JudySimpleCache</span>(
+    <span class="variable">compressionThreshold</span>: <span class="number">1024</span>,     <span class="comment">// Only compress payloads &gt;= 1 KB</span>
+    <span class="variable">compressionCodec</span>:     <span class="string">'zstd'</span>,   <span class="comment">// 'zstd', 'lz4', 'gzip', or 'deflate'</span>
+    <span class="variable">compressionLevel</span>:     <span class="number">3</span>
+);
+
+<span class="comment">// Compressed automatically; if compressed size &gt;= raw, stores raw</span>
+<span class="variable">$cache</span>-&gt;<span class="method">set</span>(<span class="string">'huge.html.render'</span>, <span class="variable">$renderedHtml</span>);</code></pre>
+      </div>
+
+      <!-- Tab 5: Symfony -->
+      <div class="code-pane" id="code-symfony">
+<pre><code><span class="keyword">&lt;?php</span>
+<span class="keyword">use</span> <span class="class-name">Orieg\JudyCache\Adapter\JudyAdapter</span>;
+
+<span class="comment">// Use as a PSR-6 / Symfony Cache pool adapter</span>
+<span class="variable">$pool</span> = <span class="keyword">new</span> <span class="class-name">JudyAdapter</span>(
+    <span class="variable">namespace</span>: <span class="string">'app.cache'</span>,
+    <span class="variable">defaultLifetime</span>: <span class="number">3600</span>
+);
+
+<span class="variable">$item</span> = <span class="variable">$pool</span>-&gt;<span class="method">getItem</span>(<span class="string">'config.routes'</span>);
+<span class="keyword">if</span> (!<span class="variable">$item</span>-&gt;<span class="method">isHit</span>()) {
+    <span class="variable">$item</span>-&gt;<span class="method">set</span>(<span class="variable">$routes</span>);
+    <span class="variable">$pool</span>-&gt;<span class="method">save</span>(<span class="variable">$item</span>);
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shootout & Benchmarks -->
+  <section class="section-block" id="benchmarks">
+    <div class="section-title">Benchmark Shootout</div>
+    <p class="section-desc">Empirical measurements across 1,000,000 cached items comparing memory footprint and invalidation scaling.</p>
+
+    <div class="bench-grid">
+      <div class="bench-card">
+        <h3>Peak Host RAM: 1,000,000 Cached Items</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Measured VmRSS in separate process.</p>
+        <div class="bench-bar-group">
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>judy-cache (STRING_TO_ENTRY)</span><span style="color: var(--accent-green);">172.4 MB (-88%)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 12%; background: var(--accent-green);"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>APCu (Shared Memory Segment)</span><span style="color: var(--accent-purple);">294.1 MB (-79%)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 21%; background: var(--accent-purple);"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>Native PHP Array</span><span style="color: var(--text-muted);">495.2 MB (-65%)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 35%; background: #64748b;"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>Symfony ArrayAdapter</span><span style="color: var(--accent-orange);">921.6 MB (-34%)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 65%; background: var(--accent-orange);"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>Symfony TagAwareAdapter</span><span style="color: #ef4444;">1,420.0 MB (Baseline)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 100%; background: #ef4444;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bench-card">
+        <h3>Namespace Drop (1M Entries)</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted);">Latency to invalidate a sub-namespace slice.</p>
+        <div class="bench-bar-group">
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>judy-cache (deletePrefix)</span><span style="color: var(--accent-green);">53 &micro;s (17,000x faster)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 1%; background: var(--accent-green);"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>APCu (Regex Key Sweep)</span><span style="color: var(--accent-purple);">81,000 &micro;s (81 ms)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 15%; background: var(--accent-purple);"></div></div>
+          </div>
+          <div class="bench-bar-row">
+            <div class="bench-bar-label"><span>Symfony ArrayAdapter</span><span style="color: var(--accent-orange);">900,000 &micro;s (900 ms)</span></div>
+            <div class="bench-bar-track"><div class="bench-bar-fill" style="width: 100%; background: var(--accent-orange);"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="section-block" id="install">
+    <div class="section-title">Installation</div>
+    <p class="section-desc">Install via Composer in any PHP 8.1+ project.</p>
+
+    <div style="background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;">
+      <h4 style="font-size: 1rem; color: var(--heading); margin-bottom: 0.75rem;">Composer Setup</h4>
+      <pre style="border-radius: 8px; margin-bottom: 1rem;"><code>composer require orieg/judy-cache</code></pre>
+      <p style="font-size: 0.85rem; color: var(--text-muted);">For optimal performance, install the native C extension via <code style="color: var(--accent);">pie install orieg/judy</code>. If the extension is absent, <code style="color: var(--accent);">judy-cache</code> automatically runs on the pure-PHP polyfill.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="container">
+    <div class="footer-links">
+      <a href="https://github.com/orieg/judy-cache" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/orieg/judy-cache/blob/main/BENCHMARK.md" target="_blank" rel="noopener">Benchmark Analysis</a>
+      <a href="https://orieg.github.io/php-judy/">PHP Judy Extension</a>
+      <a href="https://orieg.github.io/judy-polyfill/">Judy Polyfill</a>
+      <a href="https://orieg.github.io/expanse/">Expanse Engine</a>
+      <a href="https://orieg.github.io/">Nicolas Brousse</a>
+    </div>
+    <p>&copy; 2026 Nicolas Brousse. Released under the MIT License.</p>
+  </div>
+</footer>
+
+<script>
+  // Theme toggle
+  const themeToggle = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+
+  function updateThemeIcon(theme) {
+    themeIcon.textContent = theme === 'light' ? '☀️' : '🌙';
+  }
+
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+  updateThemeIcon(currentTheme);
+
+  themeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const nextTheme = isDark ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    localStorage.setItem('judy-cache-theme', nextTheme);
+    updateThemeIcon(nextTheme);
+  });
+
+  // Code showcase tabs
+  const codeButtons = document.querySelectorAll('#codeNav .code-tab-btn');
+  codeButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      codeButtons.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.code-pane').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const targetId = btn.getAttribute('data-target');
+      document.getElementById(targetId).classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>
