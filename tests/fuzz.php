@@ -112,6 +112,7 @@ class ReferenceCache
 $opsPerSeed = (int) ($argv[1] ?? 5000);
 $seeds = \array_slice($argv, 2) ?: [1, 7, 42, 1337, 99991];
 $backends = [
+    'entry' => \Judy::STRING_TO_ENTRY,
     'trie' => \Judy::STRING_TO_MIXED,
     'hash' => \Judy::STRING_TO_MIXED_HASH,
     'adaptive' => \Judy::STRING_TO_MIXED_ADAPTIVE,
