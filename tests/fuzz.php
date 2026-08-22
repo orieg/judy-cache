@@ -17,10 +17,14 @@ if (\file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require $polyfill . '/src/Judy.php';
     require $polyfill . '/src/bootstrap.php';
     require __DIR__ . '/../src/InvalidArgumentException.php';
+    require __DIR__ . '/../src/Storage/SlabArena.php';
+    require __DIR__ . '/../src/Storage/SharedMemoryPool.php';
     require __DIR__ . '/../src/JudySimpleCache.php';
 }
 
 use Orieg\JudyCache\JudySimpleCache;
+use Orieg\JudyCache\Storage\SlabArena;
+use Orieg\JudyCache\Storage\SharedMemoryPool;
 
 /** Trivially-correct PSR-16 model: array of values + array of expiries. */
 class ReferenceCache
@@ -135,7 +139,12 @@ $configs = [
     'compressed' => ['compressionThreshold' => 20, 'compressionCodec' => 'gzip'],
     'interned' => ['enableInterning' => true, 'internThreshold' => 20],
     'combo' => ['compressionThreshold' => 20, 'enableInterning' => true, 'internThreshold' => 20],
+    'slab' => ['slabThreshold' => 20],
 ];
+
+if (extension_loaded('shmop')) {
+    $configs['shmop'] = ['shmThreshold' => 20];
+}
 
 $total = 0;
 foreach ($configs as $cname => $copt) {
@@ -143,6 +152,19 @@ foreach ($configs as $cname => $copt) {
         foreach ($seeds as $seed) {
             $now = 1_000_000;
             $clock = function () use (&$now) { return $now; };
+
+            $slab = null;
+            if (isset($copt['slabThreshold'])) {
+                $slab = new SlabArena(chunkSize: 64, initialChunks: 256, maxChunks: 65536);
+            }
+
+            $shm = null;
+            if (isset($copt['shmThreshold'])) {
+                $shmKey = 0x53480000 + ((int) $seed % 0x0FFF);
+                $shm = new SharedMemoryPool(key: $shmKey, size: 2 * 1024 * 1024, chunkSize: 64);
+                $shm->clear();
+            }
+
             $judy = new JudySimpleCache(
                 clock: $clock,
                 backend: $btype,
@@ -150,70 +172,77 @@ foreach ($configs as $cname => $copt) {
                 compressionCodec: $copt['compressionCodec'] ?? 'gzip',
                 enableInterning: $copt['enableInterning'] ?? false,
                 internThreshold: $copt['internThreshold'] ?? 256,
+                slabArena: $slab,
+                slabThreshold: $copt['slabThreshold'] ?? null,
+                shmPool: $shm,
+                shmThreshold: $copt['shmThreshold'] ?? null,
             );
-            $ref  = new ReferenceCache(\Closure::fromCallable($clock));
+            $ref = new ReferenceCache(\Closure::fromCallable($clock));
 
-
-        \mt_srand((int) $seed);
-        for ($op = 0; $op < $opsPerSeed; $op++) {
-            $total++;
-            $k = $keyPool[\mt_rand(0, \count($keyPool) - 1)];
-            switch (\mt_rand(0, 9)) {
-                case 0:
-                case 1:
-                case 2: // set
-                    $v = $valuePool[\mt_rand(0, \count($valuePool) - 1)];
-                    $ttl = [null, null, 5, 30, 0, -3][\mt_rand(0, 5)];
-                    $judy->set($k, $v, $ttl);
-                    $ref->set($k, $v, $ttl);
-                    break;
-                case 3:
-                case 4:
-                case 5: // get
-                    $a = $judy->get($k, 'DFLT');
-                    $b = $ref->get($k, 'DFLT');
-                    if ($a !== $b) {
-                        fwrite(STDERR, "FUZZ DIVERGE [$bname seed=$seed op=$op] get($k): judy=" . \json_encode($a) . " ref=" . \json_encode($b) . "\n");
-                        exit(1);
-                    }
-                    break;
-                case 6: // has
-                    if ($judy->has($k) !== $ref->has($k)) {
-                        fwrite(STDERR, "FUZZ DIVERGE [$bname seed=$seed op=$op] has($k)\n");
-                        exit(1);
-                    }
-                    break;
-                case 7: // delete
-                    $judy->delete($k);
-                    $ref->delete($k);
-                    break;
-                case 8: // advance clock
-                    $now += \mt_rand(0, 8);
-                    break;
-                case 9: // prefix delete (both must agree on the count)
-                    $p = $prefixPool[\mt_rand(0, \count($prefixPool) - 1)];
-                    // deletePrefix() counts expired-but-unevicted entries,
-                    // so eagerly evict on both sides before comparing counts.
-                    $judy->prune();
-                    $ref->keysLive(); // forces lazy eviction in the model
-                    $a = $judy->deletePrefix($p);
-                    $b = $ref->deletePrefix($p);
-                    if ($a !== $b) {
-                        fwrite(STDERR, "FUZZ DIVERGE [$bname seed=$seed op=$op] deletePrefix($p): judy=$a ref=$b\n");
-                        exit(1);
-                    }
-                    break;
+            \mt_srand((int) $seed);
+            for ($op = 0; $op < $opsPerSeed; $op++) {
+                $total++;
+                $k = $keyPool[\mt_rand(0, \count($keyPool) - 1)];
+                switch (\mt_rand(0, 9)) {
+                    case 0:
+                    case 1:
+                    case 2: // set
+                        $v = $valuePool[\mt_rand(0, \count($valuePool) - 1)];
+                        $ttl = [null, null, 5, 30, 0, -3][\mt_rand(0, 5)];
+                        $judy->set($k, $v, $ttl);
+                        $ref->set($k, $v, $ttl);
+                        break;
+                    case 3:
+                    case 4:
+                    case 5: // get
+                        $a = $judy->get($k, 'DFLT');
+                        $b = $ref->get($k, 'DFLT');
+                        if ($a !== $b) {
+                            fwrite(STDERR, "FUZZ DIVERGE [$cname $bname seed=$seed op=$op] get($k): judy=" . \json_encode($a) . " ref=" . \json_encode($b) . "\n");
+                            exit(1);
+                        }
+                        break;
+                    case 6: // has
+                        if ($judy->has($k) !== $ref->has($k)) {
+                            fwrite(STDERR, "FUZZ DIVERGE [$cname $bname seed=$seed op=$op] has($k)\n");
+                            exit(1);
+                        }
+                        break;
+                    case 7: // delete
+                        $judy->delete($k);
+                        $ref->delete($k);
+                        break;
+                    case 8: // advance clock
+                        $now += \mt_rand(0, 8);
+                        break;
+                    case 9: // prefix delete (both must agree on the count)
+                        $p = $prefixPool[\mt_rand(0, \count($prefixPool) - 1)];
+                        // deletePrefix() counts expired-but-unevicted entries,
+                        // so eagerly evict on both sides before comparing counts.
+                        $judy->prune();
+                        $ref->keysLive(); // forces lazy eviction in the model
+                        $a = $judy->deletePrefix($p);
+                        $b = $ref->deletePrefix($p);
+                        if ($a !== $b) {
+                            fwrite(STDERR, "FUZZ DIVERGE [$cname $bname seed=$seed op=$op] deletePrefix($p): judy=$a ref=$b\n");
+                            exit(1);
+                        }
+                        break;
+                }
             }
-        }
 
-        // Final state must match exactly.
-        $judy->prune();
-        $judyKeys = $judy->keysByPrefix('');
-        \sort($judyKeys, SORT_STRING);
-        if ($judyKeys !== $ref->keysLive()) {
-            fwrite(STDERR, "FUZZ DIVERGE [$bname seed=$seed] final keys\n  judy: " . \implode(',', $judyKeys) . "\n  ref:  " . \implode(',', $ref->keysLive()) . "\n");
-            exit(1);
-        }
+            // Final state must match exactly.
+            $judy->prune();
+            $judyKeys = $judy->keysByPrefix('');
+            \sort($judyKeys, SORT_STRING);
+            if ($judyKeys !== $ref->keysLive()) {
+                fwrite(STDERR, "FUZZ DIVERGE [$cname $bname seed=$seed] final keys\n  judy: " . \implode(',', $judyKeys) . "\n  ref:  " . \implode(',', $ref->keysLive()) . "\n");
+                exit(1);
+            }
+
+            if ($shm !== null) {
+                $shm->delete();
+            }
         }
     }
 }

@@ -9,10 +9,11 @@ one is listed under Changed with what to do about it.
 
 ## [Unreleased]
 
-### Added
-
-- **Zero-allocation cursor pruning**: `prune()` now iterates the expiry trie directly using `first()` and `searchNext()` cursor traversal instead of materializing full array copies with `toArray()`. This eliminates $O(N)$ memory spikes during maintenance sweeps and removes numeric key coercion risks at source. ([#11])
-- **Transparent adaptive compression**: Optional compression (`compressionThreshold`, `compressionCodec`: `'gzip'`, `'deflate'`, `'zstd'`, `'lz4'`) for large payloads. Binary framing header `\x00JC\x01` enables automatic decompression on `get()`, adaptively bypassing compression if compressed payload size is not strictly smaller. ([#11])
+- **Single-Trie Metadata Packing**: Packed 32-bit Unix expiry timestamp + 8-bit storage flags directly into the single entry payload envelope (`\x00JE\x01` framing), completely eliminating the secondary `$this->expiries` Judy array (`STRING_TO_INT`). Saves ~50% Judy array allocation overhead and streamlines `prune()`, `set()`, `get()`, and `delete()` down to single-trie operations. ([#11])
+- **Chunked Slab Arena Allocator (`SlabArena`)**: Dedicated contiguous buffer slab allocator (`src/Storage/SlabArena.php`) managing pre-allocated chunk blocks with bitmap tracking for large byte payloads (JSON documents, HTML fragments), preventing Zend Memory Manager (ZMM) heap fragmentation. ([#11])
+- **Shared Memory Pool Driver (`SharedMemoryPool`)**: Zero-copy shared memory payload segment (`src/Storage/SharedMemoryPool.php`) using PHP's `shmop` and Unix shared memory across multi-worker pools (FrankenPHP, Octane, Swoole). ([#11])
+- **Zero-allocation cursor pruning**: `prune()` now iterates the single value trie directly using `first()` and `searchNext()` cursor traversal instead of materializing full array copies with `toArray()`. This eliminates $O(N)$ memory spikes during maintenance sweeps and removes numeric key coercion risks at source. ([#11])
+- **Transparent adaptive compression**: Optional compression (`compressionThreshold`, `compressionCodec`: `'gzip'`, `'deflate'`, `'zstd'`, `'lz4'`) for large payloads. Binary framing header enables automatic decompression on `get()`, adaptively bypassing compression if compressed payload size is not strictly smaller. ([#11])
 - **Content-addressable interning**: Optional payload deduplication pool (`enableInterning`, `internThreshold`) mapping duplicate payloads across distinct keys to a single shared reference-counted pool. ([#11])
 
 ## [0.2.0] - 2026-08-19

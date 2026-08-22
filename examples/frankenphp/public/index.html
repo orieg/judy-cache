@@ -81,6 +81,16 @@
                 </div>
               </button>
 
+              <button type="button" class="preset-card" data-workload="single_vs_dual_trie">
+                <div class="preset-icon-wrapper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>
+                </div>
+                <div class="preset-text">
+                  <strong>Single vs Dual-Trie</strong>
+                  <span>~50% index cut & fast prune</span>
+                </div>
+              </button>
+
               <button type="button" class="preset-card" data-workload="prefix_invalidation">
                 <div class="preset-icon-wrapper">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
@@ -107,7 +117,7 @@
                 </div>
                 <div class="preset-text">
                   <strong>Adaptive Compression</strong>
-                  <span>Multi-KB JSON/HTML (~85% RAM savings)</span>
+                  <span>Multi-KB JSON (~85% RAM drop)</span>
                 </div>
               </button>
 
@@ -117,7 +127,7 @@
                 </div>
                 <div class="preset-text">
                   <strong>Payload Interning</strong>
-                  <span>Single-copy dedup (>90% RAM drop)</span>
+                  <span>Single-copy dedup (>90% drop)</span>
                 </div>
               </button>
 
@@ -252,6 +262,9 @@
               <button type="button" class="view-tab-btn active" data-tab="tab-overview">
                 <span class="tab-icon">📊</span> Results & Comparison
               </button>
+              <button type="button" class="view-tab-btn" data-tab="tab-profiler" id="btn-tab-profiler">
+                <span class="tab-icon">🧠</span> Memory Profiler & Breakdown
+              </button>
               <button type="button" class="view-tab-btn" data-tab="tab-terminal">
                 <span class="tab-icon">📟</span> Live Execution Log <span class="tab-dot" id="terminal-dot" style="display:none;"></span>
               </button>
@@ -271,16 +284,25 @@
                     <span class="savings-pill" id="savings-badge">−84% RAM Savings</span>
                   </div>
                   <div class="visual-bars compact-bars">
-                    <div class="bar-item">
+                    <div class="bar-item" id="bar-item-single">
                       <div class="bar-meta">
-                        <span class="bar-name">ext-judy 2.6.0 (C)</span>
+                        <span class="bar-name">ext-judy 2.6.0 (Single-Trie Packed)</span>
                         <span class="bar-val" id="bar-val-judy">—</span>
                       </div>
                       <div class="progress-track">
                         <div class="progress-fill fill-judy" id="bar-fill-judy" style="width: 0%;"></div>
                       </div>
                     </div>
-                    <div class="bar-item">
+                    <div class="bar-item" id="bar-item-dual" style="display:none;">
+                      <div class="bar-meta">
+                        <span class="bar-name">ext-judy 2.6.0 (Dual-Trie Legacy)</span>
+                        <span class="bar-val" id="bar-val-dual">—</span>
+                      </div>
+                      <div class="progress-track">
+                        <div class="progress-fill fill-dual" id="bar-fill-dual" style="width: 0%;"></div>
+                      </div>
+                    </div>
+                    <div class="bar-item" id="bar-item-array">
                       <div class="bar-meta">
                         <span class="bar-name">Native PHP Array</span>
                         <span class="bar-val" id="bar-val-array">—</span>
@@ -296,10 +318,10 @@
                 <table class="metrics-table compact-table">
                   <thead>
                     <tr>
-                      <th>Backend</th>
+                      <th>Backend / Model</th>
                       <th>Duration</th>
                       <th id="th-col-write">Write Ops/s</th>
-                      <th id="th-col-read">Read Ops/s</th>
+                      <th id="th-col-read">Read / Prune</th>
                       <th>Allocated RAM</th>
                       <th>Live VmRSS</th>
                       <th>Key Insights</th>
@@ -317,7 +339,125 @@
                 </table>
               </div>
 
-              <!-- TAB 2: Live Terminal Log -->
+              <!-- TAB 2: Interactive Memory Profiler & Breakdown -->
+              <div class="tab-pane" id="tab-profiler">
+                <div class="profiler-pane-inner">
+                  <div class="profiler-header">
+                    <div class="profiler-title-group">
+                      <h3>Process RAM Distribution & Layer Breakdown</h3>
+                      <span class="profiler-subtitle">Decomposition of Worker Memory: C Radix Nodes vs. Interned Blobs vs. Zend Heap vs. Slabs</span>
+                    </div>
+                    <div class="profiler-arch-selector">
+                      <button type="button" class="arch-chip active" data-arch="single_trie">Single-Trie Packed</button>
+                      <button type="button" class="arch-chip" data-arch="dual_trie">Dual-Trie ($values + $expiries)</button>
+                      <button type="button" class="arch-chip" data-arch="array">Zend PHP Array</button>
+                    </div>
+                  </div>
+
+                  <!-- Stacked Bar Visual Diagram -->
+                  <div class="profiler-bar-container">
+                    <div class="profiler-bar-meta">
+                      <span class="profiler-total-label">Total Modeled RAM: <strong id="profiler-total-ram">24.8 MB</strong></span>
+                      <span class="profiler-kcount-label" id="profiler-key-count">100,000 keys</span>
+                    </div>
+                    <div class="stacked-memory-bar" id="stacked-memory-bar">
+                      <div class="mem-seg seg-judy" id="seg-judy" style="width: 45%;" title="C Judy Radix Nodes"></div>
+                      <div class="mem-seg seg-intern" id="seg-intern" style="width: 25%;" title="Interned Blob Pool"></div>
+                      <div class="mem-seg seg-zend" id="seg-zend" style="width: 18%;" title="Zend Heap Overhead"></div>
+                      <div class="mem-seg seg-slab" id="seg-slab" style="width: 12%;" title="System Slabs & Off-Heap"></div>
+                    </div>
+                    <div class="stacked-bar-legend">
+                      <div class="legend-item"><span class="legend-dot dot-judy"></span> C Judy Radix Nodes (<span id="leg-pct-judy">45%</span>)</div>
+                      <div class="legend-item"><span class="legend-dot dot-intern"></span> Interned Blob Pool (<span id="leg-pct-intern">25%</span>)</div>
+                      <div class="legend-item"><span class="legend-dot dot-zend"></span> Zend Heap Overhead (<span id="leg-pct-zend">18%</span>)</div>
+                      <div class="legend-item"><span class="legend-dot dot-slab"></span> System Slabs & Off-Heap (<span id="leg-pct-slab">12%</span>)</div>
+                    </div>
+                  </div>
+
+                  <!-- 4-Layer Breakdown Cards Grid -->
+                  <div class="breakdown-cards-grid" id="breakdown-cards-grid">
+                    <!-- Layer 1: Judy Radix Nodes -->
+                    <div class="breakdown-card card-judy">
+                      <div class="card-layer-header">
+                        <span class="layer-pill pill-judy">Layer 1</span>
+                        <span class="layer-name">C Judy Radix Nodes</span>
+                      </div>
+                      <div class="layer-ram-row">
+                        <span class="layer-ram-val" id="card-ram-judy">11.2 MB</span>
+                        <span class="layer-pct-val" id="card-pct-judy">45.2% of Total</span>
+                      </div>
+                      <div class="layer-bpk" id="card-bpk-judy">24.5 Bytes / Key</div>
+                      <p class="layer-desc">Off-heap 256-ary bitmap leaves (LEAF1..LEAF7), digital trie branch pointers, zero Zend Bucket structs.</p>
+                    </div>
+
+                    <!-- Layer 2: Interned Blob Pool -->
+                    <div class="breakdown-card card-intern">
+                      <div class="card-layer-header">
+                        <span class="layer-pill pill-intern">Layer 2</span>
+                        <span class="layer-name">Interned Blob Pool</span>
+                      </div>
+                      <div class="layer-ram-row">
+                        <span class="layer-ram-val" id="card-ram-intern">6.2 MB</span>
+                        <span class="layer-pct-val" id="card-pct-intern">25.0% of Total</span>
+                      </div>
+                      <div class="layer-bpk" id="card-bpk-intern">12.0 Bytes / Key</div>
+                      <p class="layer-desc">Content-addressable payload buffers with xxHash3 reference index (\x00JI\x01) for single-copy shared envelopes.</p>
+                    </div>
+
+                    <!-- Layer 3: Zend Heap Overhead -->
+                    <div class="breakdown-card card-zend">
+                      <div class="card-layer-header">
+                        <span class="layer-pill pill-zend">Layer 3</span>
+                        <span class="layer-name">Zend Heap & zvals</span>
+                      </div>
+                      <div class="layer-ram-row">
+                        <span class="layer-ram-val" id="card-ram-zend">4.5 MB</span>
+                        <span class="layer-pct-val" id="card-pct-zend">18.1% of Total</span>
+                      </div>
+                      <div class="layer-bpk" id="card-bpk-zend">6.5 Bytes / Key</div>
+                      <p class="layer-desc">PHP runtime object wrappers, zval_struct envelopes, and Zend engine emalloc chunk allocation pool.</p>
+                    </div>
+
+                    <!-- Layer 4: System Slabs & Off-Heap -->
+                    <div class="breakdown-card card-slab">
+                      <div class="card-layer-header">
+                        <span class="layer-pill pill-slab">Layer 4</span>
+                        <span class="layer-name">System Slabs & Off-Heap</span>
+                      </div>
+                      <div class="layer-ram-row">
+                        <span class="layer-ram-val" id="card-ram-slab">2.9 MB</span>
+                        <span class="layer-pct-val" id="card-pct-slab">11.7% of Total</span>
+                      </div>
+                      <div class="layer-bpk" id="card-bpk-slab">3.2 Bytes / Key</div>
+                      <p class="layer-desc">libc malloc chunk headers, OS 4KB page alignment padding, and residual worker VmRSS fragmentation.</p>
+                    </div>
+                  </div>
+
+                  <!-- Single-Trie vs Dual-Trie Index Structure Telemetry Sub-Card -->
+                  <div class="index-telemetry-box">
+                    <div class="index-telemetry-header">
+                      <h4>Single-Trie vs. Dual-Trie Index Overhead Comparison</h4>
+                      <span class="index-badge-pill" id="index-savings-pill">−50% Key Index RAM Cut</span>
+                    </div>
+                    <div class="index-grid-duo">
+                      <div class="index-model-cell">
+                        <div class="model-title">Dual-Trie Architecture ($values + $expiries)</div>
+                        <div class="model-stat"><strong>2x JudySL Tries</strong> per instance</div>
+                        <div class="model-ram" id="prof-dual-index">4.82 MB Key Index Structure</div>
+                        <p class="model-desc">Indexes every key twice across two independent Judy trees. Every write and prune walks 2 separate tries.</p>
+                      </div>
+                      <div class="index-model-cell highlight-cell">
+                        <div class="model-title">Single-Trie Packed Storage (Header Prefix)</div>
+                        <div class="model-stat"><strong>1x JudySL Trie</strong> (4-byte binary TTL)</div>
+                        <div class="model-ram highlight-ram" id="prof-single-index">2.45 MB Key Index Structure (−50%)</div>
+                        <p class="model-desc">Packs expiry timestamp directly with payload into a single digital trie. Cuts tree node allocations by 50% with faster write/prune throughput.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- TAB 3: Live Terminal Log -->
               <div class="tab-pane" id="tab-terminal">
                 <div class="terminal-body-integrated" id="terminal-body">
                   <div class="term-line info"><span class="term-time">[Ready]</span> FrankenPHP worker initialized on PHP 8.5. ext-judy 2.6.0 loaded.</div>
@@ -329,7 +469,7 @@
                 </div>
               </div>
 
-              <!-- TAB 3: Data Inspector & Live Key Prober -->
+              <!-- TAB 4: Data Inspector & Live Key Prober -->
               <div class="tab-pane" id="tab-inspector">
                 <div class="samples-pane-inner">
                   <div class="samples-header">
@@ -344,7 +484,7 @@
                   <div class="probe-search-box compact-probe">
                     <label class="probe-label">Probe Any Key / Index In Active Worker Memory:</label>
                     <div class="probe-input-row">
-                      <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or app.session.500000)" value="42">
+                      <input type="text" id="probe-input" placeholder="Index or key (e.g. 42 or doc.50000)" value="42">
                       <button type="button" id="btn-probe" class="btn-xs btn-accent">Probe Key</button>
                     </div>
                     <div class="probe-result compact-probe-result" id="probe-result" style="display:none;"></div>
