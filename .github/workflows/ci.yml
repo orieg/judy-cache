@@ -9,6 +9,15 @@ on:
     - cron: "17 6 * * 1" # weekly benchmark refresh
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   tests:
     name: PHP ${{ matrix.php-version }} (${{ matrix.judy == 'ext' && 'ext-judy' || 'polyfill' }})
@@ -58,6 +67,8 @@ jobs:
         run: php tests/symfony-adapter.php
       - name: Owner-process example smoke (IPC pattern)
         run: php examples/owner-process/demo.php 2 1000
+      - name: Large-values example smoke
+        run: php examples/large-values/demo.php 1000 1024 10 2
 
   bench:
     name: benchmark (PHP 8.4, ext-judy, apcu)
@@ -79,6 +90,11 @@ jobs:
       - name: Run benchmark sweep (median of 5)
         run: |
           php bench/cache-bench.php 50000,200000,1000000 5 | tee bench-results.md
+          echo "" >> bench-results.md
+          echo "### Large-Value Storage & Multi-Worker Shootout" >> bench-results.md
+          echo "\`\`\`" >> bench-results.md
+          php examples/large-values/demo.php 10000 2048 50 8 >> bench-results.md
+          echo "\`\`\`" >> bench-results.md
           { echo '## judy-cache benchmark'; cat bench-results.md; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
@@ -90,6 +106,10 @@ jobs:
     needs: [tests, bench]
     if: always()
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
     steps:
       - name: Check all matrix jobs passed
         run: |
@@ -99,3 +119,51 @@ jobs:
           fi
           echo "All CI matrix jobs passed."
 
+      - name: Download benchmark results
+        if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: bench-results
+          path: .
+
+      - name: Post PR comment with benchmark results
+        # Fork PRs run with a read-only GITHUB_TOKEN, so commenting fails
+        # with "Resource not accessible by integration"; the report is
+        # still available in the job summary for those. Non-blocking.
+        if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+        continue-on-error: true
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            if (!fs.existsSync('bench-results.md')) {
+              console.log('No bench-results.md found, skipping PR comment');
+              return;
+            }
+            const report = fs.readFileSync('bench-results.md', 'utf8');
+            const marker = '<!-- judy-cache-benchmark-results -->';
+            const fullBody = marker + '\n## ⚡ judy-cache Benchmark Results\n\n' + report;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body && c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fullBody,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: fullBody,
+              });
+            }
