@@ -19,8 +19,18 @@ use Psr\SimpleCache\CacheInterface;
  */
 class JudySimpleCache implements CacheInterface, \Countable
 {
+    private const MAGIC_COMPRESSED = "\x00JC\x01";
+    private const MAGIC_INTERNED = "\x00JI\x01";
+
+    private const CODEC_ZSTD = 1;
+    private const CODEC_LZ4 = 2;
+    private const CODEC_GZIP = 3;
+    private const CODEC_DEFLATE = 4;
+
     private \Judy $values;
     private \Judy $expiries;
+    private ?\Judy $internPool = null;
+    private ?\Judy $internRefs = null;
 
     /**
      * @param bool $storeSerialized Serialize values on set() and unserialize
@@ -33,11 +43,23 @@ class JudySimpleCache implements CacheInterface, \Countable
      *   to Judy::STRING_TO_MIXED (sorted trie). STRING_TO_MIXED_HASH and
      *   STRING_TO_MIXED_ADAPTIVE are also valid; all three support the
      *   prefix operations. See the README for the trade-offs.
+     * @param ?int $compressionThreshold Minimum byte length for transparent
+     *   adaptive compression (e.g. 1024 for 1 KB). Null disables compression.
+     * @param string $compressionCodec Compression algorithm: 'gzip', 'deflate',
+     *   'zstd', or 'lz4'. Defaults to 'gzip'.
+     * @param bool $enableInterning Enable content-addressable payload deduplication
+     *   to store shared payloads only once across duplicate keys.
+     * @param int $internThreshold Minimum payload size in bytes to trigger
+     *   content-addressable interning. Defaults to 256 bytes.
      */
     public function __construct(
         private readonly bool $storeSerialized = true,
         private $clock = null,
         ?int $backend = null,
+        private readonly ?int $compressionThreshold = null,
+        private readonly string $compressionCodec = 'gzip',
+        private readonly bool $enableInterning = false,
+        private readonly int $internThreshold = 256,
     ) {
         // orieg/judy-polyfill guarantees the global Judy class exists,
         // aliasing itself when ext-judy is absent.
@@ -45,6 +67,25 @@ class JudySimpleCache implements CacheInterface, \Countable
         if (!\in_array($backend, [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE], true)) {
             throw new InvalidArgumentException('backend must be a string-to-mixed Judy type constant');
         }
+
+        if ($this->compressionThreshold !== null) {
+            if ($this->compressionThreshold < 0) {
+                throw new InvalidArgumentException('compressionThreshold must be non-negative');
+            }
+            $codec = \strtolower($this->compressionCodec);
+            match ($codec) {
+                'gzip' => \function_exists('gzencode') || throw new InvalidArgumentException("Compression codec 'gzip' requires ext-zlib"),
+                'deflate' => \function_exists('gzdeflate') || throw new InvalidArgumentException("Compression codec 'deflate' requires ext-zlib"),
+                'zstd' => \function_exists('zstd_compress') || throw new InvalidArgumentException("Compression codec 'zstd' requires ext-zstd"),
+                'lz4' => \function_exists('lz4_compress') || throw new InvalidArgumentException("Compression codec 'lz4' requires ext-lz4"),
+                default => throw new InvalidArgumentException("Unsupported compression codec '$this->compressionCodec' (supported: gzip, deflate, zstd, lz4)"),
+            };
+        }
+
+        if ($this->internThreshold < 0) {
+            throw new InvalidArgumentException('internThreshold must be non-negative');
+        }
+
         self::warnIfTeardownUnsafe($storeSerialized);
         $this->values = new \Judy($backend);
         $this->expiries = new \Judy(match ($backend) {
@@ -52,6 +93,15 @@ class JudySimpleCache implements CacheInterface, \Countable
             \Judy::STRING_TO_MIXED_HASH => \Judy::STRING_TO_INT_HASH,
             default => \Judy::STRING_TO_INT_ADAPTIVE,
         });
+
+        if ($this->enableInterning) {
+            $this->internPool = new \Judy($backend);
+            $this->internRefs = new \Judy(match ($backend) {
+                \Judy::STRING_TO_MIXED => \Judy::STRING_TO_INT,
+                \Judy::STRING_TO_MIXED_HASH => \Judy::STRING_TO_INT_HASH,
+                default => \Judy::STRING_TO_INT_ADAPTIVE,
+            });
+        }
     }
 
     /**
@@ -109,7 +159,21 @@ class JudySimpleCache implements CacheInterface, \Countable
         if (!$this->live($key)) {
             return $default;
         }
+
         $value = $this->values[$key];
+
+        if ($this->enableInterning && \is_string($value) && \str_starts_with($value, self::MAGIC_INTERNED)) {
+            $hash = \substr($value, 4);
+            $value = $this->internPool[$hash] ?? null;
+            if ($value === null) {
+                return $default;
+            }
+        }
+
+        if (\is_string($value) && \str_starts_with($value, self::MAGIC_COMPRESSED)) {
+            $value = $this->decompress($value);
+        }
+
         return $this->storeSerialized ? \unserialize($value) : $value;
     }
 
@@ -122,7 +186,18 @@ class JudySimpleCache implements CacheInterface, \Countable
             $this->delete($key);
             return true;
         }
-        $this->values[$key] = $this->storeSerialized ? \serialize($value) : $value;
+
+        $this->releaseValue($key);
+
+        $payload = $this->storeSerialized ? \serialize($value) : $value;
+        if ($this->compressionThreshold !== null && \is_string($payload) && \strlen($payload) >= $this->compressionThreshold) {
+            $payload = $this->compress($payload);
+        }
+        if ($this->enableInterning) {
+            $payload = $this->internPayload($payload);
+        }
+
+        $this->values[$key] = $payload;
         if ($expiry === null) {
             unset($this->expiries[$key]);
         } else {
@@ -134,6 +209,7 @@ class JudySimpleCache implements CacheInterface, \Countable
     public function delete(string $key): bool
     {
         $this->validateKey($key);
+        $this->releaseValue($key);
         unset($this->values[$key], $this->expiries[$key]);
         return true;
     }
@@ -142,6 +218,10 @@ class JudySimpleCache implements CacheInterface, \Countable
     {
         $this->values->free();
         $this->expiries->free();
+        if ($this->enableInterning) {
+            $this->internPool->free();
+            $this->internRefs->free();
+        }
         return true;
     }
 
@@ -197,6 +277,7 @@ class JudySimpleCache implements CacheInterface, \Countable
         for ($key = $this->values->first($prefix);
              $key !== null && \str_starts_with($key, $prefix);
              $key = $this->values->searchNext($key)) {
+            $this->releaseValue($key);
             unset($this->values[$key], $this->expiries[$key]);
             $deleted++;
         }
@@ -227,26 +308,114 @@ class JudySimpleCache implements CacheInterface, \Countable
         return $this->values->count();
     }
 
+    /** Number of unique deduplicated payload entries in the intern pool (if enabled). */
+    public function internCount(): int
+    {
+        return $this->enableInterning ? $this->internPool->count() : 0;
+    }
+
     /** Drop every expired entry now; returns the number evicted. */
     public function prune(): int
     {
         $now = $this->now();
         $evicted = 0;
-        foreach ($this->expiries->toArray() as $key => $expiry) {
-            // toArray() returns a PHP array, and PHP array keys coerce
-            // canonical decimal strings to int: the legal PSR-16 key "42"
-            // comes back as int 42. ext-judy rejects a non-string offset on
-            // a string-keyed array with a TypeError, so cast it back.
-            $key = (string) $key;
-            if ($expiry <= $now) {
+        $key = $this->expiries->first();
+        while ($key !== null) {
+            $next = $this->expiries->searchNext($key);
+            $expiry = $this->expiries[$key];
+            if ($expiry !== null && $expiry <= $now) {
+                $this->releaseValue($key);
                 unset($this->values[$key], $this->expiries[$key]);
                 $evicted++;
             }
+            $key = $next;
         }
         return $evicted;
     }
 
     /* ── Internals ────────────────────────────────────────────── */
+
+    private function compress(string $data): string
+    {
+        $codecId = match (\strtolower($this->compressionCodec)) {
+            'zstd' => self::CODEC_ZSTD,
+            'lz4' => self::CODEC_LZ4,
+            'deflate' => self::CODEC_DEFLATE,
+            default => self::CODEC_GZIP,
+        };
+
+        $compressed = match ($codecId) {
+            self::CODEC_ZSTD => \function_exists('zstd_compress') ? \zstd_compress($data) : false,
+            self::CODEC_LZ4 => \function_exists('lz4_compress') ? \lz4_compress($data) : false,
+            self::CODEC_DEFLATE => \function_exists('gzdeflate') ? \gzdeflate($data, 6) : false,
+            self::CODEC_GZIP => \function_exists('gzencode') ? \gzencode($data, 6) : false,
+            default => false,
+        };
+
+        if ($compressed === false) {
+            return $data;
+        }
+
+        $framed = self::MAGIC_COMPRESSED . \chr($codecId) . $compressed;
+        // Adaptive: only store framed compression if strictly smaller than original data
+        return \strlen($framed) < \strlen($data) ? $framed : $data;
+    }
+
+    private function decompress(string $data): string
+    {
+        if (!\str_starts_with($data, self::MAGIC_COMPRESSED) || \strlen($data) < 6) {
+            return $data;
+        }
+
+        $codecId = \ord($data[4]);
+        $payload = \substr($data, 5);
+
+        $decompressed = match ($codecId) {
+            self::CODEC_ZSTD => \function_exists('zstd_uncompress') ? \zstd_uncompress($payload) : false,
+            self::CODEC_LZ4 => \function_exists('lz4_uncompress') ? \lz4_uncompress($payload) : false,
+            self::CODEC_DEFLATE => \function_exists('gzinflate') ? \gzinflate($payload) : false,
+            self::CODEC_GZIP => \function_exists('gzdecode') ? \gzdecode($payload) : false,
+            default => false,
+        };
+
+        return $decompressed === false ? $data : $decompressed;
+    }
+
+    private function internPayload(mixed $payload): mixed
+    {
+        if (!$this->enableInterning || !\is_string($payload) || \strlen($payload) < $this->internThreshold) {
+            return $payload;
+        }
+
+        $hash = \hash('xxh3', $payload);
+        if (!isset($this->internPool[$hash])) {
+            $this->internPool[$hash] = $payload;
+            $this->internRefs[$hash] = 1;
+        } else {
+            $this->internRefs[$hash] = ($this->internRefs[$hash] ?? 0) + 1;
+        }
+
+        return self::MAGIC_INTERNED . $hash;
+    }
+
+    private function releaseValue(string $key): void
+    {
+        if (!$this->enableInterning || !isset($this->values[$key])) {
+            return;
+        }
+        $val = $this->values[$key];
+        if (\is_string($val) && \str_starts_with($val, self::MAGIC_INTERNED)) {
+            $hash = \substr($val, 4);
+            if (isset($this->internRefs[$hash])) {
+                $refs = $this->internRefs[$hash] - 1;
+                if ($refs <= 0) {
+                    unset($this->internPool[$hash], $this->internRefs[$hash]);
+                } else {
+                    $this->internRefs[$hash] = $refs;
+                }
+            }
+        }
+    }
 
     private function live(string $key): bool
     {
@@ -254,6 +423,7 @@ class JudySimpleCache implements CacheInterface, \Countable
             return false;
         }
         if (isset($this->expiries[$key]) && $this->expiries[$key] <= $this->now()) {
+            $this->releaseValue($key);
             unset($this->values[$key], $this->expiries[$key]); // lazy eviction
             return false;
         }

@@ -130,13 +130,29 @@ for ($i = 0; $i < 20; $i++) {
 $valuePool = [null, true, false, 0, -1, 42, 3.14, '', 'str', [1, 2, 3], ['a' => ['b' => 'c']]];
 $prefixPool = ['user.', 'user.1', 'report.', 'cfg.3', 'nope.', ''];
 
+$configs = [
+    'default' => [],
+    'compressed' => ['compressionThreshold' => 20, 'compressionCodec' => 'gzip'],
+    'interned' => ['enableInterning' => true, 'internThreshold' => 20],
+    'combo' => ['compressionThreshold' => 20, 'enableInterning' => true, 'internThreshold' => 20],
+];
+
 $total = 0;
-foreach ($backends as $bname => $btype) {
-    foreach ($seeds as $seed) {
-        $now = 1_000_000;
-        $clock = function () use (&$now) { return $now; };
-        $judy = new JudySimpleCache(clock: $clock, backend: $btype);
-        $ref  = new ReferenceCache(\Closure::fromCallable($clock));
+foreach ($configs as $cname => $copt) {
+    foreach ($backends as $bname => $btype) {
+        foreach ($seeds as $seed) {
+            $now = 1_000_000;
+            $clock = function () use (&$now) { return $now; };
+            $judy = new JudySimpleCache(
+                clock: $clock,
+                backend: $btype,
+                compressionThreshold: $copt['compressionThreshold'] ?? null,
+                compressionCodec: $copt['compressionCodec'] ?? 'gzip',
+                enableInterning: $copt['enableInterning'] ?? false,
+                internThreshold: $copt['internThreshold'] ?? 256,
+            );
+            $ref  = new ReferenceCache(\Closure::fromCallable($clock));
+
 
         \mt_srand((int) $seed);
         for ($op = 0; $op < $opsPerSeed; $op++) {
@@ -198,7 +214,8 @@ foreach ($backends as $bname => $btype) {
             fwrite(STDERR, "FUZZ DIVERGE [$bname seed=$seed] final keys\n  judy: " . \implode(',', $judyKeys) . "\n  ref:  " . \implode(',', $ref->keysLive()) . "\n");
             exit(1);
         }
+        }
     }
 }
 
-echo "fuzz: $total ops across " . \count($seeds) . " seeds x " . \count($backends) . " backends, no divergence (backend: ", \judy_version(), ")\n";
+echo "fuzz: $total ops across " . \count($seeds) . " seeds x " . \count($backends) . " backends x " . \count($configs) . " configs, no divergence (backend: ", \judy_version(), ")\n";

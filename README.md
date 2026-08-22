@@ -76,7 +76,9 @@ Explore runnable implementations in [`examples/`](examples/):
 
 - **Keys**: Standard PSR-16 rules (`{}()/\@:` reserved). Use `.` as your hierarchy separator (`user.42.profile`).
 - **Values**: Serialized snapshots by default (like Symfony's `ArrayAdapter`), ensuring fetched objects are safe from mutation. Pass `storeSerialized: false` for faster by-reference storage.
-- **TTL**: `int` seconds or `DateInterval`. Expired entries are evicted lazily on access, or eagerly via `prune()`.
+- **TTL & Pruning**: `int` seconds or `DateInterval`. Expired entries are evicted lazily on access, or eagerly via zero-allocation cursor `prune()`.
+- **Adaptive Compression**: Pass `compressionThreshold: 1024` (bytes) and `compressionCodec: 'gzip'` (`'gzip'`, `'deflate'`, `'zstd'`, `'lz4'`) to auto-compress payloads exceeding the threshold. Automatically skips compression if the compressed size exceeds original payload size.
+- **Content-Addressable Interning**: Pass `enableInterning: true` (and optional `internThreshold: 256`) to deduplicate identical payloads across distinct keys into a shared, reference-counted pool.
 - **Clock**: Injectable (`new JudySimpleCache(clock: fn() => $timestamp)`) for deterministic testing.
 - **Backend Choice**: Defaults to `Judy::STRING_TO_MIXED`. Alternate trie backends can be selected via the constructor (e.g. `backend: Judy::STRING_TO_MIXED_ADAPTIVE`).
 

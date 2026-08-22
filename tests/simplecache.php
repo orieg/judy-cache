@@ -150,6 +150,17 @@ foreach ([\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_
     check("numeric-key prune is a miss (backend $b)", 'MISS', $num->get('42', 'MISS'));
 }
 
+// Cursor prune on larger population with mixed expiries
+$sweepCache = new JudySimpleCache(clock: function () use (&$now) { return $now; });
+for ($i = 0; $i < 2000; $i++) {
+    $sweepCache->set("bulk.$i", $i, ($i % 2 === 0) ? 10 : 1000);
+}
+$now += 15;
+check('bulk count before prune', 2000, $sweepCache->count());
+check('bulk prune evicts half', 1000, $sweepCache->prune());
+check('bulk count after prune', 1000, $sweepCache->count());
+
+
 // The same coercion hazard on the prefix ops, which read keys back from Judy.
 $num = new JudySimpleCache(clock: function () use (&$now) { return $now; });
 $num->setMultiple(['1' => 'a', '2' => 'b', '10' => 'c', '1.x' => 'd']);
@@ -228,6 +239,125 @@ check('spec: expired is miss in getMultiple', ['spec.exp' => 'D'], (array) $spec
 // clear() MUST empty the cache and return true.
 $spec->set('spec.c', 1);
 check('spec: clear returns true and empties', [true, false], [$spec->clear(), $spec->has('spec.c')]);
+
+/* ── Transparent Adaptive Compression Tests ───────────────────── */
+throws('compression: negative threshold throws', \Psr\SimpleCache\InvalidArgumentException::class,
+    fn() => new JudySimpleCache(compressionThreshold: -1));
+throws('compression: invalid codec throws', \Psr\SimpleCache\InvalidArgumentException::class,
+    fn() => new JudySimpleCache(compressionThreshold: 100, compressionCodec: 'nonexistent_algo'));
+
+foreach (['gzip', 'deflate'] as $codec) {
+    $compCache = new JudySimpleCache(
+        clock: function () use (&$now) { return $now; },
+        compressionThreshold: 100,
+        compressionCodec: $codec,
+    );
+
+    // Short string below threshold (uncompressed)
+    $short = 'short-value-under-100-bytes';
+    $compCache->set('c.short', $short);
+    check("compression ($codec): short string roundtrip", $short, $compCache->get('c.short'));
+
+    // Repetitive large string (highly compressible)
+    $large = str_repeat('The quick brown fox jumps over the lazy dog. ', 100); // ~4.6 KB
+    $compCache->set('c.large', $large);
+    check("compression ($codec): large string roundtrip", $large, $compCache->get('c.large'));
+
+    // Large structured object / array
+    $complex = [
+        'users' => array_map(fn($i) => ['id' => $i, 'name' => "User $i", 'roles' => ['admin', 'member']], range(1, 50)),
+        'metadata' => ['total' => 50, 'page' => 1],
+    ];
+    $compCache->set('c.complex', $complex);
+    check("compression ($codec): complex array roundtrip", $complex, $compCache->get('c.complex'));
+
+    // High entropy binary string (adaptive fallback: compression overhead would increase size)
+    $random = random_bytes(500);
+    $compCache->set('c.rand', $random);
+    check("compression ($codec): high entropy binary roundtrip", $random, $compCache->get('c.rand'));
+
+    // Prefix operations work transparently with compressed payloads
+    check("compression ($codec): keysByPrefix", ['c.complex', 'c.large', 'c.rand', 'c.short'], $compCache->keysByPrefix('c.'));
+    check("compression ($codec): deletePrefix", 4, $compCache->deletePrefix('c.'));
+    check("compression ($codec): after deletePrefix", 0, $compCache->count());
+}
+
+/* ── Content-Addressable Interning (Deduplication) Tests ──────── */
+throws('interning: negative threshold throws', \Psr\SimpleCache\InvalidArgumentException::class,
+    fn() => new JudySimpleCache(enableInterning: true, internThreshold: -1));
+
+$internCache = new JudySimpleCache(
+    clock: function () use (&$now) { return $now; },
+    enableInterning: true,
+    internThreshold: 100,
+);
+
+$sharedPayload = str_repeat('A heavy shared API response template. ', 20); // ~760 bytes
+$distinctPayload = str_repeat('A distinct API response template. ', 20);
+
+// Set 10 different keys with the identical payload
+for ($i = 0; $i < 10; $i++) {
+    $internCache->set("shared.$i", $sharedPayload);
+}
+check('interning: 10 keys share 1 pool entry', 1, $internCache->internCount());
+check('interning: cache count is 10', 10, $internCache->count());
+for ($i = 0; $i < 10; $i++) {
+    check("interning: get shared.$i", $sharedPayload, $internCache->get("shared.$i"));
+}
+
+// Add a distinct payload
+$internCache->set('distinct.1', $distinctPayload);
+check('interning: 2 distinct payload pool entries', 2, $internCache->internCount());
+
+// Overwrite a key with a different value (ref count decrements)
+$internCache->set('shared.0', $distinctPayload);
+check('interning: pool count remains 2 after overwrite', 2, $internCache->internCount());
+check('interning: shared.0 sees new payload', $distinctPayload, $internCache->get('shared.0'));
+
+// Delete individual keys
+$internCache->delete('distinct.1');
+// shared.0 still references $distinctPayload, so pool count is still 2
+check('interning: pool count still 2 while ref exists', 2, $internCache->internCount());
+$internCache->delete('shared.0');
+// Now $distinctPayload has 0 references, so pool count drops to 1
+check('interning: pool count drops to 1 after last ref deleted', 1, $internCache->internCount());
+
+// Expiry and cursor prune cleans up interned payload
+$internCache->set('expire.shared', $sharedPayload, 10);
+check('interning: pool count is 1', 1, $internCache->internCount());
+$internCache->deletePrefix('shared.'); // deletes shared.1..shared.9
+// Only expire.shared holds the reference
+check('interning: pool count is 1 with expire.shared holding ref', 1, $internCache->internCount());
+$now += 15;
+check('interning: prune evicts expired', 1, $internCache->prune());
+check('interning: pool count is 0 after expired evicted', 0, $internCache->internCount());
+
+// clear() frees intern pool completely
+$internCache->set('temp.1', $sharedPayload);
+$internCache->set('temp.2', $sharedPayload);
+check('interning: count before clear', 2, $internCache->count());
+check('interning: pool before clear', 1, $internCache->internCount());
+$internCache->clear();
+check('interning: count after clear', 0, $internCache->count());
+check('interning: pool after clear', 0, $internCache->internCount());
+
+// Combined: Compression + Interning
+$comboCache = new JudySimpleCache(
+    clock: function () use (&$now) { return $now; },
+    compressionThreshold: 100,
+    enableInterning: true,
+    internThreshold: 50,
+);
+for ($i = 0; $i < 5; $i++) {
+    $comboCache->set("combo.$i", $sharedPayload);
+}
+check('combo: 5 keys share 1 compressed+interned entry', 1, $comboCache->internCount());
+check('combo: retrieve key 0', $sharedPayload, $comboCache->get('combo.0'));
+check('combo: retrieve key 4', $sharedPayload, $comboCache->get('combo.4'));
+$comboCache->clear();
+check('combo: cleared', 0, $comboCache->internCount());
+
+
 
 if ($failures === 0) {
     echo "simplecache: all checks passed (backend: ", judy_version(), ")\n";
