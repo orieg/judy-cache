@@ -136,7 +136,11 @@ check('prune evicts', 1, $cache->prune());
 check('count after prune', 1, $cache->count());
 
 // prune() with numeric-string keys across all backends
-foreach ([\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE] as $b) {
+$allBackends = [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE];
+if (\defined('Judy::STRING_TO_ENTRY')) {
+    \array_unshift($allBackends, \Judy::STRING_TO_ENTRY);
+}
+foreach ($allBackends as $b) {
     $num = new JudySimpleCache(clock: function () use (&$now) { return $now; }, backend: $b);
     $num->set('42', 'dies', 10);
     $num->set('-7', 'dies', 10);

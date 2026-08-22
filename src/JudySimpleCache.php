@@ -14,33 +14,30 @@ use Psr\SimpleCache\CacheInterface;
  * process memory across requests. In classic FPM, the cache dies with the
  * request — use APCu there instead.
  *
- * The default backend is the sorted trie type (STRING_TO_MIXED), which keeps
- * keys in lexicographic order and enables the extra range operations this
- * class exposes beyond PSR-16: deletePrefix() and keysByPrefix() run on the
- * key order directly instead of scanning every entry.
- *
- * Expiry timestamps and storage flags are packed directly into the single
- * Judy trie entry envelope (MAGIC_ENTRY: \x00JE\x01), eliminating the secondary
- * expiries Judy array.
+ * The backend is Judy::STRING_TO_ENTRY, which natively stores expiry timestamps
+ * and 16-bit metadata flags directly with entries in C, enabling in-C single-pass
+ * batch eviction via pruneExpired() and zero userland packing overhead.
  */
 class JudySimpleCache implements CacheInterface, \Countable
 {
-    private const MAGIC_ENTRY = "\x00JE\x01";
+    public const FLAG_RAW = 0x0000;
+    public const FLAG_COMPRESSED = 0x0001;
+    public const FLAG_INTERNED = 0x0002;
+    public const FLAG_SLAB = 0x0004;
+    public const FLAG_SHMOP = 0x0008;
 
-    private const FLAG_RAW = 0x00;
-    private const FLAG_COMPRESSED = 0x01;
-    private const FLAG_INTERNED = 0x02;
-    private const FLAG_SLAB = 0x04;
-    private const FLAG_SHMOP = 0x08;
-
-    private const CODEC_ZSTD = 1;
-    private const CODEC_LZ4 = 2;
-    private const CODEC_GZIP = 3;
-    private const CODEC_DEFLATE = 4;
+    public const CODEC_SHIFT = 4;
+    public const CODEC_MASK = 0x00F0;
+    public const CODEC_ZSTD = 1 << 4;
+    public const CODEC_LZ4 = 2 << 4;
+    public const CODEC_GZIP = 3 << 4;
+    public const CODEC_DEFLATE = 4 << 4;
 
     private \Judy $values;
+    private readonly bool $isEntryType;
     private ?\Judy $internPool = null;
     private ?\Judy $internRefs = null;
+    private int $externalAllocations = 0;
 
     /**
      * @param bool $storeSerialized Serialize values on set() and unserialize
@@ -50,9 +47,7 @@ class JudySimpleCache implements CacheInterface, \Countable
      * @param ?callable(): int $clock Returns the current Unix timestamp;
      *   injectable for tests.
      * @param ?int $backend Judy type constant for the value store. Defaults
-     *   to Judy::STRING_TO_MIXED (sorted trie). STRING_TO_MIXED_HASH and
-     *   STRING_TO_MIXED_ADAPTIVE are also valid; all three support the
-     *   prefix operations. See the README for the trade-offs.
+     *   to Judy::STRING_TO_ENTRY when available, falling back to Judy::STRING_TO_MIXED.
      * @param ?int $compressionThreshold Minimum byte length for transparent
      *   adaptive compression (e.g. 1024 for 1 KB). Null disables compression.
      * @param string $compressionCodec Compression algorithm: 'gzip', 'deflate',
@@ -79,11 +74,16 @@ class JudySimpleCache implements CacheInterface, \Countable
         private readonly ?SharedMemoryPool $shmPool = null,
         private readonly ?int $shmThreshold = null,
     ) {
-        // orieg/judy-polyfill guarantees the global Judy class exists,
-        // aliasing itself when ext-judy is absent.
-        $backend ??= \Judy::STRING_TO_MIXED;
-        if (!\in_array($backend, [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE], true)) {
-            throw new InvalidArgumentException('backend must be a string-to-mixed Judy type constant');
+        $entryType = \defined('Judy::STRING_TO_ENTRY') ? \Judy::STRING_TO_ENTRY : 11;
+        $hasEntrySupport = \defined('Judy::STRING_TO_ENTRY') || \method_exists(\Judy::class, 'set');
+
+        $backend ??= $hasEntrySupport ? $entryType : \Judy::STRING_TO_MIXED;
+        $validBackends = [\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE];
+        if ($hasEntrySupport) {
+            $validBackends[] = $entryType;
+        }
+        if (!\in_array($backend, $validBackends, true)) {
+            throw new InvalidArgumentException('backend must be a string-to-mixed or string-to-entry Judy type constant');
         }
 
         if ($this->compressionThreshold !== null) {
@@ -114,22 +114,17 @@ class JudySimpleCache implements CacheInterface, \Countable
 
         self::warnIfTeardownUnsafe($storeSerialized);
         $this->values = new \Judy($backend);
+        $this->isEntryType = ($backend === $entryType);
 
         if ($this->enableInterning) {
-            $this->internPool = new \Judy($backend);
-            $this->internRefs = new \Judy(match ($backend) {
-                \Judy::STRING_TO_MIXED => \Judy::STRING_TO_INT,
-                \Judy::STRING_TO_MIXED_HASH => \Judy::STRING_TO_INT_HASH,
-                default => \Judy::STRING_TO_INT_ADAPTIVE,
-            });
+            $this->internPool = new \Judy(\Judy::INT_TO_MIXED);
+            $this->internRefs = new \Judy(\Judy::INT_TO_INT);
         }
     }
 
     /**
      * ext-judy before 2.6.0 has a use-after-free in the teardown of the
-     * STRING_TO_MIXED family — the three types this class is built on
-     * (php-judy#162, fixed in 2.6.0 by unlinking the container before the
-     * walk that frees its zvals).
+     * STRING_TO_MIXED family (php-judy#162, fixed in 2.6.0).
      */
     private static function warnIfTeardownUnsafe(bool $storeSerialized): void
     {
@@ -153,39 +148,109 @@ class JudySimpleCache implements CacheInterface, \Countable
     public function get(string $key, mixed $default = null): mixed
     {
         $this->validateKey($key);
-        if (!isset($this->values[$key])) {
-            return $default;
+
+        if ($this->isEntryType) {
+            if (!$this->storeSerialized) {
+                if ($this->clock === null) {
+                    $raw = $this->values->get($key);
+                    return $raw ?? $default;
+                }
+                $entry = $this->values->getEntry($key);
+                if ($entry === null) {
+                    return $default;
+                }
+                if ($entry['expires_at'] !== 0 && $entry['expires_at'] <= $this->now()) {
+                    $this->releaseValue($key);
+                    unset($this->values[$key]);
+                    return $default;
+                }
+                return $entry['value'];
+            }
+
+            $flags = 0;
+            $expiry = 0;
+            if ($this->clock === null) {
+                $raw = $this->values->get($key, $expiry, $flags);
+                if ($raw === null) {
+                    return $default;
+                }
+            } else {
+                $entry = $this->values->getEntry($key);
+                if ($entry === null) {
+                    return $default;
+                }
+                if ($entry['expires_at'] !== 0 && $entry['expires_at'] <= $this->now()) {
+                    $this->releaseValue($key);
+                    unset($this->values[$key]);
+                    return $default;
+                }
+                $raw = $entry['value'];
+                $flags = $entry['flags'];
+            }
+
+            if (($flags & self::FLAG_SHMOP) !== 0) {
+                if ($this->shmPool === null) {
+                    return $default;
+                }
+                $offset = \unpack('P', $raw)[1];
+                $raw = $this->shmPool->read($offset);
+            } elseif (($flags & self::FLAG_SLAB) !== 0) {
+                if ($this->slabArena === null) {
+                    return $default;
+                }
+                $offset = \unpack('P', $raw)[1];
+                $raw = $this->slabArena->read($offset);
+            } elseif (($flags & self::FLAG_INTERNED) !== 0) {
+                if ($this->internPool === null) {
+                    return $default;
+                }
+                $hashKey = \unpack('P', $raw)[1];
+                $raw = $this->internPool[$hashKey] ?? null;
+                if ($raw === null) {
+                    return $default;
+                }
+            }
+
+            if (($flags & self::FLAG_COMPRESSED) !== 0) {
+                $raw = $this->decompress($raw, $flags);
+            }
+
+            return \unserialize($raw);
         }
 
-        $raw = $this->values[$key];
+        // Legacy STRING_TO_MIXED path
+        $raw = $this->values[$key] ?? null;
+        if ($raw === null) {
+            return $default;
+        }
 
         if (!$this->storeSerialized) {
-            if (!\is_array($raw) || \count($raw) < 3) {
-                return $default;
+            if (\is_array($raw) && \array_key_exists('e', $raw)) {
+                if ($raw['e'] <= $this->now()) {
+                    $this->releaseValue($key);
+                    unset($this->values[$key]);
+                    return $default;
+                }
+                return $raw['v'];
             }
-            $expiry = $raw[0];
-            if ($expiry !== 0 && $expiry <= $this->now()) {
-                unset($this->values[$key]);
-                return $default;
-            }
-            return $raw[2];
+            return $raw;
         }
 
-        if (!\is_string($raw) || !\str_starts_with($raw, self::MAGIC_ENTRY) || \strlen($raw) < 9) {
+        if (!\is_string($raw) || !\str_starts_with($raw, "\x00JE\x01")) {
             return $default;
         }
 
-        $meta = \unpack('Nexpiry/Cflags', \substr($raw, 4, 5));
+        $meta = \unpack('Nexpiry/nflags', \substr($raw, 4, 6));
         $expiry = $meta['expiry'];
+        $flags = $meta['flags'];
+
         if ($expiry !== 0 && $expiry <= $this->now()) {
             $this->releaseValue($key);
             unset($this->values[$key]);
             return $default;
         }
 
-        $flags = $meta['flags'];
-        $payload = \substr($raw, 9);
-
+        $payload = \substr($raw, 10);
         if (($flags & self::FLAG_SHMOP) !== 0) {
             if ($this->shmPool === null) {
                 return $default;
@@ -202,14 +267,15 @@ class JudySimpleCache implements CacheInterface, \Countable
             if ($this->internPool === null) {
                 return $default;
             }
-            $payload = $this->internPool[$payload] ?? null;
+            $hashKey = \unpack('P', $payload)[1];
+            $payload = $this->internPool[$hashKey] ?? null;
             if ($payload === null) {
                 return $default;
             }
         }
 
         if (($flags & self::FLAG_COMPRESSED) !== 0) {
-            $payload = $this->decompress($payload);
+            $payload = $this->decompress($payload, $flags);
         }
 
         return \unserialize($payload);
@@ -226,10 +292,44 @@ class JudySimpleCache implements CacheInterface, \Countable
         }
 
         $this->releaseValue($key);
-        $expiryTs = $expiry ?? 0;
 
+        if ($this->isEntryType) {
+            $ttlSeconds = $this->ttlSeconds($expiry);
+            if (!$this->storeSerialized) {
+                $this->values->set($key, $value, $ttlSeconds, self::FLAG_RAW);
+                return true;
+            }
+
+            $payload = \serialize($value);
+            $flags = self::FLAG_RAW;
+
+            if ($this->compressionThreshold !== null && \strlen($payload) >= $this->compressionThreshold) {
+                $payload = $this->compress($payload, $flags);
+            }
+
+            if ($this->enableInterning && \strlen($payload) >= $this->internThreshold) {
+                $payload = $this->internPayload($payload);
+                $flags |= self::FLAG_INTERNED;
+                $this->externalAllocations++;
+            } elseif ($this->shmPool !== null && ($this->shmThreshold === null || \strlen($payload) >= $this->shmThreshold)) {
+                $offset = $this->shmPool->allocate($payload);
+                $payload = \pack('P', $offset);
+                $flags |= self::FLAG_SHMOP;
+                $this->externalAllocations++;
+            } elseif ($this->slabArena !== null && ($this->slabThreshold === null || \strlen($payload) >= $this->slabThreshold)) {
+                $offset = $this->slabArena->allocate($payload);
+                $payload = \pack('P', $offset);
+                $flags |= self::FLAG_SLAB;
+                $this->externalAllocations++;
+            }
+
+            $this->values->set($key, $payload, $ttlSeconds, $flags);
+            return true;
+        }
+
+        // Legacy STRING_TO_MIXED path
         if (!$this->storeSerialized) {
-            $this->values[$key] = [$expiryTs, self::FLAG_RAW, $value];
+            $this->values[$key] = $expiry === null ? $value : ['v' => $value, 'e' => $expiry];
             return true;
         }
 
@@ -237,28 +337,27 @@ class JudySimpleCache implements CacheInterface, \Countable
         $flags = self::FLAG_RAW;
 
         if ($this->compressionThreshold !== null && \strlen($payload) >= $this->compressionThreshold) {
-            $compressed = $this->compress($payload);
-            if ($compressed !== $payload) {
-                $payload = $compressed;
-                $flags |= self::FLAG_COMPRESSED;
-            }
+            $payload = $this->compress($payload, $flags);
         }
 
         if ($this->enableInterning && \strlen($payload) >= $this->internThreshold) {
             $payload = $this->internPayload($payload);
             $flags |= self::FLAG_INTERNED;
+            $this->externalAllocations++;
         } elseif ($this->shmPool !== null && ($this->shmThreshold === null || \strlen($payload) >= $this->shmThreshold)) {
             $offset = $this->shmPool->allocate($payload);
             $payload = \pack('P', $offset);
             $flags |= self::FLAG_SHMOP;
+            $this->externalAllocations++;
         } elseif ($this->slabArena !== null && ($this->slabThreshold === null || \strlen($payload) >= $this->slabThreshold)) {
             $offset = $this->slabArena->allocate($payload);
             $payload = \pack('P', $offset);
             $flags |= self::FLAG_SLAB;
+            $this->externalAllocations++;
         }
 
-        $envelope = self::MAGIC_ENTRY . \pack('NC', $expiryTs, $flags) . $payload;
-        $this->values[$key] = $envelope;
+        $header = "\x00JE\x01" . \pack('Nn', $expiry ?? 0, $flags);
+        $this->values[$key] = $header . $payload;
         return true;
     }
 
@@ -272,7 +371,7 @@ class JudySimpleCache implements CacheInterface, \Countable
 
     public function clear(): bool
     {
-        if ($this->slabArena !== null || $this->shmPool !== null || $this->enableInterning) {
+        if ($this->externalAllocations > 0) {
             for ($key = $this->values->first(); $key !== null; $key = $this->values->searchNext($key)) {
                 $this->releaseValue((string) $key);
             }
@@ -282,6 +381,7 @@ class JudySimpleCache implements CacheInterface, \Countable
             $this->internPool->free();
             $this->internRefs->free();
         }
+        $this->externalAllocations = 0;
         return true;
     }
 
@@ -378,16 +478,39 @@ class JudySimpleCache implements CacheInterface, \Countable
     public function prune(): int
     {
         $now = $this->now();
+        if ($this->isEntryType && $this->externalAllocations === 0) {
+            return $this->values->pruneExpired($now);
+        }
+
         $evicted = 0;
         $key = $this->values->first();
         while ($key !== null) {
             $next = $this->values->searchNext($key);
-            $raw = $this->values[$key];
-            $expiry = $this->extractExpiry($raw);
-            if ($expiry !== 0 && $expiry <= $now) {
-                $this->releaseValue((string) $key);
-                unset($this->values[$key]);
-                $evicted++;
+            if ($this->isEntryType) {
+                $entry = $this->values->getEntry((string) $key);
+                if ($entry !== null && $entry['expires_at'] !== 0 && $entry['expires_at'] <= $now) {
+                    $this->releaseValue((string) $key);
+                    unset($this->values[$key]);
+                    $evicted++;
+                }
+            } else {
+                $raw = $this->values[$key] ?? null;
+                $expired = false;
+                if (!$this->storeSerialized) {
+                    if (\is_array($raw) && \array_key_exists('e', $raw) && $raw['e'] <= $now) {
+                        $expired = true;
+                    }
+                } elseif (\is_string($raw) && \str_starts_with($raw, "\x00JE\x01")) {
+                    $expiry = \unpack('N', \substr($raw, 4, 4))[1];
+                    if ($expiry !== 0 && $expiry <= $now) {
+                        $expired = true;
+                    }
+                }
+                if ($expired) {
+                    $this->releaseValue((string) $key);
+                    unset($this->values[$key]);
+                    $evicted++;
+                }
             }
             $key = $next;
         }
@@ -396,7 +519,7 @@ class JudySimpleCache implements CacheInterface, \Countable
 
     /* ── Internals ────────────────────────────────────────────── */
 
-    private function compress(string $data): string
+    private function compress(string $data, int &$flags): string
     {
         $codecId = match (\strtolower($this->compressionCodec)) {
             'zstd' => self::CODEC_ZSTD,
@@ -409,34 +532,26 @@ class JudySimpleCache implements CacheInterface, \Countable
             self::CODEC_ZSTD => \function_exists('zstd_compress') ? \zstd_compress($data) : false,
             self::CODEC_LZ4 => \function_exists('lz4_compress') ? \lz4_compress($data) : false,
             self::CODEC_DEFLATE => \function_exists('gzdeflate') ? \gzdeflate($data, 6) : false,
-            self::CODEC_GZIP => \function_exists('gzencode') ? \gzencode($data, 6) : false,
-            default => false,
+            default => \function_exists('gzencode') ? \gzencode($data, 6) : false,
         };
 
-        if ($compressed === false) {
+        if ($compressed === false || \strlen($compressed) >= \strlen($data)) {
             return $data;
         }
 
-        $framed = \chr($codecId) . $compressed;
-        // Adaptive: only store compressed if strictly smaller than original data
-        return \strlen($framed) < \strlen($data) ? $framed : $data;
+        $flags |= self::FLAG_COMPRESSED | $codecId;
+        return $compressed;
     }
 
-    private function decompress(string $data): string
+    private function decompress(string $data, int $flags): string
     {
-        if (\strlen($data) < 2) {
-            return $data;
-        }
-
-        $codecId = \ord($data[0]);
-        $payload = \substr($data, 1);
+        $codecId = ($flags & self::CODEC_MASK);
 
         $decompressed = match ($codecId) {
-            self::CODEC_ZSTD => \function_exists('zstd_uncompress') ? \zstd_uncompress($payload) : false,
-            self::CODEC_LZ4 => \function_exists('lz4_uncompress') ? \lz4_uncompress($payload) : false,
-            self::CODEC_DEFLATE => \function_exists('gzinflate') ? \gzinflate($payload) : false,
-            self::CODEC_GZIP => \function_exists('gzdecode') ? \gzdecode($payload) : false,
-            default => false,
+            self::CODEC_ZSTD => \function_exists('zstd_uncompress') ? \zstd_uncompress($data) : false,
+            self::CODEC_LZ4 => \function_exists('lz4_uncompress') ? \lz4_uncompress($data) : false,
+            self::CODEC_DEFLATE => \function_exists('gzinflate') ? \gzinflate($data) : false,
+            default => \function_exists('gzdecode') ? \gzdecode($data) : false,
         };
 
         return $decompressed === false ? $data : $decompressed;
@@ -444,73 +559,115 @@ class JudySimpleCache implements CacheInterface, \Countable
 
     private function internPayload(string $payload): string
     {
-        $hash = \hash('xxh3', $payload);
-        if (!isset($this->internPool[$hash])) {
-            $this->internPool[$hash] = $payload;
-            $this->internRefs[$hash] = 1;
+        $digest = \hash('xxh3', $payload, true);
+        $hashKey = \unpack('P', $digest)[1];
+        if (!isset($this->internPool[$hashKey])) {
+            $this->internPool[$hashKey] = $payload;
+            $this->internRefs[$hashKey] = 1;
         } else {
-            $this->internRefs[$hash] = ($this->internRefs[$hash] ?? 0) + 1;
+            $this->internRefs[$hashKey] = ($this->internRefs[$hashKey] ?? 0) + 1;
         }
 
-        return $hash;
+        return $digest;
     }
 
     private function releaseValue(string $key): void
     {
-        if (!isset($this->values[$key])) {
-            return;
-        }
-        $raw = $this->values[$key];
-        if (!$this->storeSerialized || !\is_string($raw) || !\str_starts_with($raw, self::MAGIC_ENTRY) || \strlen($raw) < 9) {
+        if ($this->externalAllocations === 0 || $this->values === null) {
             return;
         }
 
-        $flags = \ord($raw[8]);
-        $payload = \substr($raw, 9);
+        if ($this->isEntryType) {
+            $entry = $this->values->getEntry($key);
+            if ($entry === null) {
+                return;
+            }
+            $flags = $entry['flags'];
+            $raw = $entry['value'];
+        } else {
+            $stored = $this->values[$key] ?? null;
+            if (!\is_string($stored) || !\str_starts_with($stored, "\x00JE\x01")) {
+                return;
+            }
+            $flags = \unpack('n', \substr($stored, 8, 2))[1];
+            $raw = \substr($stored, 10);
+        }
 
-        if (($flags & self::FLAG_SHMOP) !== 0 && $this->shmPool !== null) {
-            $offset = \unpack('P', $payload)[1];
+        if (($flags & self::FLAG_SHMOP) !== 0 && $this->shmPool !== null && \is_string($raw) && \strlen($raw) === 8) {
+            $offset = \unpack('P', $raw)[1];
             $this->shmPool->free($offset);
-        } elseif (($flags & self::FLAG_SLAB) !== 0 && $this->slabArena !== null) {
-            $offset = \unpack('P', $payload)[1];
+            $this->externalAllocations--;
+        } elseif (($flags & self::FLAG_SLAB) !== 0 && $this->slabArena !== null && \is_string($raw) && \strlen($raw) === 8) {
+            $offset = \unpack('P', $raw)[1];
             $this->slabArena->free($offset);
-        } elseif (($flags & self::FLAG_INTERNED) !== 0 && $this->enableInterning && $this->internRefs !== null && $this->internPool !== null) {
-            $hash = $payload;
-            if (isset($this->internRefs[$hash])) {
-                $refs = $this->internRefs[$hash] - 1;
+            $this->externalAllocations--;
+        } elseif (($flags & self::FLAG_INTERNED) !== 0 && $this->internPool !== null && $this->internRefs !== null && \is_string($raw) && \strlen($raw) === 8) {
+            $hashKey = \unpack('P', $raw)[1];
+            if (isset($this->internRefs[$hashKey])) {
+                $refs = $this->internRefs[$hashKey] - 1;
                 if ($refs <= 0) {
-                    unset($this->internPool[$hash], $this->internRefs[$hash]);
+                    unset($this->internPool[$hashKey], $this->internRefs[$hashKey]);
                 } else {
-                    $this->internRefs[$hash] = $refs;
+                    $this->internRefs[$hashKey] = $refs;
                 }
             }
+            $this->externalAllocations--;
         }
-    }
-
-    private function extractExpiry(mixed $raw): int
-    {
-        if ($this->storeSerialized) {
-            if (\is_string($raw) && \str_starts_with($raw, self::MAGIC_ENTRY) && \strlen($raw) >= 9) {
-                return \unpack('N', \substr($raw, 4, 4))[1];
-            }
-            return 0;
-        }
-        return \is_array($raw) ? ($raw[0] ?? 0) : 0;
     }
 
     private function live(string $key): bool
     {
-        if (!isset($this->values[$key])) {
+        if ($this->isEntryType) {
+            if ($this->clock === null) {
+                return isset($this->values[$key]);
+            }
+            $entry = $this->values->getEntry($key);
+            if ($entry === null) {
+                return false;
+            }
+            if ($entry['expires_at'] !== 0 && $entry['expires_at'] <= $this->now()) {
+                $this->releaseValue($key);
+                unset($this->values[$key]); // lazy eviction
+                return false;
+            }
+            return true;
+        }
+
+        // Legacy STRING_TO_MIXED
+        $raw = $this->values[$key] ?? null;
+        if ($raw === null) {
             return false;
         }
-        $raw = $this->values[$key];
-        $expiry = $this->extractExpiry($raw);
-        if ($expiry !== 0 && $expiry <= $this->now()) {
-            $this->releaseValue($key);
-            unset($this->values[$key]); // lazy eviction
-            return false;
+        if (!$this->storeSerialized) {
+            if (\is_array($raw) && \array_key_exists('e', $raw)) {
+                if ($raw['e'] <= $this->now()) {
+                    $this->releaseValue($key);
+                    unset($this->values[$key]);
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (\is_string($raw) && \str_starts_with($raw, "\x00JE\x01")) {
+            $expiry = \unpack('N', \substr($raw, 4, 4))[1];
+            if ($expiry !== 0 && $expiry <= $this->now()) {
+                $this->releaseValue($key);
+                unset($this->values[$key]);
+                return false;
+            }
         }
         return true;
+    }
+
+    private function ttlSeconds(?int $expiry): int
+    {
+        if ($expiry === null) {
+            return 0;
+        }
+        if ($this->clock === null) {
+            return \max(1, $expiry - \time());
+        }
+        return $expiry - \time();
     }
 
     private function expiryAt(null|int|\DateInterval $ttl): ?int

@@ -116,6 +116,9 @@ $backends = [
     'hash' => \Judy::STRING_TO_MIXED_HASH,
     'adaptive' => \Judy::STRING_TO_MIXED_ADAPTIVE,
 ];
+if (\defined('Judy::STRING_TO_ENTRY')) {
+    $backends['entry'] = \Judy::STRING_TO_ENTRY;
+}
 
 $keyPool = [];
 foreach (['user', 'report', 'cfg', 'x'] as $ns) {
