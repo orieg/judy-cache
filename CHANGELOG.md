@@ -7,7 +7,9 @@ this package uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 While the major version is `0`, a minor bump may carry a breaking change; each
 one is listed under Changed with what to do about it.
 
-## [Unreleased]
+## [0.3.0] - 2026-08-22
+
+### Added
 
 - **`Judy::STRING_TO_ENTRY` Primary Storage Architecture**: Refactored `JudySimpleCache` to use `Judy::STRING_TO_ENTRY` natively in C. Expiry timestamps and 16-bit bitfield metadata flags (`FLAG_RAW`, `FLAG_COMPRESSED`, `FLAG_INTERNED`, `FLAG_SLAB`, `FLAG_SHMOP`, and codec shift/mask) are stored directly inside native C struct entries (`judy_cache_entry_t`), completely removing userland payload envelope headers (`\x00JE\x01`) and substr/unpack overhead. ([#11])
 - **In-C Single-Pass Batch Eviction (`pruneExpired()`)**: Hybrid-safe `prune()` invokes native in-C `pruneExpired()` directly when no external allocations exist, delivering maximal throughput eviction in a single trie pass without userland loops, and cursor-walks when external slab/shmop blocks must be reclaimed. ([#11])
