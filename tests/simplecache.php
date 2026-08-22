@@ -15,10 +15,14 @@ if (\file_exists(__DIR__ . '/../vendor/autoload.php')) {
     require $polyfill . '/src/Judy.php';
     require $polyfill . '/src/bootstrap.php';
     require __DIR__ . '/../src/InvalidArgumentException.php';
+    require __DIR__ . '/../src/Storage/SlabArena.php';
+    require __DIR__ . '/../src/Storage/SharedMemoryPool.php';
     require __DIR__ . '/../src/JudySimpleCache.php';
 }
 
 use Orieg\JudyCache\JudySimpleCache;
+use Orieg\JudyCache\Storage\SlabArena;
+use Orieg\JudyCache\Storage\SharedMemoryPool;
 
 $failures = 0;
 
@@ -131,13 +135,7 @@ check('count before prune', 2, $cache->count());
 check('prune evicts', 1, $cache->prune());
 check('count after prune', 1, $cache->count());
 
-// prune() with numeric-string keys. "42" is a legal PSR-16 key, but a PHP
-// array coerces it to int 42 — so expiries->toArray() hands prune() an int
-// key, which ext-judy rejects on a string-keyed array (TypeError).
-$probe = new \Judy(\Judy::STRING_TO_INT);
-$probe['42'] = 1;
-check('toArray() coerces a canonical numeric key to int', 'integer',
-    \gettype(\array_key_first($probe->toArray())));   // pins the hazard prune() guards against
+// prune() with numeric-string keys across all backends
 foreach ([\Judy::STRING_TO_MIXED, \Judy::STRING_TO_MIXED_HASH, \Judy::STRING_TO_MIXED_ADAPTIVE] as $b) {
     $num = new JudySimpleCache(clock: function () use (&$now) { return $now; }, backend: $b);
     $num->set('42', 'dies', 10);
@@ -160,7 +158,6 @@ check('bulk count before prune', 2000, $sweepCache->count());
 check('bulk prune evicts half', 1000, $sweepCache->prune());
 check('bulk count after prune', 1000, $sweepCache->count());
 
-
 // The same coercion hazard on the prefix ops, which read keys back from Judy.
 $num = new JudySimpleCache(clock: function () use (&$now) { return $now; });
 $num->setMultiple(['1' => 'a', '2' => 'b', '10' => 'c', '1.x' => 'd']);
@@ -176,6 +173,15 @@ $o->v = 1;
 $raw->set('o', $o);
 $o->v = 2;
 check('by-reference storage sees mutation', 2, $raw->get('o')->v);
+
+// Single-Trie Metadata Packing Verification
+$stCache = new JudySimpleCache(clock: function () use (&$now) { return $now; });
+$stCache->set('st.infinite', 'inf_value');
+$stCache->set('st.expiring', 'exp_value', 100);
+check('single-trie: get infinite', 'inf_value', $stCache->get('st.infinite'));
+check('single-trie: get expiring', 'exp_value', $stCache->get('st.expiring'));
+$r = new \ReflectionClass($stCache);
+check('single-trie: expiries property completely eliminated', false, $r->hasProperty('expiries'));
 
 /* ── PSR-16 spec-clause compliance ─────────────────────────────
  * The official cache/integration-tests suite requires psr/cache ~1.0 and
@@ -316,17 +322,14 @@ check('interning: shared.0 sees new payload', $distinctPayload, $internCache->ge
 
 // Delete individual keys
 $internCache->delete('distinct.1');
-// shared.0 still references $distinctPayload, so pool count is still 2
 check('interning: pool count still 2 while ref exists', 2, $internCache->internCount());
 $internCache->delete('shared.0');
-// Now $distinctPayload has 0 references, so pool count drops to 1
 check('interning: pool count drops to 1 after last ref deleted', 1, $internCache->internCount());
 
 // Expiry and cursor prune cleans up interned payload
 $internCache->set('expire.shared', $sharedPayload, 10);
 check('interning: pool count is 1', 1, $internCache->internCount());
 $internCache->deletePrefix('shared.'); // deletes shared.1..shared.9
-// Only expire.shared holds the reference
 check('interning: pool count is 1 with expire.shared holding ref', 1, $internCache->internCount());
 $now += 15;
 check('interning: prune evicts expired', 1, $internCache->prune());
@@ -357,7 +360,34 @@ check('combo: retrieve key 4', $sharedPayload, $comboCache->get('combo.4'));
 $comboCache->clear();
 check('combo: cleared', 0, $comboCache->internCount());
 
+/* ── SlabArena Integration Tests in simplecache ──────────────── */
+$arena = new SlabArena(chunkSize: 64, initialChunks: 50, maxChunks: 200);
+$slabCache = new JudySimpleCache(
+    clock: function () use (&$now) { return $now; },
+    slabArena: $arena,
+    slabThreshold: 50,
+);
+$slabCache->set('s.1', str_repeat('Data chunk payload ', 10));
+check('simplecache+slab: retrieve payload', str_repeat('Data chunk payload ', 10), $slabCache->get('s.1'));
+check('simplecache+slab: chunk allocated', true, $arena->getAllocatedChunks() > 0);
+$slabCache->clear();
+check('simplecache+slab: chunks freed on clear', 0, $arena->getAllocatedChunks());
 
+/* ── SharedMemoryPool Integration Tests in simplecache ───────── */
+if (extension_loaded('shmop')) {
+    $shm = new SharedMemoryPool(key: 0x53484DEE, size: 1024 * 1024, chunkSize: 64);
+    $shmCache = new JudySimpleCache(
+        clock: function () use (&$now) { return $now; },
+        shmPool: $shm,
+        shmThreshold: 50,
+    );
+    $shmCache->set('shm.1', str_repeat('SHM Chunk payload ', 10));
+    check('simplecache+shm: retrieve payload', str_repeat('SHM Chunk payload ', 10), $shmCache->get('shm.1'));
+    check('simplecache+shm: chunk allocated', true, $shm->getAllocatedChunks() > 0);
+    $shmCache->clear();
+    check('simplecache+shm: chunks freed on clear', 0, $shm->getAllocatedChunks());
+    $shm->delete();
+}
 
 if ($failures === 0) {
     echo "simplecache: all checks passed (backend: ", judy_version(), ")\n";

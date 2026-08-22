@@ -61,7 +61,11 @@ jobs:
           composer install --no-interaction --no-progress
       - name: PSR-16 behavior + spec-clause tests
         run: php tests/simplecache.php
-      - name: Model-based fuzz (3 backends x 5 seeds)
+      - name: SlabArena allocator tests
+        run: php tests/slab.php
+      - name: SharedMemoryPool tests
+        run: php tests/shmop.php
+      - name: Model-based fuzz (3 backends x 5 seeds x 6 configs)
         run: php tests/fuzz.php 5000
       - name: Symfony adapter tests
         run: php tests/symfony-adapter.php
@@ -69,6 +73,8 @@ jobs:
         run: php examples/owner-process/demo.php 2 1000
       - name: Large-values example smoke
         run: php examples/large-values/demo.php 1000 1024 10 2
+      - name: Multi-worker simulation smoke
+        run: php examples/multi-worker/demo.php 2 500
 
   bench:
     name: benchmark (PHP 8.4, ext-judy, apcu)
