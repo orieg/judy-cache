@@ -42,12 +42,12 @@ For example, with 16 workers each holding a 50 MB cache of uncompressed JSON res
 | Storage Architecture | Judy Tries / Key | Compression / Interning | Key Mechanism | Multi-Worker Profile |
 | :--- | :---: | :---: | :--- | :--- |
 | **Native PHP Array (std)** | 0 | None | Zend `Bucket` Hash Tables | High $W\times$ amplification |
-| **Dual-Trie ($values + $expiries)** | 2 | None | 2x Independent Judy Radix Tries | 2x index overhead |
-| **Single-Trie (Packed Storage)** | **1** | None | 4-byte packed TTL header in 1 trie | **~50% index RAM cut** |
-| **Single-Trie (Adaptive Gzip)** | **1** | Adaptive Gzip | Packed trie + gzip framing | **~85% RAM savings** |
-| **Single-Trie (Interned Dedup)** | **1** | xxHash3 Interning | Packed trie + single-copy pool | **~90% RAM savings** |
-| **Single-Trie (Interned + Gzip)** | **1** | Dedup + Gzip | Packed trie + interned gzip | **~97% RAM savings** |
-| **Shared Owner-Process Pool** | 1 (Shared) | Adaptive / Dedup | Centralized IPC cache daemon | **$1\times$ shared footprint** |
+| **judy-cache (Single-Trie)** | **1** | None | 4-byte packed TTL header in 1 trie | **~50% index RAM cut** |
+| **judy-cache (Adaptive Gzip)** | **1** | Adaptive Gzip | Packed trie + gzip framing | **~85% RAM savings** |
+| **judy-cache (Interned Dedup)** | **1** | xxHash3 Interning | Packed trie + single-copy pool | **~90% RAM savings** |
+| **judy-cache (Interned + Gzip)** | **1** | Dedup + Gzip | Packed trie + interned gzip | **~97% RAM savings** |
+| **judy-cache (SlabArena Driver)** | **1** | Slab Buffer Blocks | Pre-allocated slab chunk bitmap | **ZMM fragmentation immune** |
+| **judy-cache (SharedMemoryPool)** | **1** | OS Shared Memory | Zero-copy Unix `shmop` segment | **Cluster-shared RAM segment** |
 
 ---
 
